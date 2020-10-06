@@ -3,34 +3,31 @@ import numpy as np
 
 
 # https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere/44164075#44164075
-def fibonacci_sphere(num_points=162,radius=1):
-    points = []
+def fibonacci_sphere(num_points=162, radius=1):
+    points_cartesian = []
+    points_spherical = []
     # https://bduvenhage.me/geometry/2019/07/31/generating-equidistant-vectors.html#:~:text=Summary,three%20points%20to%20the%20sphere.
     phi = math.pi * (3. - math.sqrt(5.))  # golden angle in radians - 2.39999 radian (compared to degrees 137)
 
     # latitude direction  pi ---?  polar angle
     # longitude direction 2pi  ---?azimuth angle
+
     for i in range(num_points):
-        # y = 1 - (i / float(samples - 1)) * 2  # y goes from 1 to -1
-        # radius = math.sqrt(1 - y * y)  # radius at y
-        #
-        # theta = phi * i  # golden angle increment
-        #
-        # x = math.cos(theta) * radius
-        # z = math.sin(theta) * radius
 
         lat = math.asin(-1.0 + 2.0 * float(i / (num_points + 1)))
         lon = phi * i
 
-        x = math.cos(lon) * math.cos(lat)*radius
-        y = math.sin(lon) * math.cos(lat)*radius
-        z = math.sin(lat)*radius
+        x = math.cos(lon) * math.cos(lat) * radius
+        y = math.sin(lon) * math.cos(lat) * radius
+        z = math.sin(lat) * radius
 
-        points.append([x, y, z])
+        points_cartesian.append([x, y, z])
+        points_spherical.append([radius, lat, lon])
 
-    points_np = np.array(points)
 
-    return points_np
+    points_np_cartesian = np.array(points_cartesian)
+    points_np_spherical = np.array(points_spherical)
+    return points_np_cartesian, points_np_spherical
 
 
 def fibonacci_spiral_disc(num_points, density_inverse=10):
@@ -46,4 +43,18 @@ def fibonacci_spiral_disc(num_points, density_inverse=10):
 
         points.append([x, y])
 
+    return points
+
+
+def average_lat_lon_sphere(radian_distance=0.05, radius=1):
+    points = []
+    num_points_lon = int(2 / radian_distance)
+    num_points_lat = int(2 / radian_distance)
+    for i in range(num_points_lon):
+        for j in range(num_points_lat):
+            x = math.cos(radian_distance * i * math.pi) * math.cos(radian_distance * j * math.pi) * radius
+            y = math.sin(radian_distance * i * math.pi) * math.cos(radian_distance * j * math.pi) * radius
+            z = math.sin(radian_distance * j * math.pi) * radius
+            points.append([x, y, z])
+    points = np.array(points)
     return points
