@@ -8,6 +8,7 @@ import config
 import os
 import numpy as np
 import time
+from multiprocessing import Process
 
 
 def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_name='Embryo04_001_segCell.nii.gz',
@@ -44,7 +45,7 @@ def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_
                         dict_img_calculate[dict_key] = [[x, y, z]]
 
     #
-    dict_key = list(dict_img_calculate.keys())[0]
+    dict_key = list(dict_img_calculate.keys())[3]
 
     # for dict_key in dict_img_calculate.keys():
     #     points_num_ = len(dict_img_calculate[dict_key])
@@ -62,7 +63,15 @@ def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_
     if center_points is None:
         center_points = [0, 0, 0]
     points_self = dict_img_calculate[dict_key] - center_points
-    points_self = general_f.descartes2spherical(points_self)
+    p = Process(target=build_R_matrix_for_each_cell,
+                args=(points_self, ray_num, points_num_this_cell, surface_average_num,))
+    p.start()
+    draw_f.draw_3D_points(points_self)
+    # representation_matrix_xyz=build_R_matrix_for_each_cell(points_self,ray_num,points_num_this_cell,surface_average_num)
+
+
+def build_R_matrix_for_each_cell(points_cell, ray_num, points_num_this_cell, surface_average_num):
+    points_self = general_f.descartes2spherical(points_cell)
     points_at_spherical_lat_phi, points_at_spherical_lon_theta = sort_by_phi_theta(points_self)
     # print(points_self)
     # print(points_at_spherical_lat_phi)
@@ -93,11 +102,11 @@ def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_
         elif prob_ray_lat_index_in_points - probable_interval_num <= 0:
             prob_ray_lat_index_in_points += (probable_interval_num + 1)
             FLAG_AS_GOTO = True
-        elif ray_lon<=points_at_spherical_lat_phi[0][1]:
+        elif ray_lon <= points_at_spherical_lat_phi[0][1]:
             prob_ray_lat_index_in_points = probable_interval_num
             FLAG_AS_GOTO = True
-        elif ray_lon>=points_at_spherical_lat_phi[points_num_this_cell-1][1]:
-            prob_ray_lat_index_in_points = points_num_this_cell-(probable_interval_num+1)
+        elif ray_lon >= points_at_spherical_lat_phi[points_num_this_cell - 1][1]:
+            prob_ray_lat_index_in_points = points_num_this_cell - (probable_interval_num + 1)
             FLAG_AS_GOTO = True
         # ---------------------------------------------------------------------- #
 
@@ -145,11 +154,11 @@ def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_
         elif prob_ray_lon_index_in_points - probable_interval_num <= 0:
             prob_ray_lon_index_in_points += (probable_interval_num + 1)
             FLAG_AS_GOTO = True
-        elif ray_lon<=points_at_spherical_lon_theta[0][2]:
+        elif ray_lon <= points_at_spherical_lon_theta[0][2]:
             prob_ray_lon_index_in_points = probable_interval_num
             FLAG_AS_GOTO = True
-        elif ray_lon>=points_at_spherical_lon_theta[points_num_this_cell-1][2]:
-            prob_ray_lon_index_in_points = points_num_this_cell-(probable_interval_num+1)
+        elif ray_lon >= points_at_spherical_lon_theta[points_num_this_cell - 1][2]:
+            prob_ray_lon_index_in_points = points_num_this_cell - (probable_interval_num + 1)
             FLAG_AS_GOTO = True
         # ---------------------------------------------------------------------- #
 
@@ -209,10 +218,11 @@ def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_
         print(average_R)
         ray_representation_matrix.append([average_R, ray_lat, ray_lon])
 
-    draw_f.draw_3D_points(general_f.sph2descartes(np.array(ray_representation_matrix)))
+    representation_matrix_xyz = general_f.sph2descartes(np.array(ray_representation_matrix))
+    draw_f.draw_3D_points(representation_matrix_xyz)
 
+    return representation_matrix_xyz
 
-# def build_R_matrix_for_each_cell
 
 def sort_by_phi_theta(points_at_spherical):
     # from small-> large

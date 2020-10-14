@@ -11,7 +11,7 @@ def main():
     # _ = cell_f.nii_get_cell_surface(img_1, save_name='Embryo04_000_segCell.nii.gz')
 
     # img_2 = general_f.show_nitf2_img(os.path.join(config.dir_my_data, 'membrane' + 'Embryo04_001_segCell.nii.gz'))
-    R_func.build_R_array_for_embryo(1000)
+    R_func.build_R_array_for_embryo(100)
 
 
 
