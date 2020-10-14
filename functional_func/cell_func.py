@@ -24,7 +24,7 @@ def nii_get_cell_surface(this_image, save_name=None):
     surface_data_result = img_arr - img_arr_erosion
 
     membrane_img = nib.Nifti2Image(surface_data_result.astype(np.int16), np.diag([1, 1, 1, 1]))
-    OrthoSlicer3D(membrane_img.dataobj).show()
+    # OrthoSlicer3D(membrane_img.dataobj).show()
 
     if save_name is not None:
         # nib.save(membrane_img, os.path.join(config.dir_my_data, 'membrane' + save_name))

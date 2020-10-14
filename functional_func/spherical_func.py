@@ -9,12 +9,13 @@ def fibonacci_sphere(num_points=162, radius=1):
     # https://bduvenhage.me/geometry/2019/07/31/generating-equidistant-vectors.html#:~:text=Summary,three%20points%20to%20the%20sphere.
     phi = math.pi * (3. - math.sqrt(5.))  # golden angle in radians - 2.39999 radian (compared to degrees 137)
 
-    # latitude direction  pi ---?  polar angle
+    # latitude direction  pi ---?  polar angle ------from x, not from z
     # longitude direction 2pi  ---?azimuth angle
 
     for i in range(num_points):
-
         lat = math.asin(-1.0 + 2.0 * float(i / (num_points + 1)))
+        # lat = lat % (-math.pi) if lat < 0 else lat % math.pi
+        # lat = lat % (2*math.pi)
         lon = phi * i
 
         x = math.cos(lon) * math.cos(lat) * radius
@@ -22,13 +23,11 @@ def fibonacci_sphere(num_points=162, radius=1):
         z = math.sin(lat) * radius
 
         points_cartesian.append([x, y, z])
-        points_spherical.append([radius, lat, lon])
-
+        # points_spherical.append([radius, lat, lon])
 
     points_np_cartesian = np.array(points_cartesian)
-    points_np_spherical = np.array(points_spherical)
-    return points_np_cartesian, points_np_spherical
-
+    # points_np_spherical = np.array(points_spherical)
+    return points_np_cartesian
 
 def fibonacci_spiral_disc(num_points, density_inverse=10):
     points = []
