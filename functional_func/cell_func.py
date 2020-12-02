@@ -6,18 +6,36 @@ import config
 from scipy import ndimage
 from collections import Counter
 from nibabel.viewers import OrthoSlicer3D
+import csv
 
 import os
+
+
+def get_cell_name_affine_table():
+    """
+
+    :return: a set of NO. to name LIST and name to NO. DICTIONARY:
+    zero first, but actually there are no zero, remember to plus 1
+    """
+    name_list = []
+    NO_dic = {}
+    with open(os.path.join('./DATA', 'name_dictionary.csv'), newline='') as name_table:
+        name_reader = csv.reader(name_table, delimiter=' ', quotechar='|')
+        name_list.append('background')
+        for row in name_reader:
+            NO_dic[row[0].split(',')[1]] = len(name_list)
+            name_list.append(row[0].split(',')[1])
+
+    return name_list, NO_dic
 
 
 def nii_get_cell_surface(this_image, save_name=None):
     img_arr = this_image.get_data()
     # ---------------- erosion ----------------
-    struc_element = ndimage.generate_binary_structure(3, -1)
-    print(struc_element)
-    print(img_arr.shape)
+    struct_element = ndimage.generate_binary_structure(3, -1)
+
     # with the original image data
-    img_arr_erosion = ndimage.grey_erosion(img_arr, footprint=struc_element)
+    img_arr_erosion = ndimage.grey_erosion(img_arr, footprint=struct_element)
     # img_df_erosion = pd.DataFrame(img_arr_erosion[100:150, 150:200, 100])
     # print(img_df_erosion)
 

@@ -11,9 +11,9 @@ import time
 from multiprocessing import Process
 
 
-def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_name='Embryo04_001_segCell.nii.gz',
+def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented_tmp1, file_name='Embryo04_001_segCell.nii.gz',
                              csv_path=config.dir_my_data_R_matrix_csv,
-                             save_name='Embryo04_001_segCell.nii.gz' + str(time.time()), surface_average_num=5):
+                             save_name='Embryo04_001_segCell.nii.gz' + str(time.time()), surface_average_num=10):
     """
     the file read must have been calculate with erosion to find out surface
     :param surface_average_num: the number of points to count the average R of the ray
@@ -30,22 +30,41 @@ def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_
     else:
         img = cell_f.nii_get_cell_surface(img_path, file_name)  # calculate membrane and save automatically
 
-    dict_img_calculate = {}
-    img_2_data = img.get_fdata().astype(np.int16)
-    x_num, y_num, z_num = img_2_data.shape
-    # -------------get each cell----------------
+    dict_img_membrane_calculate = {}
+    img_membrane_data = img.get_fdata().astype(np.int16)
+    x_num, y_num, z_num = img_membrane_data.shape
+    # -------------get each cell membrane----------------
     for x in range(x_num):
         for y in range(y_num):
             for z in range(z_num):
-                dict_key = img_2_data[x][y][z]
+                dict_key = img_membrane_data[x][y][z]
                 if dict_key != 0:
-                    if dict_key in dict_img_calculate:
-                        dict_img_calculate[dict_key].append([x, y, z])
+                    if dict_key in dict_img_membrane_calculate:
+                        dict_img_membrane_calculate[dict_key].append([x, y, z])
                     else:
-                        dict_img_calculate[dict_key] = [[x, y, z]]
+                        dict_img_membrane_calculate[dict_key] = [[x, y, z]]
+    # ----------------------
 
+    # -------------get each cell volume----------------
+    if os.path.exists(os.path.join(img_path, file_name)):
+        img = general_f.load_nitf2_img(os.path.join(img_path, file_name))
+    else:
+        return EOFError  # calculate cell and save automatically
+    dict_img_cell_calculate = {}
+    img_cell_data = img.get_fdata().astype(np.int16)
+
+    for x in range(x_num):
+        for y in range(y_num):
+            for z in range(z_num):
+                dict_key = img_cell_data[x][y][z]
+                if dict_key != 0:
+                    if dict_key in dict_img_cell_calculate:
+                        dict_img_cell_calculate[dict_key].append([x, y, z])
+                    else:
+                        dict_img_cell_calculate[dict_key] = [[x, y, z]]
+    # ----------------------
     #
-    dict_key = list(dict_img_calculate.keys())[3]
+    # dict_key = list(dict_img_membrane_calculate.keys())[3]
 
     # for dict_key in dict_img_calculate.keys():
     #     points_num_ = len(dict_img_calculate[dict_key])
@@ -55,30 +74,34 @@ def build_R_array_for_embryo(ray_num=1000, img_path=config.dir_segemented, file_
     #     p = Process(target=draw_pack.draw_3D_points_in_new_coordinate,
     #                 args=(dict_img_calculate[dict_key], center_points,))
     #     p.start()
-    points_num_this_cell = len(dict_img_calculate[dict_key])
-    dict_img_calculate[dict_key] = np.array(dict_img_calculate[dict_key])
-    center_points = np.sum(dict_img_calculate[dict_key], axis=0) / points_num_this_cell
-    # print(center_points)
-    # draw_f.draw_3D_points_in_new_coordinate(dict_img_calculate[dict_key], center_points)
-    if center_points is None:
-        center_points = [0, 0, 0]
-    points_self = dict_img_calculate[dict_key] - center_points
-    p = Process(target=build_R_matrix_for_each_cell,
-                args=(points_self, ray_num, points_num_this_cell, surface_average_num,))
-    p.start()
-    draw_f.draw_3D_points(points_self)
-    # representation_matrix_xyz=build_R_matrix_for_each_cell(points_self,ray_num,points_num_this_cell,surface_average_num)
+    for dict_key in dict_img_membrane_calculate.keys():
+        points_num_this_membrane = len(dict_img_membrane_calculate[dict_key])
+        # points_num_this_cell=
+        dict_img_membrane_calculate[dict_key] = np.array(dict_img_membrane_calculate[dict_key])
+        center_points = np.sum(dict_img_cell_calculate[dict_key], axis=0) / len(dict_img_cell_calculate[dict_key])
+        # print(center_points)
+        # draw_f.draw_3D_points_in_new_coordinate(dict_img_calculate[dict_key], center_points)
+        if center_points is None:
+            center_points = [0, 0, 0]
+        points_self = dict_img_membrane_calculate[dict_key] - center_points
+        p = Process(target=build_R_matrix_with_ray_sampling,
+                    args=(
+                        points_self, ray_num, points_num_this_membrane, surface_average_num, file_name + str(dict_key)))
+        p.start()
+        # draw_f.draw_3D_points(points_self)
+        # representation_matrix_xyz=build_R_matrix_for_each_cell(points_self,ray_num,points_num_this_cell,surface_average_num)
 
 
-def build_R_matrix_for_each_cell(points_cell, ray_num, points_num_this_cell, surface_average_num):
-    points_self = general_f.descartes2spherical(points_cell)
-    points_at_spherical_lat_phi, points_at_spherical_lon_theta = sort_by_phi_theta(points_self)
+def build_R_matrix_with_ray_sampling(points_cell_membrane, ray_num, points_num_this_cell, surface_average_num,
+                                     cell_name):
+    points_self = general_f.descartes2spherical2(points_cell_membrane)
+    points_at_spherical_lat_phi, points_at_spherical_lon_theta = spherical_f.sort_by_phi_theta(points_self)
     # print(points_self)
     # print(points_at_spherical_lat_phi)
     # print(points_at_spherical_lon_theta)
 
     # ray_xyz = spherical_f.fibonacci_sphere(ray_num)
-    ray_sph = general_f.descartes2spherical(spherical_f.fibonacci_sphere(ray_num))
+    ray_sph = general_f.descartes2spherical2(spherical_f.fibonacci_sphere(ray_num))
 
     # let's find the point closest with the ray!
     probable_interval_num = int(points_num_this_cell / ray_num)
@@ -89,146 +112,28 @@ def build_R_matrix_for_each_cell(points_cell, ray_num, points_num_this_cell, sur
         # pass
         # if math.fabs(i[1] - i[2]) <= 0.01:
         #     print(i)
-        FLAG_AS_GOTO = False
+
         ray_lat = ray_sph[i][1]
         ray_lon = ray_sph[i][2]
-        # flag to find the ray lat in points
-        prob_ray_lat_index_in_points = int(ray_lat / math.pi * points_num_this_cell)
-        print(prob_ray_lat_index_in_points)
-        # -----------------deal with the border issues---------------------------- #
-        if prob_ray_lat_index_in_points + probable_interval_num >= points_num_this_cell:
-            prob_ray_lat_index_in_points -= (probable_interval_num + 1)
-            FLAG_AS_GOTO = True
-        elif prob_ray_lat_index_in_points - probable_interval_num <= 0:
-            prob_ray_lat_index_in_points += (probable_interval_num + 1)
-            FLAG_AS_GOTO = True
-        elif ray_lon <= points_at_spherical_lat_phi[0][1]:
-            prob_ray_lat_index_in_points = probable_interval_num
-            FLAG_AS_GOTO = True
-        elif ray_lon >= points_at_spherical_lat_phi[points_num_this_cell - 1][1]:
-            prob_ray_lat_index_in_points = points_num_this_cell - (probable_interval_num + 1)
-            FLAG_AS_GOTO = True
-        # ---------------------------------------------------------------------- #
 
-        if FLAG_AS_GOTO is False:
-            # print(prob_ray_lat_index_in_points)
-            pro_ray_index_pos = (0, 0)
-            if points_at_spherical_lat_phi[prob_ray_lat_index_in_points - probable_interval_num][1] < ray_lat < \
-                    points_at_spherical_lat_phi[prob_ray_lat_index_in_points + probable_interval_num][1]:
-                pro_ray_index_pos = (0, 0)
-                prob_ray_lat_index_in_points = prob_ray_lat_index_in_points - probable_interval_num
-            elif points_at_spherical_lat_phi[prob_ray_lat_index_in_points + probable_interval_num][1] <= ray_lat:
-                pro_ray_index_pos = (1, 0)
-                prob_ray_lat_index_in_points = prob_ray_lat_index_in_points + probable_interval_num
-            elif points_at_spherical_lat_phi[prob_ray_lat_index_in_points - probable_interval_num][1] >= ray_lat:
-                pro_ray_index_pos = (0, 1)
-                prob_ray_lat_index_in_points = prob_ray_lat_index_in_points - probable_interval_num
-
-            while 1:
-                if pro_ray_index_pos == (0, 0):
-                    if points_at_spherical_lat_phi[prob_ray_lat_index_in_points][1] > ray_lat:
-                        break
-                    else:
-                        prob_ray_lat_index_in_points += 1
-                elif pro_ray_index_pos == (1, 0):
-                    if points_at_spherical_lat_phi[prob_ray_lat_index_in_points][1] > ray_lat:
-                        break
-                    else:
-                        prob_ray_lat_index_in_points += 1
-                elif pro_ray_index_pos == (0, 1):
-                    if points_at_spherical_lat_phi[prob_ray_lat_index_in_points][1] < ray_lat:
-                        break
-                    else:
-                        prob_ray_lat_index_in_points -= 1
-                else:
-                    print('======lat====finding---ray----====error====================================')
-        # print(ray_lat)
-        # print(points_at_spherical_lat_phi[prob_ray_lat_index_in_points])
-        # flag to find the ray lon in points
-        FLAG_AS_GOTO = False
-        prob_ray_lon_index_in_points = int(ray_lon / (math.pi * 2) * points_num_this_cell)
-        # -----------------deal with the border issues---------------------------- #
-        if prob_ray_lon_index_in_points + probable_interval_num >= points_num_this_cell:
-            prob_ray_lon_index_in_points -= (probable_interval_num + 1)
-            FLAG_AS_GOTO = True
-        elif prob_ray_lon_index_in_points - probable_interval_num <= 0:
-            prob_ray_lon_index_in_points += (probable_interval_num + 1)
-            FLAG_AS_GOTO = True
-        elif ray_lon <= points_at_spherical_lon_theta[0][2]:
-            prob_ray_lon_index_in_points = probable_interval_num
-            FLAG_AS_GOTO = True
-        elif ray_lon >= points_at_spherical_lon_theta[points_num_this_cell - 1][2]:
-            prob_ray_lon_index_in_points = points_num_this_cell - (probable_interval_num + 1)
-            FLAG_AS_GOTO = True
-        # ---------------------------------------------------------------------- #
-
-        if FLAG_AS_GOTO is False:
-            pro_ray_index_pos = (0, 0)
-            if points_at_spherical_lon_theta[prob_ray_lon_index_in_points - probable_interval_num][2] < ray_lon < \
-                    points_at_spherical_lon_theta[prob_ray_lon_index_in_points + probable_interval_num][2]:
-                pro_ray_index_pos = (0, 0)
-                prob_ray_lon_index_in_points = prob_ray_lon_index_in_points - probable_interval_num
-            elif points_at_spherical_lon_theta[prob_ray_lon_index_in_points + probable_interval_num][2] <= ray_lon:
-                pro_ray_index_pos = (1, 0)
-                prob_ray_lon_index_in_points = prob_ray_lon_index_in_points + probable_interval_num
-            elif points_at_spherical_lon_theta[prob_ray_lon_index_in_points - probable_interval_num][2] >= ray_lon:
-                pro_ray_index_pos = (0, 1)
-                prob_ray_lon_index_in_points = prob_ray_lon_index_in_points - probable_interval_num
-
-            while 1:
-                if pro_ray_index_pos == (0, 0):
-                    if points_at_spherical_lon_theta[prob_ray_lon_index_in_points][2] > ray_lon:
-                        break
-                    else:
-                        prob_ray_lon_index_in_points += 1
-                elif pro_ray_index_pos == (1, 0):
-                    if points_at_spherical_lon_theta[prob_ray_lon_index_in_points][2] > ray_lon:
-                        break
-                    else:
-                        prob_ray_lon_index_in_points += 1
-                elif pro_ray_index_pos == (0, 1):
-                    if points_at_spherical_lon_theta[prob_ray_lon_index_in_points][2] < ray_lon:
-                        break
-                    else:
-                        # if prob_ray_lon_index_in_points==0:
-                        #     print('----------------------')
-                        #     print(points_at_spherical_lon_theta[prob_ray_lon_index_in_points][2])
-                        #     print(ray_lon)
-                        #     print('----------------------')
-
-                        prob_ray_lon_index_in_points -= 1
-                else:
-                    print('======lon====finding---ray----====error====================================')
-        print(ray_lon)
-        print(points_at_spherical_lon_theta[prob_ray_lon_index_in_points])
-
-        prob_points_set = np.vstack((points_at_spherical_lon_theta[
-                                     prob_ray_lon_index_in_points - probable_interval_num:prob_ray_lon_index_in_points + probable_interval_num,
-                                     :], points_at_spherical_lat_phi[
-                                         prob_ray_lat_index_in_points - probable_interval_num:prob_ray_lat_index_in_points + probable_interval_num,
-                                         :]))
-        # print(prob_points_set.shape[0])
-        prob_set_distance = (prob_points_set[:, 1] - ray_lat) ** 2 + (prob_points_set[:, 2] - ray_lon) ** 2
-        prob_points_set = np.hstack((prob_points_set, prob_set_distance.reshape((prob_set_distance.shape[0], 1))))
-        # print(prob_points_set[:, 3].argsort())
-        prob_points_set = prob_points_set[prob_points_set[:, 3].argsort()]
-        # print(prob_points_set)
-        # print(prob_points_set[:surface_average_num, 0])
-        average_R = np.average(prob_points_set[:surface_average_num, 0])
+        average_R = spherical_f.calculate_R_with_average_with_my_locate_method(points_at_spherical_lat_phi,
+                                                                               points_at_spherical_lon_theta,
+                                                                               ray_lat, ray_lon, probable_interval_num,
+                                                                               surface_average_num)
         print(average_R)
         ray_representation_matrix.append([average_R, ray_lat, ray_lon])
 
-    representation_matrix_xyz = general_f.sph2descartes(np.array(ray_representation_matrix))
-    draw_f.draw_3D_points(representation_matrix_xyz)
+    ray_representation_matrix = np.array(ray_representation_matrix)
+    representation_matrix_xyz = general_f.sph2descartes2(ray_representation_matrix)
+    draw_f.draw_3D_points(representation_matrix_xyz, fig_name=cell_name)
+
+    # # -------------draw R matrix curve on 2D way-------
+    # R_curve = ray_representation_matrix.copy()
+    # R_curve[:, [0, 2]] = R_curve[:, [2, 0]]
+    # draw_f.draw_3D_curve_with_triangle(R_curve, fig_name=cell_name)
 
     return representation_matrix_xyz
-
-
-def sort_by_phi_theta(points_at_spherical):
-    # from small-> large
-    points_at_spherical_phi = points_at_spherical[points_at_spherical[:, 1].argsort()]
-    points_at_spherical_theta = points_at_spherical[points_at_spherical[:, 2].argsort()]
-    return points_at_spherical_phi, points_at_spherical_theta
+    # -------------------------------------
 
     # 先把surface r phi theta 按照 phi thera 排序算出来， 根据 ray 的 theta phi 取surface的一个点距（折算到index中，取3-4个 最近的点做R的平均，它就是intersection
     # 今天先把这个xyz-> r phi theta 写出来，检查一下ray的theta phi是怎么回事，会不会超过2pi

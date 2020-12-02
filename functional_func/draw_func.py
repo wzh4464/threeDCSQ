@@ -23,7 +23,7 @@ def generate_2D_Z_ARRAY(x, y, z):
     return Z
 
 
-def draw_3D_curve(points_data, fig_name="DEFAULT", fig_size=(6, 6)):
+def draw_3D_curve_with_lines(points_data, fig_name="DEFAULT", fig_size=(6, 6)):
     fig = plt.figure(figsize=fig_size)
     ax = Axes3D(fig)
 
@@ -80,6 +80,25 @@ def draw_3D_curve(points_data, fig_name="DEFAULT", fig_size=(6, 6)):
     plt.show()
 
 
+def draw_3D_curve_with_triangle(points_data, fig_name="DEFAULT", fig_size=(10, 10)):
+    fig = plt.figure(figsize=fig_size)
+    fig.suptitle(fig_name)
+
+    ax = Axes3D(fig)
+
+    x = points_data[:, 0]  # first column of the 2D matrix
+    y = points_data[:, 1]
+    z = points_data[:, 2]
+    ax.plot_trisurf(x, y, z)
+
+    ax.set_zlabel('Z')  # 坐标轴
+    ax.set_ylabel('Y')
+    ax.set_xlabel('X')
+    ax.set_title(fig_name)
+    # plt.title(fig_name)
+    plt.show()
+
+
 def draw_3D_points_in_new_coordinate(points, center=None):
     if center is None:
         center = [0, 0, 0]
@@ -88,7 +107,7 @@ def draw_3D_points_in_new_coordinate(points, center=None):
     return points_new
 
 
-def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(6, 6)):
+def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10)):
     x = points_data[:, 0]  # first column of the 2D matrix
     y = points_data[:, 1]
     z = points_data[:, 2]
@@ -96,30 +115,23 @@ def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(6, 6)):
     fig = plt.figure(figsize=fig_size)
     ax = Axes3D(fig)
 
-    # divide as three different color so that we can see them more easily
-    # third_of_points_num = int(len(x) / 3)
-    # ax.scatter(x[:third_of_points_num], y[:third_of_points_num], z[:third_of_points_num], c='y')  # 绘制数据点
-    # ax.scatter(x[third_of_points_num:2 * third_of_points_num], y[third_of_points_num:2 * third_of_points_num],
-    #            z[third_of_points_num:2 * third_of_points_num], c='r')
-    # ax.scatter(x[2 * third_of_points_num:len(x)], y[2 * third_of_points_num:len(x)], z[2 * third_of_points_num:len(x)],
-    #            c='g')
-    ax.scatter3D(x,y,z,)
+    ax.scatter3D(x, y, z, cmap='BuRd',marker='o')
 
-    # Add x, y gridlines
-    ax.grid(b=True, color='grey',
-            linestyle='-.', linewidth=0.3,
-            alpha=0.2)
-
-    # Creating color map
-    my_cmap = plt.get_cmap('hsv')
-
-    # Creating plot
-    sctt = ax.scatter3D(x, y, z,
-                        alpha=0.8,
-                        c=(x + y + z),
-                        cmap=my_cmap,
-                        marker='^')
-    fig.colorbar(sctt, ax=ax, shrink=0.5, aspect=5)
+    # # Add x, y gridlines
+    # ax.grid(b=True, color='grey',
+    #         linestyle='-.', linewidth=0.3,
+    #         alpha=0.2)
+    #
+    # # Creating color map
+    # my_cmap = plt.get_cmap('hsv')
+    #
+    # # Creating plot
+    # sctt = ax.scatter3D(x, y, z,
+    #                     alpha=0.8,
+    #                     c=(x + y + z),
+    #                     cmap=my_cmap,
+    #                     marker='^')
+    # fig.colorbar(sctt, ax=ax, shrink=0.5, aspect=5)
 
     ax.set_zlabel('Z')  # 坐标轴
     ax.set_ylabel('Y')
