@@ -16,10 +16,18 @@ import particular_func.SH_analyses as sh_a_f
 
 
 def do_sampling_with_interval(N, points_surface, average_num):
+    """
+
+    :param N: lat N, lon 2N
+    :param points_surface: surface points in xyz
+    :param average_num: how many average closest number to do calculate R
+    :return: R distance 2D grid matrix, spherical coordinate
+    """
     radian_interval = math.pi / N
     griddata = np.zeros((N, 2 * N))
 
     points_surface = general_f.descartes2spherical2(points_surface)
+
     # points_at_spherical_lat_phi, points_at_spherical_lon_theta = sph_f.sort_by_phi_theta(points_surface)
     # interval_tmp = int(len(points_surface) / (N * N * 2))
     # interval_of_sample_and_all_points = interval_tmp if interval_tmp > 0 else 1
@@ -30,10 +38,7 @@ def do_sampling_with_interval(N, points_surface, average_num):
                                                               radian_interval * i, radian_interval * j,
                                                               average_num)
             print("\r Loading  ", end='row   ' + str(i) + " and column  " + str(j) + " of all  " + str(N ** 2 * 2))
-            # griddata[i][j]=1
             spherical_matrix.append([griddata[i][j], radian_interval * i, radian_interval * j])
-    # print(griddata)
-    # draw_f.draw_3D_points(general_f.sph2descartes(sperical_matrix))
 
     return griddata, np.array(spherical_matrix)
 
@@ -88,18 +93,18 @@ def get_SH_coeffient_from_surface_points(file_name, sample_N, lmax, embryo_path,
                         dict_img_cell_calculate[dict_key] = [[x, y, z]]
     # ---------------------------------------------------
 
-    cell_name_affine_table = cell_f.get_cell_name_affine_table()
+    cell_name_affine_table, _ = cell_f.get_cell_name_affine_table()
     # THE DEGREE OF SH. we can specify it or less than N/2-1, or 10 -- 2*(10/2-1)+1=9 coefficients
     # lmax = int(sample_N / 2 - 1)
 
     this_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
-    print('placing SH file in====>',this_embryo_dir)
+    print('placing SH file in====>', this_embryo_dir)
     if not os.path.exists(this_embryo_dir):
         os.makedirs(this_embryo_dir)
 
     cilm = {}
 
-    # --------------------------calculate all and save as npy
+    # --------------------------calculate all and save as npy --------------------------
     for dict_key in dict_img_membrane_calculate.keys():
         # get center point
         dict_img_membrane_calculate[dict_key] = np.array(dict_img_membrane_calculate[dict_key])
@@ -108,7 +113,7 @@ def get_SH_coeffient_from_surface_points(file_name, sample_N, lmax, embryo_path,
             center_points = [0, 0, 0]
         points_membrane_local = dict_img_membrane_calculate[dict_key] - center_points
 
-        save_file_name = os.path.join(this_embryo_dir, cell_name_affine_table[dict_key - 1])
+        save_file_name = os.path.join(this_embryo_dir, cell_name_affine_table[dict_key])
 
         if not os.path.exists(save_file_name):
             # do sampling to fit [ Driscoll and Healy's (1994) sampling theorem. ]
@@ -117,14 +122,13 @@ def get_SH_coeffient_from_surface_points(file_name, sample_N, lmax, embryo_path,
 
             # do fourier transform and convolution on SPHERE
             print('---------dealing with cell ' + str(dict_key) + '-----' + cell_name_affine_table[
-                dict_key - 1] + '   ---coefficient --------------------')
+                dict_key] + '   ---coefficient --------------------')
             # calculate coefficients from points
+
             cilm[dict_key] = pysh.shtools.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
             # build sh tools coefficient class instance
             sh_coefficient_instance = pysh.SHCoeffs.from_array(cilm[dict_key])
 
             sh_coefficient_instance.to_file(filename=save_file_name)
         else:
-            sh_coefficient_instance = pysh.SHCoeffs.from_file(save_file_name)
-
-
+            continue

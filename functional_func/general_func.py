@@ -94,13 +94,95 @@ def sph2descartes(points_sph):
     points_xyz = np.zeros(points_sph.shape)
 
     radius = points_sph[:, 0]
-    lat = points_sph[:, 1] + math.pi / 2
+    lat = points_sph[:, 1] - math.pi / 2
     lon = points_sph[:, 2]
 
     # https://en.wikipedia.org/wiki/Spherical_coordinate_system
     # be careful, this is my transform base formula. There are many different transformation methods I thinks.
     points_xyz[:, 0] = np.cos(lon) * np.sin(lat) * radius
     points_xyz[:, 1] = np.sin(lon) * np.sin(lat) * radius
-    points_xyz[:, 2] = -np.cos(lat) * radius
+    points_xyz[:, 2] = np.cos(lat) * radius
 
-    return points_xyz
+    return -points_xyz
+
+
+def to_the_power_expand(modified_array):
+    """
+
+    :param modified_array:
+    :return:
+    """
+    rows = modified_array.shape[0]
+    columns = modified_array.shape[1]
+    return_array = np.zeros(modified_array.shape)
+    for i in range(rows):
+        for j in range(columns):
+            if modified_array[i][j] > 0:
+                return_array[i][j] = (modified_array[i][j] / 10) ** 2
+            elif modified_array[i][j] < 0:
+                return_array[i][j] = -(-modified_array[i][j] / 10) ** 2
+            else:
+                return_array[i][j] = 0
+
+    return return_array
+
+
+def sqrt_expand(original_array):
+    """
+
+    :param original_array:
+    :return:
+    """
+    rows = original_array.shape[0]
+    columns = original_array.shape[1]
+    return_array = np.zeros(original_array.shape)
+    for i in range(rows):
+        for j in range(columns):
+            if original_array[i][j] > 0:
+                return_array[i][j] = np.sqrt(original_array[i][j]) * 10
+            elif original_array[i][j] < 0:
+                return_array[i][j] = -np.sqrt(-original_array[i][j]) * 10
+            else:
+                return_array[i][j] = 0
+
+    return return_array
+
+
+def log_expand_offset(original_array, offset):
+    """
+    many problem!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    offset plus and minus is very bad for log
+    in math , it is not good.
+    :param original_array:
+    :param offset:
+    :return:
+    """
+    rows = original_array.shape[0]
+    columns = original_array.shape[1]
+    return_array = np.zeros(original_array.shape)
+    for i in range(rows):
+        for j in range(columns):
+            if original_array[i][j] > 0:
+                return_array[i][j] = math.log(original_array[i][j]) + offset
+            elif original_array[i][j] < 0:
+                return_array[i][j] = -math.log(-original_array[i][j]) - offset
+            else:
+                return_array[i][j] = 0
+
+    return return_array
+
+
+def exp_expand_offset(modified_array, offset):
+    rows = modified_array.shape[0]
+    columns = modified_array.shape[1]
+    return_array = np.zeros(modified_array.shape)
+    for i in range(rows):
+        for j in range(columns):
+            if modified_array[i][j] > 0:
+                return_array[i][j] = math.exp(modified_array[i][j] - offset)
+            elif modified_array[i][j] < 0:
+                return_array[i][j] = -math.exp(-(modified_array[i][j] + offset))
+            else:
+                return_array[i][j] = 0
+
+    return return_array

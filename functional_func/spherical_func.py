@@ -220,3 +220,4 @@ def sort_by_phi_theta(points_at_spherical):
     points_at_spherical_phi = points_at_spherical[points_at_spherical[:, 1].argsort()]
     points_at_spherical_theta = points_at_spherical[points_at_spherical[:, 2].argsort()]
     return points_at_spherical_phi, points_at_spherical_theta
+
