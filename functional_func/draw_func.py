@@ -3,9 +3,12 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 import os
 import config
+import random
 import pandas as pd
-import particular_func.SH_analyses as SH_A_f
 import pyshtools as pysh
+
+import particular_func.SH_analyses as SH_A_f
+import functional_func.general_func as general_f
 
 
 def generate_2D_Z_ARRAY(x, y, z):
@@ -129,7 +132,7 @@ def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None):
         ax.set_title(fig_name)
 
 
-def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE'):
+def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_degree=9, used_PCA_num=12):
     """
 
     :param embryo_path: the path of the specific cell's embryo or the embryo you want to see
@@ -137,6 +140,7 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE'):
     :return:
     """
     embryo_name = os.path.split(embryo_path)[-1]
+    PCA_NUM = (used_degree + 1) ** 2
 
     # ======================it's time to do normalization!=====================================
     path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv,
@@ -145,10 +149,12 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE'):
         print("==EEERRRROOOOR==========no embryo normalized sh coefficient df!!!!!!!!!!!!!==================")
         return
     # after build it, we can read it directly
-    df_embryo_time_slices = pd.read_csv(path_saving_csv_normalized)
-    df_index_tmp = df_embryo_time_slices.values[:, :1]
-    df_embryo_time_slices.drop(columns=df_embryo_time_slices.columns[0], inplace=True)
-    df_embryo_time_slices.index = list(df_index_tmp.flatten())
+    df_embryo_time_slices = general_f.read_csv_to_df(path_saving_csv_normalized)
+    #
+    # df_embryo_time_slices = pd.read_csv(path_saving_csv_normalized)
+    # df_index_tmp = df_embryo_time_slices.values[:, :1]
+    # df_embryo_time_slices.drop(columns=df_embryo_time_slices.columns[0], inplace=True)
+    # df_embryo_time_slices.index = list(df_index_tmp.flatten())
 
     print('finish read ', embryo_name, 'df_sh_norm_coefficients--------------')
     # ========================================================================================
@@ -156,14 +162,16 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE'):
     # ====================RECONSTRUCTION FROM SHcPCA ==================================
     # -------------------read PCA coefficient----------------------
     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_PCA_csv,
-                                            embryo_name + '_time_single_PCA_result.csv')
+                                            embryo_name + '_PCA{}.csv'.format(PCA_NUM))
     if not os.path.exists(PCA_matrices_saving_path):
         print("==EEERRRROOOOR==========no SH PCA coefficient df!!!!!!!!!!!!!==================")
         return
-    df_PCA_matrix = pd.read_csv(PCA_matrices_saving_path)
-    df_index_tmp = df_PCA_matrix.values[:, :1]
-    df_PCA_matrix.drop(columns=df_PCA_matrix.columns[0], inplace=True)
-    df_PCA_matrix.index = list(df_index_tmp.flatten())
+
+    df_PCA_matrix = general_f.read_csv_to_df(PCA_matrices_saving_path)
+    # df_PCA_matrix = pd.read_csv(PCA_matrices_saving_path)
+    # df_index_tmp = df_PCA_matrix.values[:, :1]
+    # df_PCA_matrix.drop(columns=df_PCA_matrix.columns[0], inplace=True)
+    # df_PCA_matrix.index = list(df_index_tmp.flatten())
 
     mean_PCA = df_PCA_matrix.loc['mean'][1:]  # depend on the first column is explained variance
     df_PCA_matrix.drop(index='mean', inplace=True)
@@ -178,31 +186,59 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE'):
 
     # ---------------read SHcPCA coefficient-------------------
     embryo_time_matrices_saving_path = os.path.join(config.dir_my_data_SH_PCA_csv,
-                                                    embryo_name + '_embryo_SHcPCA_result.csv')
+                                                    embryo_name + '_SHcPCA{}.csv'.format(PCA_NUM))
     if not os.path.exists(embryo_time_matrices_saving_path):
         print("==EEERRRROOOOR==========no SHcPCA coefficient df!!!!!!!!!!!!!==================")
         return
-    df_SHcPCA_coeffs = pd.read_csv(embryo_time_matrices_saving_path)
-    df_index_tmp = df_SHcPCA_coeffs.values[:, :1]
-    df_SHcPCA_coeffs.drop(columns=df_SHcPCA_coeffs.columns[0], inplace=True)
-    df_SHcPCA_coeffs.index = list(df_index_tmp.flatten())
+
+    df_SHcPCA_coeffs = general_f.read_csv_to_df(embryo_time_matrices_saving_path)
+    # df_SHcPCA_coeffs = pd.read_csv(embryo_time_matrices_saving_path)
+    # df_index_tmp = df_SHcPCA_coeffs.values[:, :1]
+    # df_SHcPCA_coeffs.drop(columns=df_SHcPCA_coeffs.columns[0], inplace=True)
+    # df_SHcPCA_coeffs.index = list(df_index_tmp.flatten())
     print('finish read ', embryo_name, '--SHcPCA coefficient df!--------------')
     # -----------------------------------------------------------------------
     # ================================================================================
 
     # compare SHc AND SHcPCA image reconstruction
-    for index_tmp in df_embryo_time_slices.index:
-        fig = plt.figure()
+    if cell_name == 'NONE':
+        for index_tmp in df_embryo_time_slices.index:
+            fig = plt.figure()
 
-        shc_instance = pysh.SHCoeffs.from_array(
-            SH_A_f.collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp])))
-        shc_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shc_instance)
-        axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
-        draw_3D_points(shc_reconstruction, fig_name='original sh coefficient', ax=axes_tmp)
+            shc_instance = pysh.SHCoeffs.from_array(
+                SH_A_f.collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp])))
+            shc_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shc_instance)
+            axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
+            draw_3D_points(shc_reconstruction, fig_name='original sh coefficient', ax=axes_tmp)
 
-        shcPCA_shc_list = list(mean_PCA + np.dot(df_PCA_matrix.values[:12, :].T, df_SHcPCA_coeffs.loc[index_tmp]))
-        shcPCA_instance = pysh.SHCoeffs.from_array(SH_A_f.collapse_flatten_clim(shcPCA_shc_list))
-        shcPCA_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shcPCA_instance)
-        axes_tmp = fig.add_subplot(1, 2, 2, projection='3d')
-        draw_3D_points(shcPCA_reconstruction, fig_name=' sh coefficient PCA', ax=axes_tmp)
-        plt.show()
+            shcPCA_shc_list = list(mean_PCA + np.dot(df_PCA_matrix.values[:12, :].T, df_SHcPCA_coeffs.loc[index_tmp]))
+            shcPCA_instance = pysh.SHCoeffs.from_array(SH_A_f.collapse_flatten_clim(shcPCA_shc_list))
+            shcPCA_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shcPCA_instance)
+            axes_tmp = fig.add_subplot(1, 2, 2, projection='3d')
+            draw_3D_points(shcPCA_reconstruction, fig_name=' sh coefficient PCA', ax=axes_tmp)
+            plt.show()
+    elif cell_name == 'RANDOM':
+        while 1:
+            index_tmp = random.choice(df_embryo_time_slices.index)
+
+            fig = plt.figure()
+            # SHc representation
+            shc_instance = pysh.SHCoeffs.from_array(
+                SH_A_f.collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp][:PCA_NUM])))
+            shc_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shc_instance)
+            axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
+            draw_3D_points(shc_reconstruction, fig_name=index_tmp + '  original SHc', ax=axes_tmp)
+
+            # SHcPCA representation
+            shcPCA_shc_list = list(
+                mean_PCA + np.dot(df_PCA_matrix.values[:used_PCA_num, :].T,
+                                  df_SHcPCA_coeffs.loc[index_tmp][:used_PCA_num]))
+            shcPCA_instance = pysh.SHCoeffs.from_array(SH_A_f.collapse_flatten_clim(shcPCA_shc_list))
+            shcPCA_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shcPCA_instance)
+
+            print('SHc--->', list(df_embryo_time_slices.loc[index_tmp][:20]))
+            print('SHcPCA--->', shcPCA_shc_list[:20])
+
+            axes_tmp = fig.add_subplot(1, 2, 2, projection='3d')
+            draw_3D_points(shcPCA_reconstruction, fig_name=index_tmp + '  SHcPCA coefficient', ax=axes_tmp)
+            plt.show()

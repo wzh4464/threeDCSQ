@@ -23,32 +23,81 @@ from collections import Counter
 from scipy import stats
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from functional_func.spherical_func import normalize_SHc
 
 cluster_AB_list = ['ABa', 'ABp', 'ABal', 'ABar', 'ABpl', 'ABpr', 'ABala', 'ABalp', 'ABara', 'ABarp', 'ABpla', 'ABplp',
                    'ABpra', 'ABprp']
 cluster_P1_list = ['EMS', 'P2', 'MS', 'E', 'C', 'P3', 'MSa', 'MSp', 'Ea', 'Ep', 'Ca', 'Cp', 'D', 'P4', 'Z']
 
 
-def analysis_SHcPCA_maximum_clustering(embryo_path, l_degree):
+def analysis_SHcPCA_energy_ratio(embryo_path, used_degree=9):
     # read the SHcPCA matrix to get SHcPCA coefficients
     embryo_name = os.path.split(embryo_path)[-1]
 
     # ---------------read SHcPCA coefficient-------------------
     embryo_time_matrices_saving_path = os.path.join(config.dir_my_data_SH_PCA_csv,
-                                                    embryo_name + '_embryo_SHcPCA_result.csv')
-    if not os.path.exists(embryo_time_matrices_saving_path):
+                                                    embryo_name + '_SHcPCA{}.csv'.format((used_degree + 1) ** 2))
+    df_SHcPCA_coeffs = general_f.read_csv_to_df(embryo_time_matrices_saving_path)
+    # -----------------------------------------------------------------------
+    df_SHcPCA_abs_coeffs = df_SHcPCA_coeffs.abs()
+    df_SHcPCA_abs_coeffs['all_energy'] = df_SHcPCA_abs_coeffs.apply(lambda x: x.sum(), axis=1)
+
+    df_energy_distribution = pd.DataFrame(index=df_SHcPCA_coeffs.index, columns=df_SHcPCA_coeffs.columns)
+    for df_tmp_index in df_energy_distribution.index:
+        # print(df_SHcPCA_abs_coeffs.at[df_tmp_index, 'all_energy'])
+        df_energy_distribution.loc[df_tmp_index] = df_SHcPCA_coeffs.loc[df_tmp_index] / \
+                                                   df_SHcPCA_abs_coeffs.at[df_tmp_index, 'all_energy']
+
+    # print(df_SHcPCA_coeffs.applymap(lambda x: x / df_SHcPCA_abs_coeffs['all_energy']))
+    print(df_energy_distribution)
+    path_energy_distribution_to_save = os.path.join(config.dir_my_data_SHcPCA_ratio,
+                                                    embryo_name + '_SHcPCA{}_E_D.csv'.format(
+                                                        (used_degree + 1) ** 2))
+    df_energy_distribution.to_csv(path_energy_distribution_to_save)
+
+
+def analysis_SHcPCA_KMEANS_clustering(embryo_path, used_degree=9, cluster_num=12):
+    # read the SHcPCA matrix to get SHcPCA coefficients
+    embryo_name = os.path.split(embryo_path)[-1]
+
+    # ---------------read SHcPCA coefficient-------------------
+    embryo_time_matrices_saving_path = os.path.join(config.dir_my_data_SH_PCA_csv,
+                                                    embryo_name + '_SHcPCA{}.csv'.format((used_degree + 1) ** 2))
+    df_SHcPCA_coeffs = general_f.read_csv_to_df(embryo_time_matrices_saving_path)
+    # -----------------------------------------------------------------------
+
+    # cluster_num = 8
+    estimator1 = KMeans(n_clusters=cluster_num, max_iter=10000)
+    # estimator1.fit(df_SHcPCA_coeffs.values)
+    result_1 = estimator1.fit_predict(df_SHcPCA_coeffs.values)
+
+    df_kmeans_clustering = pd.DataFrame(index=df_SHcPCA_coeffs.index, columns=['cluster_num'])
+    df_kmeans_clustering['cluster_num'] = result_1
+
+    print(df_kmeans_clustering)
+    path_max_to_save = os.path.join(config.dir_my_data_SH_clustering_csv,
+                                    embryo_name + '_SHcPCA' + str(
+                                        (used_degree + 1) ** 2) + '_KMEANS_CLUSTER{}.csv'.format(cluster_num))
+    df_kmeans_clustering.to_csv(path_max_to_save)
+
+
+def analysis_SHcPCA_maximum_clustering(embryo_path, used_degree=9):
+    # read the SHcPCA matrix to get SHcPCA coefficients
+    embryo_name = os.path.split(embryo_path)[-1]
+
+    # ---------------read SHcPCA coefficient-------------------
+    embryo_SHcPCA_saving_path = os.path.join(config.dir_my_data_SH_PCA_csv,
+                                             embryo_name + '_SHcPCA{}.csv'.format((used_degree + 1) ** 2))
+    if not os.path.exists(embryo_SHcPCA_saving_path):
         print('error detected! no SHcPCA matrix csv file can be found')
         return
-    df_SHcPCA_coeffs = pd.read_csv(embryo_time_matrices_saving_path)
-    df_index_tmp = df_SHcPCA_coeffs.values[:, :1]
-    df_SHcPCA_coeffs.drop(columns=df_SHcPCA_coeffs.columns[0], inplace=True)
-    df_SHcPCA_coeffs.index = list(df_index_tmp.flatten())
+    df_SHcPCA_coeffs = general_f.read_csv_to_df(embryo_SHcPCA_saving_path)
     print('finish read ', embryo_name, '--SHcPCA coefficient df!--------------')
     # -----------------------------------------------------------------------
     maximum_SHcPCA = np.max(df_SHcPCA_coeffs.values)
     minimum_SHcPCA = np.min(df_SHcPCA_coeffs.values)
 
-    df_max_abs_clustering = pd.DataFrame(index=list(df_index_tmp.flatten()), columns=['cluster_num', 'abs_max_num'])
+    df_max_abs_clustering = pd.DataFrame(index=df_SHcPCA_coeffs.index, columns=['cluster_num', 'abs_max_num'])
     for i_index in df_max_abs_clustering.index:
         abs_array = np.abs(df_SHcPCA_coeffs.loc[i_index])
         # maximum_abs_SHcPCA = np.max(abs_array)
@@ -58,11 +107,27 @@ def analysis_SHcPCA_maximum_clustering(embryo_path, l_degree):
         df_max_abs_clustering.at[i_index, 'abs_max_num'] = df_SHcPCA_coeffs.loc[i_index][max_index_indices]
 
     print(df_max_abs_clustering)
-    path_max_to_save = os.path.join(config.dir_my_data_SH_PCA_csv,
-                                    embryo_name + '_SHcPCA_MAX_CLUSTER.csv')
+    path_max_to_save = os.path.join(config.dir_my_data_SH_clustering_csv,
+                                    embryo_name + '_SHcPCA{}_MAX_CLUSTER.csv'.format((used_degree + 1) ** 2))
     df_max_abs_clustering.to_csv(path_max_to_save)
 
-def analysis_SHPCA_One_embryo(embryo_path, l_degree, is_do_PCA=True, is_show_PCA=True):
+
+def analysis_SHcPCA_All_embryo(l_degree, is_show_PCA=True, PCA_num=24):
+    # embryo_file_name = [f for f in os.listdir(embryo_sub_path) if os.path.isfile(os.path.join(embryo_sub_path, f))]
+
+    SHc_dict = {}
+    for embryo_index in np.arange(4, 21):
+        embryo_name = 'Sample' + f'{embryo_index:02}' + 'LabelUnified'
+        print(embryo_name)
+
+        path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv,
+                                                  embryo_name + '_l_' + str(l_degree) + '_norm.csv')
+        df_SHc_norm = general_f.read_csv_to_df(path_saving_csv_normalized)
+        SHc_dict[embryo_name] = df_SHc_norm.values
+        print('finish read ', embryo_name, 'df_sh_norm_coefficients--------------')
+
+
+def analysis_SHcPCA_One_embryo(embryo_path, used_degree, l_degree=25, is_do_PCA=True, is_show_PCA=True):
     """
 
     :param embryo_path: the 3D image data for embryo, 1-end time points embryos in this folder
@@ -93,45 +158,43 @@ def analysis_SHPCA_One_embryo(embryo_path, l_degree, is_do_PCA=True, is_show_PCA
                                               embryo_name + '_l_' + str(l_degree) + '_norm.csv')
     if not os.path.exists(path_saving_csv_normalized):
 
-        df_embryo_time_slices = pd.read_csv(path_saving_csv)
-        df_index_tmp = df_embryo_time_slices.values[:, :1]
-        df_embryo_time_slices.drop(columns=df_embryo_time_slices.columns[0], inplace=True)
-        df_embryo_time_slices.index = list(df_index_tmp.flatten())
+        df_SHc_norm = pd.read_csv(path_saving_csv)
+        df_index_tmp = df_SHc_norm.values[:, :1]
+        df_SHc_norm.drop(columns=df_SHc_norm.columns[0], inplace=True)
+        df_SHc_norm.index = list(df_index_tmp.flatten())
 
         for index_tmp in df_embryo_volume_surface_slices.index:
             this_normalized_coefficient = df_embryo_volume_surface_slices.loc[index_tmp][2]
-            normalization_tmp = df_embryo_time_slices.loc[index_tmp] / this_normalized_coefficient
-            # print(normalization_tmp.shape)
-            # print(df_embryo_time_slices.loc[index_tmp])
-            # print(normalization_tmp)
-            df_embryo_time_slices.loc[index_tmp] = normalization_tmp
-        df_embryo_time_slices.to_csv(path_saving_csv_normalized)
+            normalization_tmp = df_SHc_norm.loc[index_tmp] / this_normalized_coefficient
+
+            df_SHc_norm.loc[index_tmp] = normalization_tmp
+        df_SHc_norm.to_csv(path_saving_csv_normalized)
     # after build it, we can read it directly
-    df_embryo_time_slices = pd.read_csv(path_saving_csv_normalized)
-    df_index_tmp = df_embryo_time_slices.values[:, :1]
-    df_embryo_time_slices.drop(columns=df_embryo_time_slices.columns[0], inplace=True)
-    df_embryo_time_slices.index = list(df_index_tmp.flatten())
+    df_SHc_norm = general_f.read_csv_to_df(path_saving_csv_normalized)
     print('finish read ', embryo_name, 'df_sh_norm_coefficients--------------')
     # ----------------------------------------------------------------------------------------
 
     if is_do_PCA:
         # ------------------------------directly pca-------------------------------------------------
 
-        sh_PCA = PCA(n_components=12)
+        sh_PCA = PCA()
 
-        sh_PCA.fit(df_embryo_time_slices.values)
-        sh_PCA_mean = sh_PCA.mean_.flatten()
+        sh_PCA.fit(df_SHc_norm.values[:, :(used_degree + 1) ** 2])
+        # print(sh_PCA.mean_.shape)
+        # print(sh_PCA.mean_.flatten().shape)
+        #
+        sh_PCA_mean = sh_PCA.mean_
 
         print('PCA COMPONENTS: ', sh_PCA.n_components_)
         print('PCA EXPLAINED VARIANCE: ', sh_PCA.explained_variance_ratio_)
 
         PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_PCA_csv,
-                                                embryo_name + '_time_single_PCA_result.csv')
-        if not os.path.exists(PCA_matrices_saving_path):
-            df_PCA_matrices = pd.DataFrame(data=sh_PCA.components_, columns=get_flatten_ldegree_morder(l_degree))
-            df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(sh_PCA.explained_variance_ratio_))
-            df_PCA_matrices.loc['mean'] = [0] + list(sh_PCA_mean)
-            df_PCA_matrices.to_csv(PCA_matrices_saving_path)
+                                                embryo_name + '_PCA{}.csv'.format(sh_PCA.n_components_))
+        # if not os.path.exists(PCA_matrices_saving_path):
+        df_PCA_matrices = pd.DataFrame(data=sh_PCA.components_, columns=get_flatten_ldegree_morder(used_degree))
+        df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(sh_PCA.explained_variance_ratio_))
+        df_PCA_matrices.loc['mean'] = [0] + list(sh_PCA_mean)
+        df_PCA_matrices.to_csv(PCA_matrices_saving_path)
 
         if is_show_PCA:
             component_index = 0
@@ -177,25 +240,28 @@ def analysis_SHPCA_One_embryo(embryo_path, l_degree, is_do_PCA=True, is_show_PCA
                 component_index += 1
 
         print('finish PCA, begin to work on PCA shape SPACE MODELING')
-        # inverse_component_matrix = np.linalg.inv(sh_PCA.components_)
-        Q, R = la.qr(sh_PCA.components_.T)
+        print('LETS compute the SHcPCA vector , now begin.')
+
+        # Q, R = la.qr(sh_PCA.components_)
+        inverse_component_matrix = np.linalg.inv(sh_PCA.components_.T)
 
         embryo_time_matrices_saving_path = os.path.join(config.dir_my_data_SH_PCA_csv,
-                                                        embryo_name + '_embryo_SHcPCA_result.csv')
-        if not os.path.exists(embryo_time_matrices_saving_path):
-            df_sh_pca_coefs = pd.DataFrame(index=df_embryo_time_slices.index, columns=np.arange(0, 12))
-            for index_tmp in df_embryo_time_slices.index:
-                x_pca_shape_space = spla.solve_triangular(R, Q.T.dot(df_embryo_time_slices.loc[index_tmp]), lower=False)
-                # print(x_pca_shape_space)
-                df_sh_pca_coefs.loc[index_tmp] = list(x_pca_shape_space)
-            df_sh_pca_coefs.to_csv(embryo_time_matrices_saving_path)
-            print(df_sh_pca_coefs)
+                                                        embryo_name + '_SHcPCA{}.csv'.format(sh_PCA.n_components_))
+        # if not os.path.exists(embryo_time_matrices_saving_path):
+        df_sh_pca_coefs = pd.DataFrame(index=df_SHc_norm.index, columns=list(np.arange(0, sh_PCA.n_components_)))
+        for index_tmp in df_SHc_norm.index:
+            # x_pca_shape_space = spla.solve_triangular(R, Q.T.dot(df_SHc_norm.loc[index_tmp] - sh_PCA_mean),
+            #                                           lower=False)
+            # print(x_pca_shape_space)
+            df_sh_pca_coefs.loc[index_tmp] = inverse_component_matrix.dot(
+                df_SHc_norm.loc[index_tmp][:sh_PCA.n_components_] - sh_PCA_mean)
+        df_sh_pca_coefs.to_csv(embryo_time_matrices_saving_path)
 
         # ----------------------------end:directly pca----------------------------------------------
 
         # # ----------------------------PCA modified sqrt then multiple 10--------------------------------
         #
-        # sqrt_expand_array = general_f.sqrt_expand(df_embryo_time_slices.values)
+        # sqrt_expand_array = general_f.sqrt_expand(df_SHc_norm.values)
         # print('finish sqrt expand for embryo values')
         # sh_PCA = PCA(n_components=12)
         #
@@ -256,10 +322,12 @@ def analysis_SHPCA_One_embryo(embryo_path, l_degree, is_do_PCA=True, is_show_PCA
 
         # # # ----------------------------end :::::: PCA modified sqrt then multiple 10--------------------------------
 
-    return df_embryo_time_slices
+    return df_SHc_norm
 
 
-def analysis_time_domain_k_means(embryo_path, l_degree):
+def analysis_SHc_Kmeans_One_embryo(embryo_path, used_degree, l_degree=25, cluster_num=12, is_normalization=True,
+                                   is_conclude_in_percentage=False,
+                                   is_show_cluster=False):
     """
 
     :param embryo_path: the 3D image data for embryo, 1-end time points embryos in this folder
@@ -268,79 +336,107 @@ def analysis_time_domain_k_means(embryo_path, l_degree):
     """
     embryo_name = os.path.split(embryo_path)[-1]
 
-    # --------------------------get sh coefficient df ---------------------------------
-    path_saving_csv = os.path.join(config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_' + str(l_degree) + '.csv')
-    if not os.path.exists(path_saving_csv):
-        compute_embryo_sh_descriptor_csv(embryo_path, l_degree, path_saving_csv)
-
-    df_embryo_time_slices = pd.read_csv(path_saving_csv)
-    cell_index_time_this_embryo = df_embryo_time_slices.values[:, :1]
-    array_time_this_embryo = df_embryo_time_slices.values[:, 1:]
-
-    # ----------------------------------------------------------------------------------------
-
-    cluster_cell_list = cluster_AB_list + cluster_P1_list
-    # print(cluster_cell_list)
-
-    cluster_num = 12
-
     # --------------------------------get volume and surface -----------------------------------
     path_volume_surface_path = os.path.join(config.dir_my_data_volume_surface, embryo_name + '.csv')
     if not os.path.exists(path_volume_surface_path):
         cell_f.count_volume_surface_normalization_tocsv(embryo_path)
-    df_embryo_volume_surface_slices = pd.read_csv(path_volume_surface_path)
 
-    df_index_tmp = df_embryo_volume_surface_slices.values[:, :1]
-    df_embryo_volume_surface_slices.drop(columns=df_embryo_volume_surface_slices.columns[0], inplace=True)
-    df_embryo_volume_surface_slices.index = list(df_index_tmp.flatten())
+    df_embryo_volume_surface_slices = general_f.read_csv_to_df(path_volume_surface_path)
     # ------------------------------------------------------------
 
-    # ------------------------   original k-means clustering ----------------------------------------
-    estimator1 = KMeans(n_clusters=cluster_num, max_iter=1000)
-    estimator1.fit(array_time_this_embryo)
-    result_1 = estimator1.predict(array_time_this_embryo)
+    # -------------------------------read normalized or original choosing------------------------------
+    path_original_SHc_saving_csv = os.path.join(config.dir_my_data_SH_time_domain_csv,
+                                                embryo_name + '_l_' + str(l_degree) + '.csv')
+    path_normalized_SHc_saving_csv = os.path.join(config.dir_my_data_SH_time_domain_csv,
+                                                  embryo_name + '_l_' + str(l_degree) + '_norm.csv')
+    if not os.path.exists(path_original_SHc_saving_csv):
+        compute_embryo_sh_descriptor_csv(embryo_path, l_degree, path_original_SHc_saving_csv)
+    if is_normalization:
+        # --------------------------get normalized sh coefficient df ---------------------------------
+        if not os.path.exists(path_normalized_SHc_saving_csv):
+            normalize_SHc(path_normalized_SHc_saving_csv, df_embryo_volume_surface_slices,
+                          path_normalized_SHc_saving_csv)
+        # after build it, we can read it directly
+        df_embryo_SHc = general_f.read_csv_to_df(path_normalized_SHc_saving_csv)
+        print('finish read ', embryo_name, 'df_sh_norm_coefficients--------------')
+    else:
+        # --------------------------get sh coefficient df ---------------------------------
+        df_embryo_SHc = general_f.read_csv_to_df(path_original_SHc_saving_csv)
+        print('finish read ', embryo_name, 'df_sh_norm_coefficients--------------')
 
-    path_to_saving = os.path.join(config.dir_my_data_SH_time_domain_csv,
-                                  embryo_name + '_l_' + str(l_degree) + 'KMEANS_cluster12.csv')
-    deal_with_cluster(result_1, cell_index_time_this_embryo, cluster_cell_list, cluster_num).to_csv(path_to_saving)
+        # ----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
 
-    result_1_sort_dict = {}
-    for index, value in enumerate(result_1):
-        if value in result_1_sort_dict.keys():
-            result_1_sort_dict[value].append(index)
-        else:
-            result_1_sort_dict[value] = [index]
+    # ==========================================  original k-means clustering =======================================
+    # estimator1 = KMeans(n_clusters=cluster_num, max_iter=10000)
+    estimator1 = KMeans(n_clusters=cluster_num)
 
-    center_sampling_dict = {}
+    estimator1.fit(df_embryo_SHc.values[:, :(used_degree + 1) ** 2])
+    Kmeans_cluster_label = estimator1.predict(df_embryo_SHc.values[:, :(used_degree + 1) ** 2])
 
-    figure_rows = 2
-    figure_columns = 2
-    for index, value in enumerate(estimator1.cluster_centers_):
-        log_abs_data = np.log(np.abs(np.float64(value)))
-        offset = np.abs(int(np.min(log_abs_data)))
-        center_sample_modified = general_f.log_expand_offset(value.reshape((value.shape[0], 1)), offset).flatten()
+    # ------------------------- save norm k-means clustering result to csv --------------------
+    df_SHc_KMEANS_clustering = pd.DataFrame(index=df_embryo_SHc.index, columns=['cluster_num'])
+    # maximum_abs_SHcPCA = np.max(abs_array)
+    df_SHc_KMEANS_clustering['cluster_num'] = Kmeans_cluster_label
 
-        shc_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(list(center_sample_modified)))
-        center_sampling_dict[index] = do_reconstruction_for_SH(30, shc_instance)
+    path_kmeans_to_save = os.path.join(config.dir_my_data_SH_clustering_csv,
+                                       embryo_name + '_SHc' + str(
+                                           (used_degree + 1) ** 2) + '_KMEANS_CLUSTER{}.csv'.format(cluster_num))
+    df_SHc_KMEANS_clustering.to_csv(path_kmeans_to_save)
+    print(df_SHc_KMEANS_clustering)
+    # ---------------------------------------------------------------------------------------
 
-        fig = plt.figure()
-        axes_tmp = fig.add_subplot(figure_rows, figure_columns, 1, projection='3d')
-        draw_f.draw_3D_points(center_sampling_dict[index], ax=axes_tmp, fig_name='class' + str(index) + 'center_one')
+    # ============================================================================================================
 
-        random_selection = random.sample(result_1_sort_dict[index], figure_rows * figure_columns - 1)
-        for i in np.arange(1, figure_rows * figure_columns):
-            this_index = random_selection[i - 1]
-            shc_instance = pysh.SHCoeffs.from_array(
-                collapse_flatten_clim(list(array_time_this_embryo[this_index])))
-            sh_reconstruction = do_reconstruction_for_SH(20, shc_instance)
-            axes_tmp = fig.add_subplot(figure_rows, figure_columns, i + 1, projection='3d')
-            tp_cell_name_index = cell_index_time_this_embryo[this_index][0]
-            # print(tp_cell_name_index)
-            draw_f.draw_3D_points(sh_reconstruction, ax=axes_tmp, fig_name=tp_cell_name_index + 'V' + str(
-                df_embryo_volume_surface_slices.loc[tp_cell_name_index][0]) + 'S' + str(
-                df_embryo_volume_surface_slices.loc[tp_cell_name_index][1]))
+    # ------------------------  is saving the percentage conclusion to csv ?----------------------------
+    if is_conclude_in_percentage:
+        cluster_cell_list = cluster_AB_list + cluster_P1_list
+        path_to_saving = os.path.join(config.dir_my_data_SH_time_domain_csv,
+                                      embryo_name + '_l_' + str(l_degree) + 'KMEANS_cluster12.csv')
+        conclude_cluster_in_percentage(Kmeans_cluster_label, df_embryo_SHc.values, cluster_cell_list,
+                                       cluster_num).to_csv(path_to_saving)
+    # ---------------------------------------------------------------------------------------------
 
-    plt.show()
+    # ----------------------  draw cluster centroid and randomly selective cells' figures ---------
+    if is_show_cluster == True:
+        result_1_sort_dict = {}
+        for index, value in enumerate(Kmeans_cluster_label):
+            if value in result_1_sort_dict.keys():
+                result_1_sort_dict[value].append(index)
+            else:
+                result_1_sort_dict[value] = [index]
+
+        center_sampling_dict = {}
+
+        figure_rows = 3
+        figure_columns = 3
+        for index, value in enumerate(estimator1.cluster_centers_):
+            log_abs_data = np.log(np.abs(np.float64(value)))
+            offset = np.abs(int(np.min(log_abs_data)))
+            center_sample_modified = general_f.log_expand_offset(value.reshape((value.shape[0], 1)), offset).flatten()
+
+            shc_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(list(center_sample_modified)))
+            center_sampling_dict[index] = do_reconstruction_for_SH(30, shc_instance)
+
+            fig = plt.figure()
+            axes_tmp = fig.add_subplot(figure_rows, figure_columns, 1, projection='3d')
+            draw_f.draw_3D_points(center_sampling_dict[index], ax=axes_tmp,
+                                  fig_name='class' + str(index) + 'center_one')
+
+            random_selection = random.sample(result_1_sort_dict[index], figure_rows * figure_columns - 1)
+            for i in np.arange(1, figure_rows * figure_columns):
+                this_index = random_selection[i - 1]
+                shc_instance = pysh.SHCoeffs.from_array(
+                    collapse_flatten_clim(list(df_embryo_SHc.values[this_index])))
+                sh_reconstruction = do_reconstruction_for_SH(20, shc_instance)
+                axes_tmp = fig.add_subplot(figure_rows, figure_columns, i + 1, projection='3d')
+                tp_cell_name_index = df_embryo_SHc.index[this_index]
+                # print(tp_cell_name_index)
+                draw_f.draw_3D_points(sh_reconstruction, ax=axes_tmp, fig_name=tp_cell_name_index + 'V' + str(
+                    df_embryo_volume_surface_slices.loc[tp_cell_name_index][0]) + 'S' + str(
+                    df_embryo_volume_surface_slices.loc[tp_cell_name_index][1]))
+
+        plt.show()
     # -----end:   -------------------   original k-means clustering ----------------------------------------
 
     # # ---------------------------- abs k-means clustering--------------------------------
@@ -733,7 +829,7 @@ def get_flatten_ldegree_morder(degree):
     return index_slice
 
 
-def deal_with_cluster(cluster_result, cell_index, cluster_cell_list, cluster_num):
+def conclude_cluster_in_percentage(cluster_result, cell_index, cluster_cell_list, cluster_num):
     clustering_result_df = pd.DataFrame(index=cluster_cell_list, columns=list(np.arange(0, cluster_num)))
 
     for match_pattern in cluster_cell_list:
