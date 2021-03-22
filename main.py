@@ -58,16 +58,46 @@ def main():
     # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
     # cell_f.count_volume_surface_normalization_tocsv(path_tmp)
     # # -----------------------------------------------------------------------------------------------------
+    # path_tmp = config.dir_segemented_tmp1
 
-    # SH_A_func.analysis_time_domain_k_means(embryo_path=config.dir_segemented_tmp1,l_degree=10)
+    # SH_A_func.analysis_SHcPCA_All_embryo(l_degree=25)
+
+    # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample05LabelUnified'
+    # SH_A_func.analysis_SHc_Kmeans_One_embryo(embryo_path=path_tmp, used_degree=9, is_show_cluster=False)
+
+    for cell_index in np.arange(start=4, stop=21, step=1):
+        path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
+        print(path_tmp)
+        SH_A_func.analysis_SHc_Kmeans_One_embryo(embryo_path=path_tmp, used_degree=9, cluster_num=12,
+                                                 is_show_cluster=False)
+        SH_A_func.analysis_SHcPCA_KMEANS_clustering(embryo_path=path_tmp, used_degree=9, cluster_num=12)
+
+        SH_A_func.analysis_SHcPCA_energy_ratio(embryo_path=path_tmp, used_degree=9)
+        SH_A_func.analysis_SHcPCA_maximum_clustering(embryo_path=path_tmp, used_degree=9)
+
+    #
+    #
+    # SH_A_func.analysis_SHcPCA_One_embryo(embryo_path=path_tmp, l_degree=25, is_show_PCA=True, PCA_num=PCA_NUM)
+
+    # for cell_index in np.arange(start=4, stop=21, step=1):
+    #     path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
+    #     print(path_tmp)
+    #     SH_A_func.analysis_SHcPCA_One_embryo(embryo_path=path_tmp, used_degree=9, is_show_PCA=False)
+    #     #
+    #     # draw_f.draw_comparison_SHcPCA_SH(embryo_path=path_tmp, l_degree=25, cell_name='RANDOM', PCA_num=PCA_NUM)
 
     # =======we always use l_degree= 25 coefficients are 676 to analyse===============
-    path_tmp = r'./DATA/SegmentCellUnified04-20/Sample05LabelUnified'
-    # SH_A_func.analysis_SHPCA_One_embryo(embryo_path=path_tmp, l_degree=25, is_show_PCA=True)
+    # SH_A_func.analysis_SHcPCA_One_embryo(embryo_path=path_tmp, l_degree=25, is_show_PCA=False)
 
-    # draw_f.draw_comparison_SHcPCA_SH(embryo_path=path_tmp, l_degree=25)
+    # ---------------------------draw SHcPCA
+    # draw_f.draw_comparison_SHcPCA_SH(embryo_path=path_tmp, l_degree=25, cell_name='RANDOM', used_degree=9,
+    #                                  used_PCA_num=18)
 
-    SH_A_func.analysis_SHcPCA_maximum_clustering(embryo_path=path_tmp, l_degree=25)
+    # SH_A_func.analysis_SHcPCA_maximum_clustering(embryo_path=path_tmp, l_degree=25)
+
+    # SH_A_func.analysis_SHcPCA_KMEANS_clustering(embryo_path=path_tmp, l_degree=25)
+
+    # SH_A_func.analysis_SHcPCA_energy_ratio(embryo_path=path_tmp, l_degree=25)
 
 
 if __name__ == '__main__':

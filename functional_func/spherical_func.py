@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from functional_func.general_func import read_csv_to_df
 
 
 # https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere/44164075#44164075
@@ -221,3 +222,13 @@ def sort_by_phi_theta(points_at_spherical):
     points_at_spherical_theta = points_at_spherical[points_at_spherical[:, 2].argsort()]
     return points_at_spherical_phi, points_at_spherical_theta
 
+
+def normalize_SHc(path_original_SHc_saving_csv, df_embryo_volume_surface_slices, path_normalized_SHc_saving_csv):
+    df_SHc = read_csv_to_df(path_original_SHc_saving_csv)
+
+    for index_tmp in df_embryo_volume_surface_slices.index:
+        this_normalized_coefficient = df_embryo_volume_surface_slices.loc[index_tmp][2]
+        normalization_tmp = df_SHc.loc[index_tmp] / this_normalized_coefficient
+        df_SHc.loc[index_tmp] = normalization_tmp
+    df_SHc.to_csv(path_normalized_SHc_saving_csv)
+    return df_SHc

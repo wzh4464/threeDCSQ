@@ -5,6 +5,7 @@ import os
 from nibabel.viewers import OrthoSlicer3D
 
 import numpy as np
+import pandas as pd
 
 
 def load_nitf2_img(path):
@@ -186,3 +187,21 @@ def exp_expand_offset(modified_array, offset):
                 return_array[i][j] = 0
 
     return return_array
+
+
+def read_csv_to_df(csv_path):
+    """
+
+    :param csv_path:
+    :return:
+    """
+    # ---------------read SHcPCA coefficient-------------------
+    if not os.path.exists(csv_path):
+        print('error detected! no SHcPCA matrix csv file can be found')
+        return
+    df_read = pd.read_csv(csv_path)
+    df_index_tmp = df_read.values[:, :1]
+    df_read.drop(columns=df_read.columns[0], inplace=True)
+    df_read.index = list(df_index_tmp.flatten())
+    return df_read
+    # -----------------------------------------------------------------------
