@@ -31,6 +31,12 @@ cluster_P1_list = ['EMS', 'P2', 'MS', 'E', 'C', 'P3', 'MSa', 'MSp', 'Ea', 'Ep', 
 
 
 def analysis_SHcPCA_energy_ratio(embryo_path, used_degree=9):
+    '''
+
+    :param embryo_path:
+    :param used_degree:
+    :return: just ration of all, same as SHcPCA
+    '''
     # read the SHcPCA matrix to get SHcPCA coefficients
     embryo_name = os.path.split(embryo_path)[-1]
 
@@ -239,7 +245,7 @@ def analysis_SHcPCA_One_embryo(embryo_path, used_degree, l_degree=25, is_do_PCA=
 
                 component_index += 1
 
-        print('finish PCA, begin to work on PCA shape SPACE MODELING')
+        print('finish PCA, begin to work on SHcPCA shape SPACE MODELING')
         print('LETS compute the SHcPCA vector , now begin.')
 
         # Q, R = la.qr(sh_PCA.components_)
@@ -879,3 +885,8 @@ def conclude_cluster_in_percentage(cluster_result, cell_index, cluster_cell_list
     clustering_result_df['Mother_daughter_sum'] = Mother_daughter_sum
 
     return clustering_result_df
+
+
+# def do_SHc_
+# if __name__ == "__main__":
+#     做experiemtn for sh in Spherical Wavelet Descriptors for Content-based 3D Model Retrieva
