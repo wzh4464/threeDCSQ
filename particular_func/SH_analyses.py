@@ -1,4 +1,5 @@
 import random
+from typing import Dict
 
 import functional_func.general_func as general_f
 import functional_func.cell_func as cell_f
@@ -18,7 +19,7 @@ import os
 import math
 import re
 
-from collections import Counter
+from tqdm import tqdm
 
 from scipy import stats
 from sklearn.cluster import KMeans
@@ -30,7 +31,13 @@ cluster_AB_list = ['ABa', 'ABp', 'ABal', 'ABar', 'ABpl', 'ABpr', 'ABala', 'ABalp
 cluster_P1_list = ['EMS', 'P2', 'MS', 'E', 'C', 'P3', 'MSa', 'MSp', 'Ea', 'Ep', 'Ca', 'Cp', 'D', 'P4', 'Z']
 
 
-def analysis_SHcPCA_energy_ratio(embryo_path, used_degree=9):
+def analysis_SHcPCA_energy_ratio(embryo_path, used_degree=16):
+    '''
+
+    :param embryo_path:
+    :param used_degree:
+    :return: just ration of all, same as SHcPCA
+    '''
     # read the SHcPCA matrix to get SHcPCA coefficients
     embryo_name = os.path.split(embryo_path)[-1]
 
@@ -56,7 +63,7 @@ def analysis_SHcPCA_energy_ratio(embryo_path, used_degree=9):
     df_energy_distribution.to_csv(path_energy_distribution_to_save)
 
 
-def analysis_SHcPCA_KMEANS_clustering(embryo_path, used_degree=9, cluster_num=12):
+def analysis_SHcPCA_KMEANS_clustering(embryo_path, used_degree=16, cluster_num=12):
     # read the SHcPCA matrix to get SHcPCA coefficients
     embryo_name = os.path.split(embryo_path)[-1]
 
@@ -81,7 +88,7 @@ def analysis_SHcPCA_KMEANS_clustering(embryo_path, used_degree=9, cluster_num=12
     df_kmeans_clustering.to_csv(path_max_to_save)
 
 
-def analysis_SHcPCA_maximum_clustering(embryo_path, used_degree=9):
+def analysis_SHcPCA_maximum_clustering(embryo_path, used_degree=16):
     # read the SHcPCA matrix to get SHcPCA coefficients
     embryo_name = os.path.split(embryo_path)[-1]
 
@@ -94,17 +101,18 @@ def analysis_SHcPCA_maximum_clustering(embryo_path, used_degree=9):
     df_SHcPCA_coeffs = general_f.read_csv_to_df(embryo_SHcPCA_saving_path)
     print('finish read ', embryo_name, '--SHcPCA coefficient df!--------------')
     # -----------------------------------------------------------------------
-    maximum_SHcPCA = np.max(df_SHcPCA_coeffs.values)
-    minimum_SHcPCA = np.min(df_SHcPCA_coeffs.values)
+    # maximum_SHcPCA = np.max(df_SHcPCA_coeffs.values)
+    # minimum_SHcPCA = np.min(df_SHcPCA_coeffs.values)
 
     df_max_abs_clustering = pd.DataFrame(index=df_SHcPCA_coeffs.index, columns=['cluster_num', 'abs_max_num'])
     for i_index in df_max_abs_clustering.index:
         abs_array = np.abs(df_SHcPCA_coeffs.loc[i_index])
         # maximum_abs_SHcPCA = np.max(abs_array)
+        # find where is it!
         max_index_indices = np.where(abs_array == np.max(abs_array))[0][0]
         df_max_abs_clustering.at[i_index, 'cluster_num'] = max_index_indices
 
-        df_max_abs_clustering.at[i_index, 'abs_max_num'] = df_SHcPCA_coeffs.loc[i_index][max_index_indices]
+        df_max_abs_clustering.at[i_index, 'max_value'] = df_SHcPCA_coeffs.loc[i_index][max_index_indices]
 
     print(df_max_abs_clustering)
     path_max_to_save = os.path.join(config.dir_my_data_SH_clustering_csv,
@@ -239,7 +247,7 @@ def analysis_SHcPCA_One_embryo(embryo_path, used_degree, l_degree=25, is_do_PCA=
 
                 component_index += 1
 
-        print('finish PCA, begin to work on PCA shape SPACE MODELING')
+        print('finish PCA, begin to work on SHcPCA shape SPACE MODELING')
         print('LETS compute the SHcPCA vector , now begin.')
 
         # Q, R = la.qr(sh_PCA.components_)
@@ -556,8 +564,15 @@ def compute_embryo_sh_descriptor_csv(embryo_path, l_degree, path_saving_csv):
     data_embryo_time_slices.to_csv(path_saving_csv)
     # print(count)
 
+def analysis_compare_represent_method(embryo_path):
 
-def analysis_calculate_error_contrast(embryo_path, file_name, behavior='both'):
+    embryo_time_list=[]
+    for file_name in os.listdir(embryo_path):
+        if os.path.isfile(os.path.join(embryo_path, file_name)):
+            # print(path_tmp)
+            embryo_time_list.append(file_name)
+
+def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
     """
     :param embryo_path: the 3D image data for embryo, 1-end time points embryos in this folder
     :param file_name: specular time point embryo
@@ -596,16 +611,16 @@ def analysis_calculate_error_contrast(embryo_path, file_name, behavior='both'):
                         dict_img_membrane_calculate[dict_key].append([x, y, z])
                     else:
                         dict_img_membrane_calculate[dict_key] = [[x, y, z]]
-    # ----------------------
+    # ----------------------------------------------------
 
-    # -------------get each cell ----------------
+    # -------------get each cell all point,just for calculate the centroid---------------
     if os.path.exists(os.path.join(embryo_path, file_name)):
         img = general_f.load_nitf2_img(os.path.join(embryo_path, file_name))
     else:
         return EOFError  # calculate cell and save automatically
     dict_img_cell_calculate = {}
     img_cell_data = img.get_fdata().astype(np.int16)
-
+    # just for calculate the centroid
     for x in range(x_num):
         for y in range(y_num):
             for z in range(z_num):
@@ -618,20 +633,21 @@ def analysis_calculate_error_contrast(embryo_path, file_name, behavior='both'):
     # ---------------------------------------------------
 
     # -----------------------analysis :  drawing contraction for each cell --------------------
-    if behavior == 'draw_contraction' or 'both':
+    if behavior == 'draw_contraction' or behavior == 'both':
         # there is actually one loop for this embryo this time each cells
         for cell_name in cells_list:
             cell_SH_path = os.path.join(this_embryo_dir, cell_name)
-            sh_coefficient_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=11)
+            sh_coefficient_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=16)
 
             dict_key = cell_name_to_No_dict[cell_name]
-
+            # get centroid
             tmp_this_membrane = np.array(dict_img_membrane_calculate[dict_key])
             center_points = np.sum(dict_img_cell_calculate[dict_key], axis=0) / len(
                 dict_img_cell_calculate[dict_key])
             if center_points is None:
                 center_points = [0, 0, 0]
             points_membrane_local = tmp_this_membrane - center_points
+            N_sh_num = int(math.sqrt(len(points_membrane_local) / 2))
 
             # ------------------display coefficients distribution--------------------
             # if cell_name[0] == 'A':
@@ -661,12 +677,13 @@ def analysis_calculate_error_contrast(embryo_path, file_name, behavior='both'):
             # ax.plot_surface(plane_LAT, plane_LON, grid.data.T)
 
             # ------------------3D representation-------------------------------
-            do_contraction_image(sh_coefficient_instance, 20, points_membrane_local)
+            print(cell_name)
+            do_contraction_image(sh_coefficient_instance, N_sh_num, points_membrane_local)
             # -----------------------------------------------------------------
     # --------------end-------analysis : drawing contraction for each cell-----------------------
 
     # -----------------------------------analysis : error ----------------------------------------
-    if behavior == 'calculate_error' or 'both':
+    if behavior == 'calculate_error' or behavior == 'both':
         average_error_list = []
         l_degree_range = np.arange(5, 30, 1)
         for l_degree in l_degree_range:
@@ -674,10 +691,57 @@ def analysis_calculate_error_contrast(embryo_path, file_name, behavior='both'):
             average_error_list_this_degree = []
 
             # there is actually one loop for this embryo this time each cells
-            for cell_name in cells_list:
+            for cell_name in tqdm(cells_list, desc="dealing with {}".format(l_degree)):
                 cell_SH_path = os.path.join(this_embryo_dir, cell_name)
                 sh_coefficient_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=l_degree)
 
+                dict_key = cell_name_to_No_dict[cell_name]
+
+                tmp_this_membrane = np.array(dict_img_membrane_calculate[dict_key])
+                center_points = np.sum(dict_img_cell_calculate[dict_key], axis=0) / len(
+                    dict_img_cell_calculate[dict_key])
+                if center_points is None:
+                    center_points = [0, 0, 0]
+                points_membrane_local = tmp_this_membrane - center_points
+
+                reconstruction_xyz = do_reconstruction_for_SH(50, sh_coefficient_instance)
+                grid_data_SH, _ = SH_represention.do_sampling_with_interval(50, reconstruction_xyz, 10)
+
+                grid_data_original, _ = SH_represention.do_sampling_with_interval(50, points_membrane_local, 10)
+
+                error_sum = np.sum(np.abs(grid_data_SH - grid_data_original))
+                print(error_sum)
+                average_error_list_this_degree.append(error_sum)
+
+            sum_error_this_degree = np.sum(np.array(average_error_list_this_degree))
+            print("=================>>>>>>>>>>>> degree ", l_degree, ' ------ error----', sum_error_this_degree)
+            average_error_list.append(sum_error_this_degree)
+        print(average_error_list)
+        plt.plot(l_degree_range, average_error_list)
+        plt.show()
+    # -------------------------------end-------analysis : error----------------------------------------------------
+
+    # -----------------------------------analysis : error ----------------------------------------
+
+    if behavior == 'compare_method_error':
+
+        average_error_list = []
+        l_degree_range = np.arange(5, 25, 1)
+
+        for l_degree in l_degree_range:
+            print("dealing with degree  ", l_degree, (l_degree + 1) ** 2 * 2, (l_degree + 1) ** 2, (l_degree + 1) ** 2,
+                  "  coefficients for sampling, SPHARM,SPCSM")
+            # random latitude and longitude
+            map_random = [[random.uniform(0, math.pi), random.uniform(0, 2 * math.pi)] for i in range(15 ** 2 * 2)]
+
+            # there is actually one loop for this embryo this time each cells
+            for cell_name in tqdm(cells_list, desc="dealing with {}".format(l_degree)):
+
+
+
+                # ------------------------calculate shc error------------------------------------
+                cell_SH_path = os.path.join(this_embryo_dir, cell_name)
+                sh_coefficient_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=l_degree)
                 dict_key = cell_name_to_No_dict[cell_name]
 
                 tmp_this_membrane = np.array(dict_img_membrane_calculate[dict_key])
@@ -733,37 +797,10 @@ def do_reconstruction_for_SH(sample_N, sh_coefficient_instance):
 
 
 def do_contraction_image(sh_coefficient_instance, sh_show_N, points_membrane_local):
-    plane_representation_lat = np.arange(-90, 90, 180 / sh_show_N)
-    plane_representation_lon = np.arange(0, 360, 360 / (2 * sh_show_N))
-    plane_LAT, plane_LON = np.meshgrid(plane_representation_lat, plane_representation_lon)
-
-    plane_LAT_FLATTEN = plane_LAT.flatten(order='F')
-    plane_LON_FLATTEN = plane_LON.flatten(order='F')
-    # print(plane_LAT_FLATTEN)
-    # print(plane_LON_FLATTEN)
-    grid = sh_coefficient_instance.expand(lat=plane_LAT_FLATTEN, lon=plane_LON_FLATTEN)
-
-    plane_LAT_FLATTEN = plane_LAT_FLATTEN / 180 * math.pi
-    plane_LON_FLATTEN = plane_LON_FLATTEN / 180 * math.pi
-
-    # grid = sh_coefficient_instance.expand()
-    # print(grid.data.shape)
-
-    reconstruction_matrix = []
-    # lat_interval = math.pi / grid.data.shape[0]
-    # lon_interval = 2 * math.pi / grid.data.shape[1]
-    ratio_interval = math.pi / sh_show_N
-    for i in range(grid.data.shape[0]):
-        reconstruction_matrix.append([grid.data[i], plane_LAT_FLATTEN[i], plane_LON_FLATTEN[i]])
-
-    reconstruction_xyz = general_f.sph2descartes(np.array(reconstruction_matrix))
-    reconstruction_xyz[:, 2] = -reconstruction_xyz[:, 2]
+    reconstruction_xyz = do_reconstruction_for_SH(sh_show_N, sh_coefficient_instance)
     p = multiprocessing.Process(target=draw_f.draw_3D_points, args=(reconstruction_xyz, 'shc reconstruction',))
     p.start()
     draw_f.draw_3D_points(points_membrane_local)
-
-    # fig, ax = sh_coefficient_instance.expand().plot3d()
-    # plt.show()
 
 
 def flatten_clim(sh_coefficient_instance):
@@ -879,3 +916,7 @@ def conclude_cluster_in_percentage(cluster_result, cell_index, cluster_cell_list
     clustering_result_df['Mother_daughter_sum'] = Mother_daughter_sum
 
     return clustering_result_df
+
+# def do_SHc_
+# if __name__ == "__main__":
+#     做experiemtn for sh in Spherical Wavelet Descriptors for Content-based 3D Model Retrieva

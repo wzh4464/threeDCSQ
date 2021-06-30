@@ -34,9 +34,9 @@ def do_sampling_with_interval(N, points_surface, average_num):
     spherical_matrix = []
     for i in range(N):
         for j in range(2 * N):
-            griddata[i][j] = sph_f.calculate_R_with_sortation(points_surface,
-                                                              radian_interval * i, radian_interval * j,
-                                                              average_num)
+            griddata[i][j] = sph_f.calculate_R_with_lat_lon(points_surface,
+                                                            radian_interval * i, radian_interval * j,
+                                                            average_num)
             print("\r Loading  ", end='row   ' + str(i) + " and column  " + str(j) + " of all  " + str(N ** 2 * 2))
             spherical_matrix.append([griddata[i][j], radian_interval * i, radian_interval * j])
 
@@ -104,7 +104,7 @@ def get_SH_coeffient_from_surface_points(file_name, sample_N, lmax, embryo_path,
 
     cilm = {}
 
-    # --------------------------calculate all and save as npy --------------------------
+    # --------------------------calculate all and save as csv --------------------------
     for dict_key in dict_img_membrane_calculate.keys():
         # get center point
         dict_img_membrane_calculate[dict_key] = np.array(dict_img_membrane_calculate[dict_key])
@@ -124,7 +124,6 @@ def get_SH_coeffient_from_surface_points(file_name, sample_N, lmax, embryo_path,
             print('---------dealing with cell ' + str(dict_key) + '-----' + cell_name_affine_table[
                 dict_key] + '   ---coefficient --------------------')
             # calculate coefficients from points
-
             cilm[dict_key] = pysh.shtools.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
             # build sh tools coefficient class instance
             sh_coefficient_instance = pysh.SHCoeffs.from_array(cilm[dict_key])
@@ -132,3 +131,19 @@ def get_SH_coeffient_from_surface_points(file_name, sample_N, lmax, embryo_path,
             sh_coefficient_instance.to_file(filename=save_file_name)
         else:
             continue
+
+
+def sample_and_SHc_with_surface(surface_points, sample_N, lmax, surface_average_num=5):
+    center_points = np.sum(surface_points, axis=0) / len(surface_points)
+    if center_points is None:
+        center_points = [0, 0, 0]
+    points_surface_local = surface_points - center_points
+    griddata, samples_result = do_sampling_with_interval(sample_N, points_surface_local, surface_average_num)
+    # do fourier transform and convolution on SPHERE
+    print('---------dealing with surface point coefficient --------------------')
+    # calculate coefficients from points
+    cilm = pysh.shtools.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
+    # build sh tools coefficient class instance
+    sh_coefficient_instance = pysh.SHCoeffs.from_array(cilm)
+    return sh_coefficient_instance
+

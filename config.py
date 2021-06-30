@@ -12,7 +12,10 @@ dir_my_data_SH_time_domain_csv = r'./DATA/my_data_csv/SH_time_domain_csv'
 
 dir_my_data_volume_surface = r'./DATA/my_data_csv/volume_and_surface'
 
-dir_my_data_SH_clustering_csv=r'./DATA/my_data_csv/SH_clustering'
+dir_my_data_SH_clustering_csv = r'./DATA/my_data_csv/SH_clustering'
 
-dir_my_data_SHcPCA_ratio=r'./DATA/my_data_csv/SHcPCA_ratio'
+dir_my_data_SHcPCA_ratio = r'./DATA/my_data_csv/SHcPCA_ratio'
 
+dir_my_regular_shape_path = r'./DATA\my_data_csv\regular_shape'
+
+dir_my_data_err_est_dir=r'./DATA\my_data_csv\err_estimation'
