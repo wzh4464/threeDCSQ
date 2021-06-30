@@ -1,4 +1,5 @@
 import math
+import tqdm as tqdm
 
 import nibabel as nib
 import os
@@ -213,10 +214,14 @@ def read_csv_to_df(csv_path):
     # -----------------------------------------------------------------------
 
 
-def combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv, l_degree=25):
+def combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv, l_degree=25, is_norm=True):
     embryo_name_tmp = 'Sample{}LabelUnified'.format(f'{4:02}')
-    path_saving_csv_normalized_tmp = os.path.join(dir_my_data_SH_time_domain_csv,
-                                                  embryo_name_tmp + '_l_' + str(l_degree) + '_norm.csv')
+    if is_norm:
+        path_saving_csv_normalized_tmp = os.path.join(dir_my_data_SH_time_domain_csv,
+                                                      embryo_name_tmp + '_l_' + str(l_degree) + '_norm.csv')
+    else:
+        path_saving_csv_normalized_tmp = os.path.join(dir_my_data_SH_time_domain_csv,
+                                                      embryo_name_tmp + '_l_' + str(l_degree) + '.csv')
     together_df = pd.DataFrame(columns=read_csv_to_df(path_saving_csv_normalized_tmp).columns)
     for cell_index in np.arange(start=4, stop=21, step=1):
         # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
@@ -237,7 +242,12 @@ def combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv, l_degree=25):
             # print(item)
             together_df.loc[embryo_num + '::' + item] = norm_df.loc[item]
         print(together_df)
-    together_df.to_csv(os.path.join(dir_my_data_SH_time_domain_csv, 'SHc_norm.csv'))
+    if is_norm:
+
+        together_df.to_csv(os.path.join(dir_my_data_SH_time_domain_csv, 'SHc_norm.csv'))
+    else:
+        together_df.to_csv(os.path.join(dir_my_data_SH_time_domain_csv, 'SHc.csv'))
+
 
 
 def rotate_points_lon(points_list, phi):

@@ -13,7 +13,7 @@ import particular_func.SH_analyses as SH_A_func
 import functional_func.cell_func as cell_f
 import functional_func.general_func as general_f
 import pandas as pd
-
+from multiprocessing import Process
 import functional_func.draw_func as draw_f
 
 import test_scripts
@@ -39,20 +39,20 @@ def main():
     #                                                      file_name=file_name)
     # # -------------------------------------------------------------------------------------------------------
 
-    # # ------------------------------do contraction with sh expand and shc expand------------------------------
-    #
+    # ------------------------------do contraction with sh expand and shc expand------------------------------
+
     # path_tmp = r'./DATA/Embryo04LabelUnified_C/'
     #
     # SH_func.get_SH_coeffient_from_surface_points(embryo_path=path_tmp, sample_N=100, lmax=49,
     #                                              file_name='Embryo04_009_segCell.nii.gz')
-    # p = multiprocessing.Process(target=SH_A_func.analysis_calculate_error_contrast,
-    #                             args=(path_tmp, 'Embryo04_009_segCell.nii.gz', 'draw',))
+    # p = Process(target=SH_A_func.analysis_calculate_error_contrast,
+    #                             args=(path_tmp, 'Embryo04_009_segCell.nii.gz', 'draw_contraction',))
     # p.start()
-    #
-    # SH_A_func.analysis_calculate_error_contrast(embryo_path=config.dir_segemented_tmp1,
-    #                                             file_name='Embryo04_009_segCell.nii.gz', behavior='draw')
-    #
-    # # ---------------------------------------------------------------------------------------------------------
+
+    SH_A_func.analysis_compare_SHc(embryo_path=config.dir_segemented_tmp1,
+                                   file_name='Embryo04_009_segCell.nii.gz', behavior='draw_contraction')
+
+    # ---------------------------------------------------------------------------------------------------------
 
     # # ------------------------------calculate volume and surface of the cells of one embryo ----------------
     # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'

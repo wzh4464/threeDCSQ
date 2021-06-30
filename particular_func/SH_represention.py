@@ -34,9 +34,9 @@ def do_sampling_with_interval(N, points_surface, average_num):
     spherical_matrix = []
     for i in range(N):
         for j in range(2 * N):
-            griddata[i][j] = sph_f.calculate_R_with_sortation(points_surface,
-                                                              radian_interval * i, radian_interval * j,
-                                                              average_num)
+            griddata[i][j] = sph_f.calculate_R_with_lat_lon(points_surface,
+                                                            radian_interval * i, radian_interval * j,
+                                                            average_num)
             print("\r Loading  ", end='row   ' + str(i) + " and column  " + str(j) + " of all  " + str(N ** 2 * 2))
             spherical_matrix.append([griddata[i][j], radian_interval * i, radian_interval * j])
 

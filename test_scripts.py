@@ -300,7 +300,7 @@ def test_2021_6_21_2():
 
 # do PCA for all SHc and save the coefficient
 def test_2021_6_21_3():
-    used_degree = 16
+    used_degree = 25
 
     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm_PCA.csv')
     if not os.path.exists(PCA_matrices_saving_path):
@@ -329,15 +329,37 @@ def test_2021_6_21_3():
         print(n_components)
     # RECOSTRUCT THE SHcPCA, draw tree fuck
 
+
 def test_2021_6_22_1():
     for cell_index in np.arange(start=4, stop=21, step=1):
         path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
         print(path_tmp)
         sh_analysis.analysis_SHc_Kmeans_One_embryo(embryo_path=path_tmp, used_degree=16, cluster_num=4,
-                                                 is_show_cluster=False)
-        sh_analysis.analysis_SHcPCA_KMEANS_clustering(embryo_path=path_tmp, used_degree=16, cluster_num=4)
+                                                   is_show_cluster=False)
+        # sh_analysis.analysis_SHcPCA_KMEANS_clustering(embryo_path=path_tmp, used_degree=16, cluster_num=4)
 
         # sh_analysis.analysis_SHcPCA_energy_ratio(embryo_path=path_tmp, used_degree=9)
-        sh_analysis.analysis_SHcPCA_maximum_clustering(embryo_path=path_tmp, used_degree=16)
+        # sh_analysis.analysis_SHcPCA_maximum_clustering(embryo_path=path_tmp, used_degree=16)
+
+
+def test_2021_6_30_1():
+    sh_analysis.analysis_compare_represent_method(embryo_path=config.dir_segemented_tmp1)
+
+
+def test_2021_6_30_2():
+    PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm_PCA.csv')
+
+    print('PCA exist')
+    means, variation, n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
+    print(means)
+    print(variation)
+    print(n_components)
+
+
+def test_2021_6_30_3():
+    general_f.combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv=config.dir_my_data_SH_time_domain_csv,
+                                           is_norm=False)
+
+
 if __name__ == "__main__":
-    test_2021_6_21_2()
+    test_2021_6_30_2()

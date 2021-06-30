@@ -4,6 +4,9 @@ from functional_func.draw_func import draw_3D_points
 from matplotlib import pyplot as plt
 import functional_func.general_func as general_f
 
+import os
+import config
+
 
 def draw_PCA(sh_PCA):
     sh_PCA_mean = sh_PCA.mean_
@@ -58,4 +61,30 @@ def read_PCA_file(PCA_file_path):
     PCA_df.drop(columns='explained_variation', inplace=True)
 
     return pca_means, pca_explained, PCA_df
+
+def calculate_PCA_zk_norm(embryo_path,PCA_matrices_saving_path):
+    print('PCA exist')
+    pca_means, _, pca_components = read_PCA_file(PCA_matrices_saving_path)
+    # print(means)
+    # print(variation)
+    # print(n_components)
+
+    embryo_name = os.path.basename(embryo_path)
+    path_SHc = os.path.join(config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
+    df_SHc = general_f.read_csv_to_df(path_SHc)
+
+
+def calculate_PCA_zk(embryo_path,PCA_matrices_saving_path):
+
+
+    print('PCA exist')
+    pca_means, _, pca_components = read_PCA_file(PCA_matrices_saving_path)
+    # print(means)
+    # print(variation)
+    # print(n_components)
+
+    embryo_name=os.path.basename(embryo_path)
+    path_SHc=os.path.join(config.dir_my_data_SH_time_domain_csv,embryo_name+'_l_25.csv')
+    df_SHc=general_f.read_csv_to_df(path_SHc)
+
 
