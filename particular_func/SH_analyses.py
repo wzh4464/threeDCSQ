@@ -564,13 +564,14 @@ def compute_embryo_sh_descriptor_csv(embryo_path, l_degree, path_saving_csv):
     data_embryo_time_slices.to_csv(path_saving_csv)
     # print(count)
 
-def analysis_compare_represent_method(embryo_path):
 
-    embryo_time_list=[]
+def analysis_compare_represent_method(embryo_path):
+    embryo_time_list = []
     for file_name in os.listdir(embryo_path):
         if os.path.isfile(os.path.join(embryo_path, file_name)):
             # print(path_tmp)
             embryo_time_list.append(file_name)
+
 
 def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
     """
@@ -737,8 +738,6 @@ def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
             # there is actually one loop for this embryo this time each cells
             for cell_name in tqdm(cells_list, desc="dealing with {}".format(l_degree)):
 
-
-
                 # ------------------------calculate shc error------------------------------------
                 cell_SH_path = os.path.join(this_embryo_dir, cell_name)
                 sh_coefficient_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=l_degree)
@@ -769,8 +768,9 @@ def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
     # -------------------------------end-------analysis : error----------------------------------------------------
 
 
-def do_reconstruction_for_SH(sample_N, sh_coefficient_instance):
+def do_reconstruction_for_SH(sample_N: int, sh_coefficient_instance: pysh.SHCoeffs):
     """
+    latitude!!
     :param sample_N: sample N, total samples will be 2*sample_N**2
     :param sh_coefficient_instance: the SH transform result
     :param average_sampling: np.mean(array(shape=average_sampling))
@@ -794,6 +794,67 @@ def do_reconstruction_for_SH(sample_N, sh_coefficient_instance):
     reconstruction_xyz = general_f.sph2descartes(np.array(reconstruction_matrix))
     reconstruction_xyz[:, 2] = -reconstruction_xyz[:, 2]
     return reconstruction_xyz
+
+
+def generate_3D_matrix_from_SHc(sh_instance, dense=100):
+    '''
+    not just surface but inside
+    :param sh_instance:
+    :param dense: x y z dense (number of points)
+    :return:
+    '''
+    matrix_3d = np.zeros((dense, dense, dense))
+    # matrix_tmp = np.zeros((dense, dense, dense))
+
+    error_test_point_num = 10
+    map_tmp = [[random.uniform(0, math.pi), random.uniform(0, 2 * math.pi)] for i in
+               range(error_test_point_num)]
+    R_SHc, shc_sample_xyz = get_points_with_SHc(sh_instance,
+                                                colat=np.array(map_tmp)[:, 0],
+                                                lon=np.array(map_tmp)[:, 1],
+                                                is_return_xyz=True)
+    max_r_index = np.argmax(R_SHc)
+    bound_cube = max(np.abs(shc_sample_xyz[max_r_index])) * 1.2
+    interval_coordinate = bound_cube / (dense / 2)
+
+    for i in range(dense):
+        for j in range(dense):
+            for k in range(dense):
+                x_i, y_j, z_k = -bound_cube + i * interval_coordinate, -bound_cube + j * interval_coordinate, -bound_cube + k * interval_coordinate
+                r, colat, lon = general_f.descartes2spherical2([[x_i, y_j, z_k]])[0]
+                r_shc, _ = get_points_with_SHc(sh_instance, colat=np.array([colat]), lon=np.array([lon]))
+                if r < r_shc:
+                    matrix_3d[i][j][k] = 1
+    return matrix_3d
+
+
+def get_points_with_SHc(sh_instance, colat, lon, is_return_xyz=False):
+    '''
+    co latitude
+    :param cilm: the sh instance. coeffs
+    :param colat: the co-latitude points
+    :param lon: the lon points
+    :return: the R of above latitude
+    '''
+
+    sph_list = []
+
+    lat = -(colat - math.pi / 2)
+    f_lm_array = sh_instance.expand(lat=lat, lon=lon, degrees=False)
+    for idx, _ in enumerate(lat):
+        sph_list.append([f_lm_array[idx], lat[idx], lon[idx]])
+
+    reconstruction_xyz = general_f.sph2descartes(np.array(sph_list))
+    reconstruction_xyz[:, 2] = -reconstruction_xyz[:, 2]
+
+    # return the co-latitude!
+    sph_list = general_f.descartes2spherical2(reconstruction_xyz)
+    # print(sph_list[:,1]-colat)
+    # sph_list=np.array(sph_list)
+    if is_return_xyz is True:
+        return sph_list[:, 0], np.array(reconstruction_xyz)
+
+    return sph_list[:, 0], sph_list
 
 
 def do_contraction_image(sh_coefficient_instance, sh_show_N, points_membrane_local):
@@ -919,4 +980,3 @@ def conclude_cluster_in_percentage(cluster_result, cell_index, cluster_cell_list
 
 # def do_SHc_
 # if __name__ == "__main__":
-#     做experiemtn for sh in Spherical Wavelet Descriptors for Content-based 3D Model Retrieva

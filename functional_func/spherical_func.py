@@ -204,11 +204,11 @@ def calculate_R_with_average_with_my_locate_method(points_sorted_by_lat, points_
     return np.average(prob_points_set[:average_points, 0])
 
 
-def calculate_R_with_lat_lon(spherical_points, lat_phi, lon_theta, average_points=4):
+def calculate_R_with_lat_lon(spherical_points, lat_phi, lon_theta, average_points=5):
     '''
 
     :param spherical_points: all surface points
-    :param lat_phi: the latitude radius
+    :param lat_phi: the co-latitude radius
     :param lon_theta: the longitude radius
     :param average_points: how many closest point to calculate
     :return:

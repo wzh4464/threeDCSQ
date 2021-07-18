@@ -108,7 +108,7 @@ def draw_3D_points_in_new_coordinate(points, center=None):
     return points_new
 
 
-def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None):
+def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None,cmap='BuRd'):
     x = points_data[:, 0]  # first column of the 2D matrix
     y = points_data[:, 1]
     z = points_data[:, 2]
@@ -116,7 +116,7 @@ def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None):
     if ax == None:
         fig = plt.figure(figsize=fig_size)
         ax = Axes3D(fig)
-        ax.scatter3D(x, y, z, cmap='BuRd', marker='o')
+        ax.scatter3D(x, y, z, marker='o')
         ax.set_zlabel('Z')  # 坐标轴
         ax.set_ylabel('Y')
         ax.set_xlabel('X')
@@ -125,7 +125,7 @@ def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None):
         plt.title(fig_name)
         plt.show()
     else:
-        ax.scatter3D(x, y, z, cmap='BuRd', marker='o')
+        ax.scatter3D(x, y, z, marker='o')
         ax.set_zlabel('Z')  # 坐标轴
         ax.set_ylabel('Y')
         ax.set_xlabel('X')

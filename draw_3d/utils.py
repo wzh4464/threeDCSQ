@@ -105,7 +105,7 @@ if __name__ == "__main__":
         origin_shape = seg.shape
         out_size = [int(x / 1.5) for x in origin_shape]
 
-        seg = resize(image=seg, output_shape=out_size, preserve_range=True, order=0).astype(np.uint8)
+        seg = resize(image=seg, output_shape=out_size, preserve_range=True, order=0,anti_aliasing=False).astype(np.uint8)
 
         # seg = seg[..., :(out_size[-1] // 2)]
         tif_imgs = []

@@ -7,6 +7,11 @@ import functional_func.general_func as general_f
 import os
 import config
 
+import numpy as np
+import pandas as pd
+import numpy.linalg as la
+from tqdm import tqdm
+
 
 def draw_PCA(sh_PCA):
     sh_PCA_mean = sh_PCA.mean_
@@ -62,9 +67,10 @@ def read_PCA_file(PCA_file_path):
 
     return pca_means, pca_explained, PCA_df
 
-def calculate_PCA_zk_norm(embryo_path,PCA_matrices_saving_path):
-    print('PCA exist')
-    pca_means, _, pca_components = read_PCA_file(PCA_matrices_saving_path)
+
+def calculate_PCA_zk_norm(embryo_path, PCA_matrices_saving_path, k=12):
+    print('PCA norm exist')
+    pca_means, _, pca_df = read_PCA_file(PCA_matrices_saving_path)
     # print(means)
     # print(variation)
     # print(n_components)
@@ -72,19 +78,69 @@ def calculate_PCA_zk_norm(embryo_path,PCA_matrices_saving_path):
     embryo_name = os.path.basename(embryo_path)
     path_SHc = os.path.join(config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
     df_SHc = general_f.read_csv_to_df(path_SHc)
+    df_SHcPCA = pd.DataFrame(columns=range(k))
+    # SHc_u_matrix = df_SHc.values.T - pca_means
+    # pca_df.values is k x d , we need inverse of d x k
+    # P x zk = x - u
+    # inverse_P = np.linalg.inv(pca_df.values.T)
+    # Z = inverse_P.dot(df_SHc.values.T)
+    # https: // zh.wikipedia.org / wiki / QR % E5 % 88 % 86 % E8 % A7 % A3
+    # d > k 本质是最小化{\displaystyle ||A{\hat {x}}-b||}{\displaystyle ||A{\hat {x}}-b||}
+    Q, R = la.qr(pca_df.values[:k].T)
+    R_ = np.linalg.inv(R)
+    # print(R.shape)
+    # print(Q.shape)
+
+    for y_idx in tqdm(df_SHc.index, desc='dealing with each cell'):
+        y = df_SHc.loc[y_idx]
+        # print(pca_means)
+        y_u = y - pca_means
+        zk = R_.dot(Q.T.dot(y_u))
+        # print(zk)
+        # print(zk.shape)
+        df_SHcPCA.loc[y_idx] = zk
+
+    path_tmp = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}_norm.csv'.format(k))
+    df_SHcPCA.to_csv(path_tmp)
 
 
-def calculate_PCA_zk(embryo_path,PCA_matrices_saving_path):
+# Zk = Z[:k][:]
+# print(Zk)
+# print(Zk.shape)
+# 测一下准不准 画两个出来看看
 
 
-    print('PCA exist')
-    pca_means, _, pca_components = read_PCA_file(PCA_matrices_saving_path)
+def calculate_PCA_zk(embryo_path, PCA_matrices_saving_path, k=12):
+    print('PCA exist, calculating zk')
+    pca_means, _, pca_df = read_PCA_file(PCA_matrices_saving_path)
     # print(means)
     # print(variation)
     # print(n_components)
 
-    embryo_name=os.path.basename(embryo_path)
-    path_SHc=os.path.join(config.dir_my_data_SH_time_domain_csv,embryo_name+'_l_25.csv')
-    df_SHc=general_f.read_csv_to_df(path_SHc)
+    embryo_name = os.path.basename(embryo_path)
+    path_SHc = os.path.join(config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25.csv')
+    df_SHc = general_f.read_csv_to_df(path_SHc)
+    df_SHcPCA = pd.DataFrame(columns=range(k))
+    # SHc_u_matrix = df_SHc.values.T - pca_means
+    # pca_df.values is k x d , we need inverse of d x k
+    # P x zk = x - u
+    # inverse_P = np.linalg.inv(pca_df.values.T)
+    # Z = inverse_P.dot(df_SHc.values.T)
+    # https: // zh.wikipedia.org / wiki / QR % E5 % 88 % 86 % E8 % A7 % A3
+    # d > k 本质是最小化{\displaystyle ||A{\hat {x}}-b||}{\displaystyle ||A{\hat {x}}-b||}
+    Q, R = la.qr(pca_df.values[:k].T)
+    R_ = np.linalg.inv(R)
+    # print(R.shape)
+    # print(Q.shape)
 
+    for y_idx in tqdm(df_SHc.index, desc='dealing with each cell'):
+        y = df_SHc.loc[y_idx]
+        # print(pca_means)
+        y_u = y - pca_means
+        zk = R_.dot(Q.T.dot(y_u))
+        # print(zk)
+        # print(zk.shape)
+        df_SHcPCA.loc[y_idx] = zk
 
+    path_tmp = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}.csv'.format(k))
+    df_SHcPCA.to_csv(path_tmp)
