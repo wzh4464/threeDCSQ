@@ -13,15 +13,17 @@ import numpy.linalg as la
 from tqdm import tqdm
 
 
-def draw_PCA(sh_PCA):
-    sh_PCA_mean = sh_PCA.mean_
-    component_index = 0
-    for component in sh_PCA.components_:
-        print('components  ', component[:20])
+def draw_PCA(sh_PCA_path):
+
+    sh_PCA_mean,variance,df_pca=read_PCA_file(sh_PCA_path)
+    # sh_PCA_mean = sh_PCA.mean_
+    # idx = 0
+    for idx in df_pca.index:
+        print('components  ', idx)
         # print("inverse log::",inverse_log_expand[:50])
 
         fig = plt.figure()
-
+        component=df_pca.loc[idx]
         shc_instance_3 = SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(list(sh_PCA_mean + -5 * component)))
         shc_instance_2 = SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(list(sh_PCA_mean + -3 * component)))
         shc_instance_1 = SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(list(sh_PCA_mean + -1 * component)))
@@ -30,32 +32,32 @@ def draw_PCA(sh_PCA):
         shc_instance2 = SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(list(sh_PCA_mean + 3 * component)))
         shc_instance3 = SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(list(sh_PCA_mean + 5 * component)))
 
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(30, shc_instance_3)
+        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance_3)
         axes_tmp = fig.add_subplot(2, 3, 1, projection='3d')
-        draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(-5),
+        draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(-5),
                        ax=axes_tmp)
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(30, shc_instance_2)
+        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance_2)
         axes_tmp = fig.add_subplot(2, 3, 2, projection='3d')
-        draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(-3),
+        draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(-3),
                        ax=axes_tmp)
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(30, shc_instance_1)
+        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance_1)
         axes_tmp = fig.add_subplot(2, 3, 3, projection='3d')
-        draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(-1),
+        draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(-1),
                        ax=axes_tmp)
 
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(30, shc_instance1)
+        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance1)
         axes_tmp = fig.add_subplot(2, 3, 4, projection='3d')
-        draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(1), ax=axes_tmp)
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(30, shc_instance2)
+        draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(1), ax=axes_tmp)
+        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance2)
         axes_tmp = fig.add_subplot(2, 3, 5, projection='3d')
-        draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(3), ax=axes_tmp)
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(30, shc_instance3)
+        draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(3), ax=axes_tmp)
+        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance3)
         axes_tmp = fig.add_subplot(2, 3, 6, projection='3d')
-        draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(5), ax=axes_tmp)
+        draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(5), ax=axes_tmp)
 
         plt.show()
 
-        component_index += 1
+        # component_index += 1
 
 
 def read_PCA_file(PCA_file_path):

@@ -28,6 +28,9 @@ import math
 import random
 import numpy.linalg as la
 
+import seaborn as sns
+import particular_func.read_function as read_f
+
 
 def test_06_10_2020_2():
     img_2 = general_f.load_nitf2_img(os.path.join(config.dir_my_data, 'membrane' + 'Embryo04_001_segCell.nii.gz'))
@@ -208,7 +211,7 @@ def test_2021_6_21():
 # plot the regular shape rotation, rotation invariance
 def test_2021_6_21_2():
     print('hello 2021 6 20')
-    points = geo_f.get_sample_on_geometric_object(r'./DATA/template_shape_stl/unit-regular-octahedron.solid')
+    points = geo_f.get_sample_on_geometric_object(r'./DATA/template_shape_stl/unit-cube.solid')
     instance = sh_represent.sample_and_SHc_with_surface(surface_points=points, sample_N=34, lmax=16,
                                                         surface_average_num=3)
 
@@ -218,24 +221,30 @@ def test_2021_6_21_2():
     # p1.start()
     # pysh.utils.figstyle(rel_width=0.75)
 
+    dense = 100
+
     fig_1d_spectrum = plt.figure()
     fig_2d_spectrum = plt.figure()
     fig_points = plt.figure()
+    plt.axis('off')
 
     axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 1)
-    instance.plot_spectrum(ax=axes_tmp)
+    instance.plot_spectrum(ax=axes_tmp,fname='Standard cube no rotation')
+    axes_tmp.set_title('Standard cube no rotation')
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 1)
-    instance.plot_spectrum2d(ax=axes_tmp)
+    instance.plot_spectrum2d(ax=axes_tmp,fname='Standard cube no rotation')
+    axes_tmp.set_title('Standard cube no rotation')
+
     axes_tmp = fig_points.add_subplot(2, 3, 1, projection='3d')
     draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance),
-                             ax=axes_tmp)
-    # p1 = Process(target=draw_pack.draw_3D_points,
-    #              args=(sh_analysis.do_reconstruction_for_SH(sample_N=100,
-    #                                                         sh_coefficient_instance=instance),
-    #                    "DEFAULT",
-    #                    (10, 10),
-    #                    ax[0, 0],))
-    # p1.start()
+                             ax=axes_tmp,fig_name='Standard cube no rotation',cmap='viridis')
+    # # ------------------save shc to npy to draw 3D plot--------------------------------------
+    # matrix_3d = sh_analysis.generate_3D_matrix_from_SHc(sh_instance=instance, dense=dense)
+    # saving_path = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\regular_shape\3d_ matrix_rotation',
+    #                            'cube_phi' + str(0) + '_theta_' + str(0))
+    # # with open(saving_path, 'wb') as f:
+    # np.save(saving_path, matrix_3d)
+    # # ------------------------------------------------------------------------------------
 
     instance1 = instance.rotate(alpha=-(math.pi / 8),
                                 beta=math.pi / 8,
@@ -243,12 +252,23 @@ def test_2021_6_21_2():
                                 convention='x',
                                 degrees=False)
     axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 2)
-    instance1.plot_spectrum(ax=axes_tmp)
+    instance1.plot_spectrum(ax=axes_tmp,fname='Rotation 22.5 degree along z axis then 22.5 along x axis')
+    axes_tmp.set_title('Rotation 22.5 degree along z axis then 22.5 along x axis')
+
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 2)
-    instance1.plot_spectrum2d(ax=axes_tmp)
+    instance1.plot_spectrum2d(ax=axes_tmp,fname='Rotation 22.5 degree along z axis then 22.5 along x axis')
+    axes_tmp.set_title('Rotation 22.5 degree along z axis then 22.5 along x axis')
+
     axes_tmp = fig_points.add_subplot(2, 3, 2, projection='3d')
     draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance1),
-                             ax=axes_tmp)
+                             ax=axes_tmp,fig_name='Rotation 22.5 degree along z axis then 22.5 along x axis',cmap='viridis')
+    # # ------------------save shc to npy to draw 3D plot--------------------------------------
+    # matrix_3d = sh_analysis.generate_3D_matrix_from_SHc(sh_instance=instance1, dense=dense)
+    # saving_path = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\regular_shape\3d_ matrix_rotation',
+    #                            'cube_phi' + str(1) + '_theta_' + str(1))
+    # # with open(saving_path, 'wb') as f:
+    # np.save(saving_path, matrix_3d)
+    # # ------------------------------------------------------------------------------------
 
     instance2 = instance.rotate(alpha=-(math.pi / 8) * 2,
                                 beta=(math.pi / 8) * 2,
@@ -256,12 +276,23 @@ def test_2021_6_21_2():
                                 convention='x',
                                 degrees=False)
     axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 3)
-    instance2.plot_spectrum(ax=axes_tmp)
+    instance2.plot_spectrum(ax=axes_tmp,fname='Rotation 45 degree along z axis then 45 along x axis')
+    axes_tmp.set_title('Rotation 45 degree along z axis then 45 along x axis')
+
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 3)
-    instance2.plot_spectrum2d(ax=axes_tmp)
+    instance2.plot_spectrum2d(ax=axes_tmp,fname='Rotation 45 degree along z axis then 45 along x axis')
+    axes_tmp.set_title('Rotation 45 degree along z axis then 45 along x axis')
+
     axes_tmp = fig_points.add_subplot(2, 3, 3, projection='3d')
     draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance2),
-                             ax=axes_tmp)
+                             ax=axes_tmp,fig_name='Rotation 45 degree along z axis then 45 along x axis',cmap='viridis')
+    # # ------------------save shc to npy to draw 3D plot--------------------------------------
+    # matrix_3d = sh_analysis.generate_3D_matrix_from_SHc(sh_instance=instance2, dense=dense)
+    # saving_path = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\regular_shape\3d_ matrix_rotation',
+    #                            'cube_phi' + str(2) + '_theta_' + str(2))
+    # # with open(saving_path, 'wb') as f:
+    # np.save(saving_path, matrix_3d)
+    # # ------------------------------------------------------------------------------------
 
     instance3 = instance.rotate(alpha=-(math.pi / 8) * 3,
                                 beta=(math.pi / 8) * 3,
@@ -269,12 +300,23 @@ def test_2021_6_21_2():
                                 convention='x',
                                 degrees=False)
     axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 4)
-    instance3.plot_spectrum(ax=axes_tmp)
+    instance3.plot_spectrum(ax=axes_tmp,fname='Rotation 67.5 degree along z axis then 67.5 along x axis')
+    axes_tmp.set_title('Rotation 67.5 degree along z axis then 67.5 along x axis')
+
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 4)
-    instance3.plot_spectrum2d(ax=axes_tmp)
+    instance3.plot_spectrum2d(ax=axes_tmp,fname='Rotation 67.5 degree along z axis then 67.5 along x axis')
+    axes_tmp.set_title('Rotation 67.5 degree along z axis then 67.5 along x axis')
+
     axes_tmp = fig_points.add_subplot(2, 3, 4, projection='3d')
     draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance3),
-                             ax=axes_tmp)
+                             ax=axes_tmp,fig_name='Rotation 67.5 degree along z axis then 67.5 along x axis',cmap='viridis')
+    # # ------------------save shc to npy to draw 3D plot--------------------------------------
+    # matrix_3d = sh_analysis.generate_3D_matrix_from_SHc(sh_instance=instance3, dense=dense)
+    # saving_path = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\regular_shape\3d_ matrix_rotation',
+    #                            'cube_phi' + str(3) + '_theta_' + str(3))
+    # # with open(saving_path, 'wb') as f:
+    # np.save(saving_path, matrix_3d)
+    # # ------------------------------------------------------------------------------------
 
     instance4 = instance.rotate(alpha=-(math.pi / 8) * 4,
                                 beta=(math.pi / 8) * 4,
@@ -282,12 +324,23 @@ def test_2021_6_21_2():
                                 convention='x',
                                 degrees=False)
     axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 5)
-    instance4.plot_spectrum(ax=axes_tmp)
+    instance4.plot_spectrum(ax=axes_tmp,fname='Rotation 90 degree along z axis then 90 along x axis')
+    axes_tmp.set_title('Rotation 90 degree along z axis then 90 along x axis')
+
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 5)
-    instance4.plot_spectrum2d(ax=axes_tmp)
+    instance4.plot_spectrum2d(ax=axes_tmp,fname='Rotation 90 degree along z axis then 90 along x axis')
+    axes_tmp.set_title('Rotation 90 degree along z axis then 90 along x axis')
+
     axes_tmp = fig_points.add_subplot(2, 3, 5, projection='3d')
     draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance4),
-                             ax=axes_tmp)
+                             ax=axes_tmp,fig_name='Rotation 90 degree along z axis then 90 along x axis',cmap='viridis')
+    # # ------------------save shc to npy to draw 3D plot--------------------------------------
+    # matrix_3d = sh_analysis.generate_3D_matrix_from_SHc(sh_instance=instance4, dense=dense)
+    # saving_path = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\regular_shape\3d_ matrix_rotation',
+    #                            'cube_phi' + str(4) + '_theta_' + str(4))
+    # # with open(saving_path, 'wb') as f:
+    # np.save(saving_path, matrix_3d)
+    # # ------------------------------------------------------------------------------------
 
     instance5 = instance.rotate(alpha=-(math.pi / 8) * 5,
                                 beta=(math.pi / 8) * 5,
@@ -295,12 +348,24 @@ def test_2021_6_21_2():
                                 convention='x',
                                 degrees=False)
     axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 6)
-    instance5.plot_cross_spectrum(clm=instance5, ax=axes_tmp)
+    instance5.plot_spectrum(ax=axes_tmp,fname='Rotation 112.5 degree along z axis then 112.5 along x axis')
+    axes_tmp.set_title('Rotation 112.5 degree along z axis then 112.5 along x axis')
+
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 6)
-    instance5.plot_spectrum2d(ax=axes_tmp)
+    instance5.plot_spectrum2d(ax=axes_tmp,fname='Rotation 112.5 degree along z axis then 112.5 along x axis')
+    axes_tmp.set_title('Rotation 112.5 degree along z axis then 112.5 along x axis')
+
     axes_tmp = fig_points.add_subplot(2, 3, 6, projection='3d')
     draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance5),
-                             ax=axes_tmp)
+                             ax=axes_tmp,fig_name='Rotation 112.5 degree along z axis then 112.5 along x axis',cmap='viridis')
+    # # ------------------save shc to npy to draw 3D plot--------------------------------------
+    # matrix_3d = sh_analysis.generate_3D_matrix_from_SHc(sh_instance=instance2, dense=dense)
+    # saving_path = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\regular_shape\3d_ matrix_rotation',
+    #                            'cube_phi' + str(5) + '_theta_' + str(5))
+    # # with open(saving_path, 'wb') as f:
+    # np.save(saving_path, matrix_3d)
+    # # ------------------------------------------------------------------------------------
+
     plt.show()
     # instance1.plot_cross_spectrum2d()
     # instance1.plot_spectrum2d()
@@ -311,9 +376,9 @@ def test_2021_6_21_2():
 def test_2021_6_21_3():
     used_degree = 25
 
-    PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_PCA.csv')
+    PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm_PCA.csv')
     if not os.path.exists(PCA_matrices_saving_path):
-        path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc.csv')
+        path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
         df_SHc_norm = general_f.read_csv_to_df(path_saving_csv_normalized)
         print('finish read all embryo cell df_sh_norm_coefficients--------------')
 
@@ -329,13 +394,15 @@ def test_2021_6_21_3():
         df_PCA_matrices.loc['mean'] = [0] + list(sh_PCA_mean)
         df_PCA_matrices.to_csv(PCA_matrices_saving_path)
 
-        PCA_f.draw_PCA(sh_PCA)
+        # PCA_f.draw_PCA(PCA_matrices_saving_path)
     else:
         print('PCA exist')
-        means, variation, n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
-        print(means)
-        print(variation)
-        print(n_components)
+    PCA_f.draw_PCA(PCA_matrices_saving_path)
+
+        # means, variation, n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
+        # print(means)
+        # print(variation)
+        # print(n_components)
     # RECOSTRUCT THE SHcPCA, draw tree fuck
 
 
@@ -461,7 +528,7 @@ def test_2021_7_2_1():
     # seg_files_path=[]
     No_cell, _ = cell_f.get_cell_name_affine_table()
 
-    l_degree_range = np.arange(5, 25, 1)
+    l_degree_range = np.arange(5, 26, 1)
 
     df_err = pd.DataFrame(columns=['outline', 'outlinePCA', 'SHc', 'SHcPCA'])
 
@@ -482,8 +549,9 @@ def test_2021_7_2_1():
             # print(dict_center_points)
             for l_degree in reversed(l_degree_range):
 
+                # outline extraction number
                 N: int = int(math.sqrt((l_degree + 1) ** 2 / 2) + 1)
-                k: int = l_degree ** 2  # 16+1 square
+                k: int = (l_degree+1) ** 2  # 16+1 square
                 SHcPCA_path = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}.csv'.format(k))
                 if not os.path.exists(SHcPCA_path):
                     PCA_f.calculate_PCA_zk(embryo_path, PCA_matrices_saving_path, k)
@@ -507,8 +575,9 @@ def test_2021_7_2_1():
                                                                                          average_num=10,
                                                                                          is_return_xyz=True)
                     # --------------------------outline extraction------------------------------------------------
-                    _, sample_surface = sh_represent.do_sampling_with_interval(N, local_surface_points, 10,
+                    grid_date, sample_surface = sh_represent.do_sampling_with_interval(N, local_surface_points, 10,
                                                                                is_return_xyz=True)
+
                     R_sample, sample_xyz = sh_represent.do_sampling_with_lat_lon(sample_surface, map_testing,
                                                                                  average_num=1,
                                                                                  is_return_xyz=True)
@@ -756,7 +825,7 @@ def test_2021_7_15():
     dense = 100
 
     for i in range(pca_number):
-
+        print('pca-->>', i)
         # sh_instance = pysh.SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(df_PCA.loc[str(i)]))
         # matrix_3d=sh_analysis.generate_3D_matrix_from_SHc(sh_instance=sh_instance,dense=dense)
         #
@@ -779,6 +848,7 @@ def test_2021_7_15():
         component = df_PCA.loc[str(i)]
 
         for pca_change in np.arange(start=-5, stop=6, step=2):
+            print('change with:', pca_change)
             shc_instance = pysh.SHCoeffs.from_array(
                 sh_analysis.collapse_flatten_clim(list(sh_PCA_mean + pca_change * component)))
             matrix_3d = sh_analysis.generate_3D_matrix_from_SHc(sh_instance=shc_instance, dense=dense)
@@ -787,23 +857,23 @@ def test_2021_7_15():
             # with open(saving_path, 'wb') as f:
             np.save(saving_path, matrix_3d)
 
-import seaborn as sns
 
+# draw outline spharm spcsm performance
 def test_2021_7_15_1():
     embryo_path = config.dir_segemented_tmp1
 
     # degree = 16
 
     embryo_name = os.path.basename(embryo_path)
-    df_err=general_f.read_csv_to_df(os.path.join(config.dir_my_data_err_est_dir, embryo_name + 'test1.csv'))
+    df_err = general_f.read_csv_to_df(os.path.join(config.dir_my_data_err_est_dir, embryo_name + 'test1.csv'))
 
-    name_list=[]
-    degree_list=[]
+    name_list = []
+    degree_list = []
     for item in df_err.index:
         name_list.append(item.split('::')[1])
         degree_list.append(item.split('::')[2])
-    df_err['name']=name_list
-    df_err['degree']=degree_list
+    df_err['name'] = name_list
+    df_err['degree'] = degree_list
 
     reversed_df = df_err.iloc[::-1]
     print(df_err)
@@ -815,11 +885,11 @@ def test_2021_7_15_1():
     f, ax = plt.subplots(figsize=(7, 6))
     ax.set_yscale("log")
     # Plot the orbital period with horizontal boxes
-    sns.boxplot(x="degree", y="SHcPCA", data=reversed_df,
+    box_plot=sns.boxplot(x="degree", y="outline", data=reversed_df,
                 whis=[0, 100], width=.6, palette="vlag", )
 
     # Add in points to show each observation
-    sns.stripplot(x="degree", y="SHcPCA", data=reversed_df,
+    sns.stripplot(x="degree", y="outline", data=reversed_df,
                   size=1, color=".5", linewidth=0)
 
     # Tweak the visual presentation
@@ -829,7 +899,276 @@ def test_2021_7_15_1():
     ax.set(xlabel="outline degree")
     sns.despine(trim=True, left=True)
 
+    medians = reversed_df.groupby(['degree'])['outline'].median()
+    print(medians)
+    # vertical_offset = reversed_df['SHcPCA'].median() * 0.05  # offset from median for display
+    #
+    # for xtick in box_plot.get_xticks():
+    #     box_plot.text(xtick, medians[xtick] + vertical_offset, medians[xtick],
+    #                   horizontalalignment='center', size='x-small', color='w', weight='semibold')
+
     plt.show()
 
+
+# l-2 distance from shc and spcsm
+def test_2021_7_19_1():
+    # embryo_name = os.path.basename(config.dir_segemented_tmp1).split('.')[0]
+
+    for cell_index in np.arange(start=4, stop=21, step=1):
+        # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
+        # print(path_tmp)
+        # ===========================draw lineage for one embryo=======================================================
+
+        embryo_num = f'{cell_index:02}'
+        embryo_name = 'Sample{}LabelUnified'.format(embryo_num)
+
+        df_distance_path = os.path.join(r'./DATA\my_data_csv\distance', embryo_name + '_shc_nomr_distance.csv')
+        if os.path.exists(df_distance_path):
+            df_distance = general_f.read_csv_to_df(df_distance_path)
+        else:
+            df_distance = pd.DataFrame(columns=['shc_d1', 'shc_d2', 'shc_dinf', 'spcsm_d1', 'spcsm_d2', 'spcsm_dinf'])
+
+        shc_norm_path = os.path.join(config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
+        print(shc_norm_path)
+        df_shc_norm = general_f.read_csv_to_df(shc_norm_path)
+        anchor_cell_shc, _, _ = PCA_f.read_PCA_file(config.shcpca_norm_path)
+
+        spcsm_path_norm = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}_norm.csv'.format(12))
+        df_spcsm_norm = general_f.read_csv_to_df(spcsm_path_norm)
+
+        for idx in df_shc_norm.index:
+            tmp = df_shc_norm.loc[idx] - anchor_cell_shc
+            df_distance.at[idx, 'shc_d1'] = np.linalg.norm(tmp, ord=1)
+            df_distance.at[idx, 'shc_d2'] = np.linalg.norm(tmp)
+            df_distance.at[idx, 'shc_dinf'] = np.linalg.norm(tmp, ord=np.inf)
+
+            tmp = df_spcsm_norm.loc[idx]
+            df_distance.at[idx, 'spcsm_d1'] = np.linalg.norm(tmp, ord=1)
+            df_distance.at[idx, 'spcsm_d2'] = np.linalg.norm(tmp)
+            df_distance.at[idx, 'spcsm_dinf'] = np.linalg.norm(tmp, ord=np.inf)
+
+        df_distance.to_csv(df_distance_path)
+
+
+def test_2021_8_2():
+    # index would be {list_index}::{theta}::{phi}
+
+    # df_regular_polyhedron_sh_path = os.path.join(config.dir_my_regular_shape_path, '5_regular_random_degree_sh.csv')
+    # df_regular_polyhedron_sh = general_f.read_csv_to_df(df_regular_polyhedron_sh_path)
+    #
+    # used_degree = 16
+    # PCA_matrices_saving_path = os.path.join(config.dir_my_regular_shape_path, 'SHc_PCA.csv')
+    #
+    # sh_PCA_mean, _, sh_PCA = PCA_f.read_PCA_file(PCA_matrices_saving_path)
+    # print(sh_PCA.values.shape)
+    #
+    # # the first k
+    # df_SHcPCA = pd.DataFrame(columns=range(k))
+    # Q, R = la.qr(sh_PCA.values.T)
+    # R_ = np.linalg.inv(R)
+    # # print(R.shape)
+    # # print(Q.shape)
+    #
+    # for y_idx in tqdm(df_regular_polyhedron_sh.index, desc='dealing with each cell'):
+    #     y = df_regular_polyhedron_sh.loc[y_idx]
+    #     # print(pca_means)
+    #     y_u = y - sh_PCA_mean
+    #     zk = R_.dot(Q.T.dot(y_u))
+    #     # print(zk)
+    #     # print(zk.shape)
+    #     df_SHcPCA.loc[y_idx] = zk
+
+    k = 12
+
+    df_SHcPCA = general_f.read_csv_to_df(
+        os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\regular_shape', '20000_spcsm.csv'))
+    for cell_index in np.arange(start=4, stop=21, step=1):
+        # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
+        # print(path_tmp)
+        # ===========================draw lineage for one embryo=======================================================
+
+        embryo_num = f'{cell_index:02}'
+        embryo_name = 'Sample{}LabelUnified'.format(embryo_num)
+
+        spcsm_path_norm = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}_norm.csv'.format(k))
+        df_spcsm_norm = general_f.read_csv_to_df(spcsm_path_norm)
+
+        concat_df_SHcPCA = pd.concat([df_SHcPCA, df_spcsm_norm])
+
+        # print(concat_df_SHcPCA)
+
+        cluster_num = 5
+        estimator2 = KMeans(n_clusters=cluster_num, max_iter=1000)
+        # estimator1.fit(df_SHcPCA_coeffs.values)
+        result_2 = estimator2.fit_predict(concat_df_SHcPCA.values)
+        df_kmeans_clustering = pd.DataFrame(index=concat_df_SHcPCA.index, columns=['cluster_num'])
+        df_kmeans_clustering['cluster_num'] = result_2
+        # print(result_2.shape)
+        print(result_2[500], result_2[4500], result_2[8500], result_2[12500], result_2[16500])
+        tmp_map = {result_2[500]: 0, result_2[4500]: 1, result_2[8500]: 2, result_2[12500]: 3, result_2[16500]: 4}
+        print(tmp_map)
+
+        df_kmeans_clustering.to_csv(
+            os.path.join(config.dir_my_data_SH_clustering_csv,
+                         embryo_name + '5_regular_spcsm_cluster_k{}.csv'.format(cluster_num)))
+
+# KMEANS test
+def test_2021_8_2_2():
+    # index would be {list_index}::{theta}::{phi}
+
+    df_regular_polyhedron_sh_path = os.path.join(config.dir_my_regular_shape_path, '5_regular_random_degree_sh.csv')
+    df_regular_polyhedron_sh = general_f.read_csv_to_df(df_regular_polyhedron_sh_path)
+
+    used_degree = 16
+
+    for cell_index in np.arange(start=4, stop=21, step=1):
+        # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
+        # print(path_tmp)
+        # ===========================draw lineage for one embryo=======================================================
+
+        embryo_num = f'{cell_index:02}'
+        embryo_name = 'Sample{}LabelUnified'.format(embryo_num)
+
+        shc_path_norm = os.path.join(config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
+        df_shc_norm = general_f.read_csv_to_df(shc_path_norm)
+
+        concat_df_SHcPCA = pd.concat([df_regular_polyhedron_sh, df_shc_norm])
+
+        print(concat_df_SHcPCA)
+
+        cluster_num = 2
+        estimator2 = KMeans(n_clusters=cluster_num, max_iter=1000)
+        # estimator1.fit(df_SHcPCA_coeffs.values)
+        result_2 = estimator2.fit_predict(concat_df_SHcPCA.values[:, :(used_degree + 1) ** 2])
+        df_kmeans_clustering = pd.DataFrame(index=concat_df_SHcPCA.index, columns=['cluster_num'])
+        df_kmeans_clustering['cluster_num'] = result_2
+        # print(result_2.shape)
+        print(result_2[500], result_2[4500], result_2[8500], result_2[12500], result_2[16500])
+        tmp_map = {result_2[500]: 0, result_2[4500]: 1, result_2[8500]: 2, result_2[12500]: 3, result_2[16500]: 4}
+        print(tmp_map)
+
+        df_kmeans_clustering.to_csv(
+            os.path.join(config.dir_my_data_SH_clustering_csv,
+                         embryo_name + '5_regular_shc_cluster_k{}.csv'.format(cluster_num)))
+
+# select cell illustrate the robustness
+def test_2021_8_6():
+
+    embryo_path=os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\SH_time_domain_csv','Sample04LabelUnified_l_25_norm.csv')
+    embryo_csv=general_f.read_csv_to_df(embryo_path)
+
+
+    fig_points = plt.figure()
+    fig_1d_spectrum = plt.figure()
+    fig_2d_spectrum = plt.figure()
+    plt.axis('off')
+
+    instance_tmp = pysh.SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(embryo_csv.loc['108::Caaaa']))
+    axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 1)
+    instance_tmp.plot_spectrum(ax=axes_tmp, fname='Caaaa 1 spectrum curve')
+    axes_tmp.set_title('Caaaa 1 spectrum curve')
+
+    axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 1)
+    instance_tmp.plot_spectrum2d(ax=axes_tmp, fname='Caaaa 1 2d spectrum')
+    axes_tmp.set_title('Caaaa 1 2D spectra')
+
+    axes_tmp = fig_points.add_subplot(2, 3, 1, projection='3d')
+    draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance_tmp),
+                             ax=axes_tmp, fig_name='Caaaa 1', cmap='viridis')
+
+    instance_tmp = pysh.SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(embryo_csv.loc['109::Caaaa']))
+    axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 2)
+    instance_tmp.plot_spectrum(ax=axes_tmp, fname='Caaaa 2 spectrum')
+    axes_tmp.set_title('Caaaa 2 spectrum curve')
+
+    axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 2)
+    instance_tmp.plot_spectrum2d(ax=axes_tmp, fname='Caaaa 2 2d spectrum')
+    axes_tmp.set_title('Caaaa 2 2D spectra')
+
+    axes_tmp = fig_points.add_subplot(2, 3, 2, projection='3d')
+    draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance_tmp),
+                             ax=axes_tmp, fig_name='Caaaa 2', cmap='viridis')
+
+    instance_tmp=pysh.SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(embryo_csv.loc['110::Caaaa']))
+    axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 3)
+    instance_tmp.plot_spectrum(ax=axes_tmp, fname='Caaaa 3 spectrum')
+    axes_tmp.set_title('Caaaa 3 spectrum curve')
+
+    axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 3)
+    instance_tmp.plot_spectrum2d(ax=axes_tmp, fname='Caaaa 3 2d spectrum')
+    axes_tmp.set_title('Caaaa 3 2D spectra')
+
+    axes_tmp=fig_points.add_subplot(2,3,3,projection='3d')
+    draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance_tmp),
+                             ax=axes_tmp, fig_name='Caaaa 3', cmap='viridis')
+    # sample 04 Caaaa 110-115
+
+    instance_tmp = pysh.SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(embryo_csv.loc['111::Caaaa']))
+    axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 4)
+    instance_tmp.plot_spectrum(ax=axes_tmp, fname='Caaaa 4 spectrum')
+    axes_tmp.set_title('Caaaa 4 spectrum curve')
+
+    axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 4)
+    instance_tmp.plot_spectrum2d(ax=axes_tmp, fname='Caaaa 4 2d spectrum')
+    axes_tmp.set_title('Caaaa 4 2D spectra')
+
+    axes_tmp = fig_points.add_subplot(2, 3, 4, projection='3d')
+    draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance_tmp),
+                             ax=axes_tmp, fig_name='Caaaa 4', cmap='viridis')
+
+    instance_tmp = pysh.SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(embryo_csv.loc['112::Caaaa']))
+    axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 5)
+    instance_tmp.plot_spectrum(ax=axes_tmp, fname='Caaaa 5 spectrum')
+    axes_tmp.set_title('Caaaa 5 spectrum curve')
+
+    axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 5)
+    instance_tmp.plot_spectrum2d(ax=axes_tmp, fname='Caaaa 5 2d spectrum')
+    axes_tmp.set_title('Caaaa 5 2D spectra')
+
+
+    axes_tmp = fig_points.add_subplot(2, 3, 5, projection='3d')
+    draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance_tmp),
+                             ax=axes_tmp, fig_name='Caaaa 5', cmap='viridis')
+
+    instance_tmp = pysh.SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(embryo_csv.loc['113::Caaaa']))
+    axes_tmp = fig_1d_spectrum.add_subplot(2, 3, 6)
+    instance_tmp.plot_spectrum(ax=axes_tmp, fname='Caaaa 6 spectrum curve')
+    axes_tmp.set_title('Caaaa 6 spectrum curve')
+
+    axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 6)
+    instance_tmp.plot_spectrum2d(ax=axes_tmp, fname='Caaaa 6 2D spectra')
+    axes_tmp.set_title('Caaaa 6 2D spectra')
+
+    axes_tmp = fig_points.add_subplot(2, 3, 6, projection='3d')
+    draw_pack.draw_3D_points(sh_analysis.do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance_tmp),
+                             ax=axes_tmp, fig_name='Caaaa 6', cmap='viridis')
+    grid = instance_tmp.expand(lmax=25)
+
+    fig, ax = grid.plot(cmap='RdBu',colorbar='right',cb_label='Distance')
+
+
+    plt.show()
+
+# show different cluster result
+# def test_2021_9_20_1():
+
+# show
+# def test_2021_9_20_2():
 if __name__ == "__main__":
-    test_2021_7_15_1()
+    test_2021_6_21_3()
+
+
+    # sns.set_style("whitegrid")
+    # tips = sns.load_dataset("tips")
+    # box_plot = sns.boxplot(x="day", y="total_bill", data=tips)
+    # print(tips)
+    #
+    # medians = tips.groupby(['day'])['total_bill'].median()
+    # vertical_offset = tips['total_bill'].median() * 0.05  # offset from median for display
+    #
+    # for xtick in box_plot.get_xticks():
+    #     box_plot.text(xtick, medians[xtick] + vertical_offset, medians[xtick],
+    #                   horizontalalignment='center', size='x-small', color='w', weight='semibold')
+    # plt.show()
+
+

@@ -1,6 +1,5 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 import os
 import config
 import random
@@ -9,6 +8,9 @@ import pyshtools as pysh
 
 import particular_func.SH_analyses as SH_A_f
 import functional_func.general_func as general_f
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
 
 
 def generate_2D_Z_ARRAY(x, y, z):
@@ -108,7 +110,7 @@ def draw_3D_points_in_new_coordinate(points, center=None):
     return points_new
 
 
-def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None,cmap='BuRd'):
+def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None, cmap='viridis'):
     x = points_data[:, 0]  # first column of the 2D matrix
     y = points_data[:, 1]
     z = points_data[:, 2]
@@ -116,7 +118,9 @@ def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None,c
     if ax == None:
         fig = plt.figure(figsize=fig_size)
         ax = Axes3D(fig)
-        ax.scatter3D(x, y, z, marker='o')
+        # ax.scatter3D(x, y, z, marker='o', c=z, cmap=cmap)
+        ax.scatter3D(x, y, z, c=z, cmap=cmap)
+
         ax.set_zlabel('Z')  # 坐标轴
         ax.set_ylabel('Y')
         ax.set_xlabel('X')
@@ -125,7 +129,9 @@ def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None,c
         plt.title(fig_name)
         plt.show()
     else:
-        ax.scatter3D(x, y, z, marker='o')
+        # ax.scatter3D(x, y, z, marker='o', c=z, cmap=cmap)
+        ax.scatter3D(x, y, z, c=z, cmap=cmap)
+
         ax.set_zlabel('Z')  # 坐标轴
         ax.set_ylabel('Y')
         ax.set_xlabel('X')
@@ -242,3 +248,18 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
             axes_tmp = fig.add_subplot(1, 2, 2, projection='3d')
             draw_3D_points(shcPCA_reconstruction, fig_name=index_tmp + '  SHcPCA coefficient', ax=axes_tmp)
             plt.show()
+
+
+
+
+
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        FancyArrowPatch.draw(self, renderer)

@@ -32,8 +32,8 @@ P = [0, 0, 0] + P
 #  ========================
 # Set file folders
 
-src_folder = r"C:\Users\zelinli6\OneDrive\paper_figure\PCA_matrix"
-dst_folder = r"C:\Users\zelinli6\OneDrive\paper_figure\PCA_matrix"
+src_folder = r"D:\cell_shape_quantification\DATA\my_data_csv\regular_shape\3d_ matrix_rotation"
+dst_folder = r"C:\Users\zelinli6\OneDrive\paper_figure\regular_shape\rotation"
 
 seg_files = sorted(glob.glob(os.path.join(src_folder, "*.npy")))
 

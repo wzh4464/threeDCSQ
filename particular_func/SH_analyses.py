@@ -796,7 +796,7 @@ def do_reconstruction_for_SH(sample_N: int, sh_coefficient_instance: pysh.SHCoef
     return reconstruction_xyz
 
 
-def generate_3D_matrix_from_SHc(sh_instance, dense=100):
+def generate_3D_matrix_from_SHc(sh_instance, dense=100, multiplier=2):
     '''
     not just surface but inside
     :param sh_instance:
@@ -814,7 +814,7 @@ def generate_3D_matrix_from_SHc(sh_instance, dense=100):
                                                 lon=np.array(map_tmp)[:, 1],
                                                 is_return_xyz=True)
     max_r_index = np.argmax(R_SHc)
-    bound_cube = max(np.abs(shc_sample_xyz[max_r_index])) * 1.2
+    bound_cube = max(np.abs(shc_sample_xyz[max_r_index])) * multiplier
     interval_coordinate = bound_cube / (dense / 2)
 
     for i in range(dense):
