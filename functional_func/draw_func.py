@@ -110,7 +110,7 @@ def draw_3D_points_in_new_coordinate(points, center=None):
     return points_new
 
 
-def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None, cmap='viridis'):
+def draw_3D_points(points_data, fig_name="", fig_size=(10, 10), ax=None, cmap='viridis'):
     x = points_data[:, 0]  # first column of the 2D matrix
     y = points_data[:, 1]
     z = points_data[:, 2]
@@ -121,9 +121,9 @@ def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None, 
         # ax.scatter3D(x, y, z, marker='o', c=z, cmap=cmap)
         ax.scatter3D(x, y, z, c=z, cmap=cmap)
 
-        ax.set_zlabel('Z')  # 坐标轴
-        ax.set_ylabel('Y')
-        ax.set_xlabel('X')
+        ax.set_zlabel('Z').set_fontstyle('italic')  # 坐标轴
+        ax.set_ylabel('Y').set_fontstyle('italic')
+        ax.set_xlabel('X').set_fontstyle('italic')
         ax.set_title(fig_name)
 
         plt.title(fig_name)
@@ -263,3 +263,15 @@ class Arrow3D(FancyArrowPatch):
         xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
         FancyArrowPatch.draw(self, renderer)
+
+
+def set_size(w,h, ax=None):
+    """ w, h: width, height in inches """
+    if not ax: ax=plt.gca()
+    l = ax.figure.subplotpars.left
+    r = ax.figure.subplotpars.right
+    t = ax.figure.subplotpars.top
+    b = ax.figure.subplotpars.bottom
+    figw = float(w)/(r-l)
+    figh = float(h)/(t-b)
+    ax.figure.set_size_inches(figw, figh)

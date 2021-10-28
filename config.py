@@ -24,3 +24,5 @@ shcpca_norm_path=r'./DATA/my_data_csv/SH_time_domain_csv/SHc_norm_PCA.csv'
 
 shcpca_path=r'./DATA/my_data_csv/SH_time_domain_csv/SHc_PCA.csv'
 
+cell_fate_path=r'./DATA/CellFate.xls'
+
