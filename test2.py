@@ -1,4 +1,3 @@
-
 import functional_func.draw_func as draw_pack
 import functional_func.general_func as general_f
 import functional_func.cell_func as cell_f
@@ -8,7 +7,6 @@ import os
 import pandas as pd
 
 from sklearn.cluster import KMeans
-
 
 from time import time
 
@@ -31,6 +29,9 @@ from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from matplotlib import cm
 import matplotlib.patches
+
+from datetime import datetime
+
 from matplotlib.font_manager import FontProperties
 
 """
@@ -241,7 +242,6 @@ def build_label_supervised_learning():
 
 
 def SPCSMs_SVM():
-
     print('reading dsf')
     t0 = time()
     cshaper_X = general_f.read_csv_to_df(
@@ -250,10 +250,11 @@ def SPCSMs_SVM():
         os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv',
                      '17_embryo_fate_label.csv'))
     X_train, X_test, y_train, y_test = train_test_split(
-        cshaper_X.values, cshaper_Y.values.reshape((cshaper_Y.values.shape[0],)), test_size=0.2, random_state=42)
+        cshaper_X.values, cshaper_Y.values.reshape((cshaper_Y.values.shape[0],)), test_size=0.2,
+        random_state=datetime.now().microsecond)
     print("reading done in %0.3fs" % (time() - t0))
 
-    print(y_train)
+    print(X_train.shape)
     print(y_train.shape)
 
     print("Total dataset size:")
@@ -264,12 +265,12 @@ def SPCSMs_SVM():
     # #############################################################################
     # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
     # dataset): unsupervised feature extraction / dimensionality reduction
-    n_components = 12
+    n_components = 48
 
     print("Extracting the top %d eigenfaces from %d cells"
           % (n_components, X_train.shape[0]))
     t0 = time()
-    pca = PCA(n_components=n_components, svd_solver='randomized',
+    pca = PCA(n_components=n_components, svd_solver='randomized',S
               whiten=True).fit(X_train)
     print("done in %0.3fs" % (time() - t0))
 
@@ -278,38 +279,67 @@ def SPCSMs_SVM():
     X_train_pca = pca.transform(X_train)
     X_test_pca = pca.transform(X_test)
     print("done in %0.3fs" % (time() - t0))
-
-    print(X_train)
-    print(pca.inverse_transform(X_train_pca))
+    #
+    # print(X_train.shape)
+    # print(X_train_pca.shape)
+    # print(X_test_pca.shape)
+    # print(pca.inverse_transform(X_train_pca))
 
     # #############################################################################
     # Train a SVM classification model
 
     print("Fitting the classifier to the training set")
     t0 = time()
-    param_grid = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
-                  'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
+    # param_grid = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
+    #               'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
+    #
+    # param_grid = {'C': [1e4],
+    #               'gamma': [0.001], }
+    # clf = GridSearchCV(
+    #     SVC(kernel='rbf', class_weight='balanced'), param_grid
+    # )
+    # clf = clf.fit(X_train_pca, y_train)
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+    clf = make_pipeline(StandardScaler(), SVC(gamma='auto', probability=True))
+    #
+    # print(y_train.shape)
+    #
+    # random_indices=np.random.choice(X_train_pca.shape[0],size=100000,replace=False)
+    # print(random_indices)
+    # X_train_cut=X_train_pca[random_indices,:]
+    #
+    # print(X_train_cut.shape)
+    # print(X_train_pca.shape)
+    #
+    # y_train_cut=y_train[random_indices]
+    #
+    #
+    # print(y_train.shape)
 
-    param_grid = {'C': [1e4],
-                  'gamma': [0.001], }
-    clf = GridSearchCV(
-        SVC(kernel='rbf', class_weight='balanced'), param_grid
-    )
-    clf = clf.fit(X_train_pca, y_train)
+    clf.fit(X_train_pca, y_train)
+    print('test score', clf.score(X_test_pca, y_test))
+
     print("done in %0.3fs" % (time() - t0))
     print("Best estimator found by grid search:")
-    print(clf.best_estimator_)
+    print(clf)
 
     # #############################################################################
     # Quantitative evaluation of the model quality on the test set
 
-    print("Predicting people's names on the test set")
+    print("Predicting cell fate on the test set")
     t0 = time()
     y_pred = clf.predict(X_test_pca)
     print("done in %0.3fs" % (time() - t0))
 
+    print(clf.classes_)
     print(classification_report(y_test, y_pred, target_names=dict.cell_fate_dict))
-    print(confusion_matrix(y_test, y_pred, labels=range(len(dict.cell_fate_dict))))
+    print(confusion_matrix(y_test, y_pred, labels=dict.cell_fate_dict))
+
+    print("Predicting probability of cell fate on the test set")
+    t0 = time()
+    clf.predict_proba(X_test_pca).tofile('test_proba.csv', sep=',', format='%10.5f')
+    print("done in %0.3fs" % (time() - t0))
 
 
 def draw_figure_for_science():
@@ -317,7 +347,6 @@ def draw_figure_for_science():
     # Sample06,ABalaapa,078
     print('waiting type you input1')
     embryo_name1, cell_name1, tp1 = str(input()).split(',')
-
 
     print('waiting type you input2')
     embryo_name, cell_name, tp = str(input()).split(',')
@@ -337,24 +366,22 @@ def draw_figure_for_science():
     fig_SPCSMs_info = plt.figure()
 
     axes_tmp1 = fig_SPCSMs_info.add_subplot(2, 2, 1, projection='3d')
-    instance_tmp1=pysh.SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(embryo_csv.loc[tp1+'::'+cell_name1])).expand(lmax=100)
-    instance_tmp1_expanded=instance_tmp1.data
+    instance_tmp1 = pysh.SHCoeffs.from_array(
+        sh_analysis.collapse_flatten_clim(embryo_csv.loc[tp1 + '::' + cell_name1])).expand(lmax=100)
+    instance_tmp1_expanded = instance_tmp1.data
 
-    Y2d = np.arange(-90, 90, 180/203)
-    X2d = np.arange(0, 360, 360/405)
+    Y2d = np.arange(-90, 90, 180 / 203)
+    X2d = np.arange(0, 360, 360 / 405)
     X2d, Y2d = np.meshgrid(X2d, Y2d)
 
-
-
     axes_tmp1.plot_surface(X2d, Y2d, instance_tmp1_expanded, cmap=cm.coolwarm,
-                           linewidth=0, antialiased=False,rstride=60,cstride=10)
+                           linewidth=0, antialiased=False, rstride=60, cstride=10)
 
     axes_tmp2 = fig_SPCSMs_info.add_subplot(2, 2, 2)
     instance_tmp1.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                  xlabel='x of X-Y plane',
-                  ylabel='y of X-Y plane',axes_labelsize=12,tick_interval=[60, 60])
-    draw_f.set_size(5,5,ax=axes_tmp2)
-
+                       xlabel='x of X-Y plane',
+                       ylabel='y of X-Y plane', axes_labelsize=12, tick_interval=[60, 60])
+    draw_f.set_size(5, 5, ax=axes_tmp2)
 
     # embryo_path_name = embryo_name + 'LabelUnified'
     # embryo_path = os.path.join('D:/cell_shape_quantification/DATA/SegmentCellUnified04-20', embryo_path_name)
@@ -397,19 +424,20 @@ def draw_figure_for_science():
     y_lon = np.sqrt(225 - np.power(x_lon, 2))
     # print(y_lon)
     axes_tmp3.scatter3D(x_lon, y_lon, np.zeros(1000), s=3, color='blue')
-    axes_tmp3.text(23, 23, 0, 'longitude', (-1,1,0), ha='center')
+    axes_tmp3.text(23, 23, 0, 'longitude', (-1, 1, 0), ha='center')
 
     # latitude circle
     y_lat = np.arange(0, 15, 15 / 1000)
     z_lat = np.sqrt(225 - np.power(y_lat, 2))
     axes_tmp3.scatter3D(np.zeros(1000), y_lat, z_lat, s=3, color='black')
-    axes_tmp3.text(0, 18, 18, 'latitude', (-1,1,0), ha='center')
+    axes_tmp3.text(0, 18, 18, 'latitude', (-1, 1, 0), ha='center')
 
-    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, 'x', (-1,1,0), ha='center').set_fontstyle('italic')
-    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, 'y', (-1,1,0), ha='center').set_fontstyle('italic')
-    axes_tmp3.text(-0.1 * sn, 0, sn + 10, 'z', (-1,1,0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, 'x', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, 'y', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(-0.1 * sn, 0, sn + 10, 'z', (-1, 1, 0), ha='center').set_fontstyle('italic')
 
-    axes_tmp3.text('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold', style='italic')
+    axes_tmp3.text('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold',
+                   style='italic')
     # axes_tmp3.annotate('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold', style='italic')
 
     axes_tmp4 = fig_SPCSMs_info.add_subplot(2, 2, 4)
@@ -417,10 +445,10 @@ def draw_figure_for_science():
     # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
     grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Heat Map',
                   xlabel='Longitude (X-Y plane)',
-                  ylabel='Latitude (Y-Z plane)',axes_labelsize=12,tick_interval=[60, 60])
+                  ylabel='Latitude (Y-Z plane)', axes_labelsize=12, tick_interval=[60, 60])
 
-    fig_SPCSMs_info.text(0,0.7,'3D Surface Mapping',fontsize=12)
-    fig_SPCSMs_info.text(0,0.25,'3D Object Mapping',fontsize=12)
+    fig_SPCSMs_info.text(0, 0.7, '3D Surface Mapping', fontsize=12)
+    fig_SPCSMs_info.text(0, 0.25, '3D Object Mapping', fontsize=12)
     # Sample06,Dpaap,158
     # Sample06,ABalaapa,078
 
@@ -428,7 +456,7 @@ def draw_figure_for_science():
     #     matplotlib.patches.Rectangle((200., -4.), 50., 6., transform=axes_tmp1.transData, alpha=0.3, color="g"))
 
     arrow = matplotlib.patches.FancyArrowPatch(
-        (0.4,0.7), (0.6,0.7), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
+        (0.4, 0.7), (0.6, 0.7), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
         fc="g", connectionstyle="arc3,rad=0.2", arrowstyle='simple', alpha=0.3,
         mutation_scale=40.
     )
@@ -449,4 +477,4 @@ def draw_figure_for_science():
 if __name__ == "__main__":
     print('test2 run')
 
-    draw_figure_for_science()
+    SPCSMs_SVM()

@@ -1,1 +1,1 @@
-cell_fate_dict=['Unspecified','Other','Death','Intestin','Muscle','Pharynx','Skin','Germ Cell']
+cell_fate_dict = ['Unspecified', 'Other', 'Death', 'Neuron', 'Intestin', 'Muscle', 'Pharynx', 'Skin', 'Germ Cell']
