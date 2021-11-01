@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from functional_func.general_func import read_csv_to_df
+from utils.general_func import read_csv_to_df
 
 
 # https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere/44164075#44164075

@@ -1,29 +1,24 @@
 import math
 import os
 import config
-import time
 
 import numpy as np
 import pyshtools as pysh
-from matplotlib import pyplot as plt
-from multiprocessing import Process
 
-import functional_func.general_func as general_f
-import functional_func.cell_func as cell_f
-import functional_func.spherical_func as sph_f
-
-import particular_func.SH_analyses as sh_a_f
+import utils.general_func as general_f
+import utils.cell_func as cell_f
+import utils.spherical_func as sph_f
 
 
 def do_sampling_with_lat_lon(points_surface, lat_lon, average_num=5, is_return_xyz=False):
-    '''
+    """
 
     :param points_surface:
     :param lat_lon: co-lat points list, should be same as lon
     :param average_num:
     :param is_return_xyz:
     :return: R and coordinate array
-    '''
+    """
 
     points_surface = general_f.descartes2spherical2(points_surface)
 
@@ -31,9 +26,9 @@ def do_sampling_with_lat_lon(points_surface, lat_lon, average_num=5, is_return_x
     for item in lat_lon:
         R = sph_f.calculate_R_with_lat_lon(points_surface, item[0], item[1], average_num)
         list_return.append([R, item[0], item[1]])
-    list_return=np.array(list_return)
+    list_return = np.array(list_return)
     if is_return_xyz:
-        return list_return[:, 0],np.array(general_f.sph2descartes2(list_return))
+        return list_return[:, 0], np.array(general_f.sph2descartes2(list_return))
     return list_return[:, 0], np.array(list_return)
 
 
@@ -196,6 +191,3 @@ def sample_and_SHc_with_surface(surface_points, sample_N, lmax, surface_average_
     # build sh tools coefficient class instance
     sh_coefficient_instance = pysh.SHCoeffs.from_array(cilm)
     return sh_coefficient_instance
-
-
-

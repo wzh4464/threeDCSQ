@@ -1,8 +1,8 @@
-import particular_func.SH_analyses as sh_analysis
+import analysis.SH_analyses as sh_analysis
 from pyshtools import SHCoeffs
-from functional_func.draw_func import draw_3D_points
+from utils.draw_func import draw_3D_points
 from matplotlib import pyplot as plt
-import functional_func.general_func as general_f
+import utils.general_func as general_f
 
 import os
 import config
@@ -71,6 +71,14 @@ def read_PCA_file(PCA_file_path):
 
 
 def calculate_PCA_zk_norm(embryo_path, PCA_matrices_saving_path, k=12):
+    """
+    # this method is totally wrong OH my god!!!!!!!!!!!! 2021-10-30 by zelin
+        # I really don't know why don't you just go to run the tutorial !!!!!
+    :param embryo_path:
+    :param PCA_matrices_saving_path:
+    :param k:
+    :return:
+    """
     print('PCA norm exist')
     pca_means, _, pca_df = read_PCA_file(PCA_matrices_saving_path)
     # print(means)

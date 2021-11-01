@@ -1,4 +1,4 @@
-import functional_func.general_func as general_f
+import utils.general_func as general_f
 
 import config
 import os
