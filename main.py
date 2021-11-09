@@ -1,22 +1,9 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import pyshtools as pysh
+# import pyshtools as pysh
 
-import csv
 import os
 import config
 
-import particular_func.SH_represention as SH_func
-
-import particular_func.SH_analyses as SH_A_func
-
-import functional_func.cell_func as cell_f
-import functional_func.general_func as general_f
-import pandas as pd
-from multiprocessing import Process
-import functional_func.draw_func as draw_f
-
-import test_scripts
+import utils.general_func as general_f
 
 
 def main():
@@ -24,6 +11,9 @@ def main():
 
     # ------------------------------R fibonacci representation------------------------------------------------
     # img_1 = general_f.load_nitf2_img(os.path.join(config.dir_segemented, 'Embryo04_000_segCell.nii.gz'))
+    general_f.show_nitf2_img(os.path.join(config.dir_segemented_tmp1, 'Embryo04_068_segCell.nii.gz'))
+
+
     # _ = cell_f.nii_get_cell_surface(img_1, save_name='Embryo04_000_segCell.nii.gz')
 
     # img_2 = general_f.show_nitf2_img(os.path.join(config.dir_my_data, 'membrane' + 'Embryo04_001_segCell.nii.gz'))

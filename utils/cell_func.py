@@ -5,12 +5,11 @@ import config
 
 from scipy import ndimage
 from collections import Counter
-from nibabel.viewers import OrthoSlicer3D
 import csv
 
 import os
 
-import functional_func.general_func as general_f
+import utils.general_func as general_f
 
 
 def get_cell_name_affine_table():
