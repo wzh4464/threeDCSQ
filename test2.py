@@ -234,7 +234,7 @@ def build_label_supervised_learning():
         tmp_cell_name = cell_name
         while tmp_cell_name not in fate_dict.keys():
             tmp_cell_name = tmp_cell_name[:-1]
-        cshaper_data_label_df.loc[idx] = fate_dict[tmp_cell_name]
+        cshaper_data_label_df.loc[idx] = dict.cell_fate_map[fate_dict[tmp_cell_name]]
     print(cshaper_data_label_df)
     cshaper_data_label_df.to_csv(os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv',
                                               '17_embryo_fate_label.csv'))
@@ -249,13 +249,48 @@ def SPCSMs_SVM():
     cshaper_Y = general_f.read_csv_to_df(
         os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv',
                      '17_embryo_fate_label.csv'))
+    print('Unspecified',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index))
+    print('Other',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Other']].index))
+    print('Death',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Death']].index))
+    print('Neuron',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Neuron']].index))
+    print('Intestin',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Intestin']].index))
+    print('Muscle',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Muscle']].index))
+    print('Pharynx',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Pharynx']].index))
+    print('Skin',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Skin']].index))
+    print('Germ Cell',len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Germ Cell']].index))
+    #
+    # cshaper_X.drop(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index,inplace=True)
+    # cshaper_Y.drop(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index,inplace=True)
+
     X_train, X_test, y_train, y_test = train_test_split(
         cshaper_X.values, cshaper_Y.values.reshape((cshaper_Y.values.shape[0],)), test_size=0.2,
         random_state=datetime.now().microsecond)
     print("reading done in %0.3fs" % (time() - t0))
 
-    print(X_train.shape)
-    print(y_train.shape)
+    print('train distribution',len(y_train))
+    print('train Unspecified', (y_train == dict.cell_fate_map['Unspecified']).sum())
+    print('train Other', (y_train == dict.cell_fate_map['Other']).sum())
+    print('train Death', (y_train == dict.cell_fate_map['Death']).sum())
+    print('train Neuron', (y_train == dict.cell_fate_map['Neuron']).sum())
+    print('train Intestin', (y_train == dict.cell_fate_map['Intestin']).sum())
+    print('train Muscle', (y_train == dict.cell_fate_map['Muscle']).sum())
+    print('train Pharynx', (y_train == dict.cell_fate_map['Pharynx']).sum())
+    print('train Skin', (y_train == dict.cell_fate_map['Skin']).sum())
+    print('train Germ Cell', (y_train == dict.cell_fate_map['Germ Cell']).sum())
+
+    print('test distribution', len(y_test))
+    print('test Unspecified', (y_test == dict.cell_fate_map['Unspecified']).sum())
+    print('test Other', (y_test == dict.cell_fate_map['Other']).sum())
+    print('test Death', (y_test == dict.cell_fate_map['Death']).sum())
+    print('test Neuron', (y_test == dict.cell_fate_map['Neuron']).sum())
+    print('test Intestin', (y_test == dict.cell_fate_map['Intestin']).sum())
+    print('test Muscle', (y_test == dict.cell_fate_map['Muscle']).sum())
+    print('test Pharynx', (y_test == dict.cell_fate_map['Pharynx']).sum())
+    print('test Skin', (y_test == dict.cell_fate_map['Skin']).sum())
+    print('test Germ Cell', (y_test == dict.cell_fate_map['Germ Cell']).sum())
+
+    # cshaper_Y.drop(cshaper_Y[cshaper_Y['Fate'] == 'Germ Cell'].index,replace=True)
+
 
     print("Total dataset size:")
     print("n_samples: %d" % cshaper_X.values.shape[0])
@@ -265,12 +300,12 @@ def SPCSMs_SVM():
     # #############################################################################
     # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
     # dataset): unsupervised feature extraction / dimensionality reduction
-    n_components = 48
+    n_components = 24
 
     print("Extracting the top %d eigenfaces from %d cells"
           % (n_components, X_train.shape[0]))
     t0 = time()
-    pca = PCA(n_components=n_components, svd_solver='randomized',S
+    pca = PCA(n_components=n_components, svd_solver='randomized',
               whiten=True).fit(X_train)
     print("done in %0.3fs" % (time() - t0))
 
@@ -330,15 +365,19 @@ def SPCSMs_SVM():
     print("Predicting cell fate on the test set")
     t0 = time()
     y_pred = clf.predict(X_test_pca)
+    print(np.unique(y_test,return_counts=True))
+    print(np.unique(y_pred,return_counts=True))
     print("done in %0.3fs" % (time() - t0))
 
     print(clf.classes_)
     print(classification_report(y_test, y_pred, target_names=dict.cell_fate_dict))
-    print(confusion_matrix(y_test, y_pred, labels=dict.cell_fate_dict))
+    print(confusion_matrix(y_test, y_pred, labels=dict.cell_fate_num))
 
     print("Predicting probability of cell fate on the test set")
     t0 = time()
-    clf.predict_proba(X_test_pca).tofile('test_proba.csv', sep=',', format='%10.5f')
+    pd_prod_test=pd.DataFrame(clf.predict_proba(X_test_pca))
+    print(pd_prod_test)
+    pd_prod_test.to_csv("test_prob_rbf_n%d" % n_components)
     print("done in %0.3fs" % (time() - t0))
 
 
@@ -476,5 +515,6 @@ def draw_figure_for_science():
 
 if __name__ == "__main__":
     print('test2 run')
+    # pd.DataFrame(np.ones((3,3))).to_csv('test.csv')
 
     SPCSMs_SVM()
