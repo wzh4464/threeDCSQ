@@ -1,3 +1,8 @@
+from pickle import dump, load
+from re import match, search
+
+from scipy.ndimage import generate_binary_structure, grey_dilation
+
 import config
 import numpy as np
 import os
@@ -28,11 +33,12 @@ from datetime import datetime
 
 from matplotlib.font_manager import FontProperties
 
-from transformation.SH_represention import get_nib_embryo_membrane_dict
+from transformation.SH_represention import get_nib_embryo_membrane_dict, get_SH_coeffient_from_surface_points
 from utils.cell_func import get_cell_name_affine_table
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
-from utils.general_func import read_csv_to_df
+from utils.general_func import read_csv_to_df, load_nitf2_img
 from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
+from itertools import combinations
 
 """
 Sample06,ABalaapa,078
@@ -245,9 +251,9 @@ def SPCSMs_SVM():
     print('reading dsf')
     t0 = time()
     cshaper_X = read_csv_to_df(
-        os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_norm.csv'))
+        os.path.join('.\DATA\my_data_csv\SH_time_domain_csv', 'SHc_norm.csv'))
     cshaper_Y = read_csv_to_df(
-        os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv',
+        os.path.join('.\DATA\my_data_csv\SH_time_domain_csv',
                      '17_embryo_fate_label.csv'))
     X_train, X_test, y_train, y_test = train_test_split(
         cshaper_X.values, cshaper_Y.values.reshape((cshaper_Y.values.shape[0],)), test_size=0.2,
@@ -390,19 +396,19 @@ def draw_figure_for_science():
     instance_tmp = pysh.SHCoeffs.from_array(collapse_flatten_clim(embryo_csv.loc[tp + '::' + cell_name]))
     axes_tmp3 = fig_SPCSMs_info.add_subplot(2, 2, 3, projection='3d')
     draw_3D_points(do_reconstruction_for_SH(sample_N=50, sh_coefficient_instance=instance_tmp),
-                             ax=axes_tmp3, cmap=cm.coolwarm)
+                   ax=axes_tmp3, cmap=cm.coolwarm)
     sn = 20
     x_axis = Arrow3D([0, sn + 3], [0, 0],
-                            [0, 0], mutation_scale=20,
-                            lw=3, arrowstyle="-|>", color="r")
+                     [0, 0], mutation_scale=20,
+                     lw=3, arrowstyle="-|>", color="r")
     axes_tmp3.add_artist(x_axis)
     y_axis = Arrow3D([0, 0], [0, sn + 3],
-                            [0, 0], mutation_scale=20,
-                            lw=3, arrowstyle="-|>", color="r")
+                     [0, 0], mutation_scale=20,
+                     lw=3, arrowstyle="-|>", color="r")
     axes_tmp3.add_artist(y_axis)
     z_axis = Arrow3D([0, 0], [0, 0],
-                            [0, sn + 23], mutation_scale=20,
-                            lw=3, arrowstyle="-|>", color="r")
+                     [0, sn + 23], mutation_scale=20,
+                     lw=3, arrowstyle="-|>", color="r")
     axes_tmp3.add_artist(z_axis)
 
     axis_points_num = 1000
@@ -472,17 +478,158 @@ def draw_figure_for_science():
 
     plt.show()
 
-def display_cell_contact_surface():
+
+def calculate_cell_contact_surface():
     # Sample06,Dpaap,158
     # Sample06,ABalaapa,078
-    print('waiting type you input1')
-    embryo_name1, cell_name1, tp1 = str(input()).split(',')
+    # print('waiting type you input1')
+    # embryo_name1, cell_name1, tp1 = str(input()).split(',')
+    #
+    # print('waiting type you input2')
+    # embryo_name2, cell_name2, tp2 = str(input()).split(',')
 
-    print('waiting type you input2')
-    embryo_name2, cell_name2, tp2 = str(input()).split(',')
+    number_cell, cell_number = get_cell_name_affine_table()
+
+    # ------------------------------calculate contact points for each cell ----------------------------------------------
+    path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
+    for file_name in os.listdir(path_tmp):
+        if os.path.isfile(os.path.join(path_tmp, file_name)):
+            print(path_tmp, file_name)
+
+            this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
+
+            img_arr = this_img.get_data()
+
+            x_num, y_num, z_num = img_arr.shape
+
+            # arr_unique,arr_indices,arr_count=np.unique(img_arr,return_counts=True,return_index=True)
+            arr_unique = np.unique(img_arr)
+            # print(arr_unique)
+            # print(arr_indices)
+            # print(arr_count)
+
+            dict_img_cell_calculate = {}
+            for x in range(x_num):
+                for y in range(y_num):
+                    for z in range(z_num):
+                        dict_key = img_arr[x][y][z]
+                        if dict_key != 0:
+                            if dict_key in dict_img_cell_calculate:
+                                dict_img_cell_calculate[dict_key].append([x, y, z])
+                            else:
+                                dict_img_cell_calculate[dict_key] = [[x, y, z]]
+            cell_points_dict = {}
+
+            t0 = time()
+
+            for cell_number in arr_unique[1:]:
+                print('dealing with ', cell_number, 'dilation things')
+                targe_arr = np.array(dict_img_cell_calculate[cell_number])
+                # print(dict_img_cell_calculate[cell_number])
+                # print(dict_img_cell_calculate[cell_number][:, 0])
+                x_min_boundary = np.min(targe_arr[:, 0]) - 1
+                x_max_boundary = np.max(targe_arr[:, 0]) + 1
+
+                y_min_boundary = np.min(targe_arr[:, 1]) - 1
+                y_max_boundary = np.max(targe_arr[:, 1]) + 1
+
+                z_min_boundary = np.min(targe_arr[:, 2]) - 1
+                z_max_boundary = np.max(targe_arr[:, 2]) + 1
+
+                cut_img_arr = img_arr[x_min_boundary:x_max_boundary, y_min_boundary:y_max_boundary,
+                              z_min_boundary:z_max_boundary]
+
+                # set all points as zero expect cell_number dealing with
+                cut_img_arr = (cut_img_arr == cell_number).astype(int)
+
+                # print(np.unique(cut_img_arr,return_counts=True))
+                # with the original image data
+                struct_element = generate_binary_structure(3, -1)
+                cut_img_arr_dilation = grey_dilation(cut_img_arr, footprint=struct_element)
+                # print(np.unique(cut_img_arr_dilation,return_counts=True))
+
+                cut_img_arr_dilation = cut_img_arr_dilation - cut_img_arr
+                print(np.unique(cut_img_arr_dilation, return_counts=True))
+
+                point_position_x, point_position_y, point_position_z = np.where(cut_img_arr_dilation == 1)
+                cell_points_dict[cell_number] = []
+                for i in range(len(point_position_x)):
+                    cell_points_dict[cell_number].append(str(point_position_x[i] + x_min_boundary) + '_' + str(
+                        point_position_y[i] + y_min_boundary) + '_' + str(point_position_z[i] + z_min_boundary))
+                # print(cell_points_dict[cell_number])
+
+            contact_points_dict = {}
+            key_list_tmp = combinations(cell_points_dict.keys(), 2)
+
+            for idx in key_list_tmp:
+                print(idx, 'cell contact surface points counting')
+                y = [x for x in cell_points_dict[idx[0]] if x in cell_points_dict[idx[1]]]
+                if len(y) > 0:
+                    print(len(y))
+                    str_key = str(idx[0]) + '_' + str(idx[1])
+                    contact_points_dict[str_key] = y
+            # print(contact_points_dict)
+
+            contact_saving_path = r'./DATA/cshaper_contact_data'
+            with open(os.path.join(contact_saving_path, file_name.split('.')[0] + '.json'), 'wb') as fp:
+                dump(contact_points_dict, fp)
+
+            # load()
+            print("done in %0.3fs" % (time() - t0))
+
+            # print(cell_points_dict)
+
+    # -------------------------------------------------------------------------------------------------------
+
+
+def display_contact_points():
+    # Sample20,ABalaapa,078
+    print('waiting type you input: samplename and timepoints for embryogenesis')
+    embryo_name, cell_name, tp = str(input()).split(',')
+
+    # embryo_path_name = embryo_name + 'LabelUnified'
+    # embryo_path = os.path.join(r'.\DATA\SegmentCellUnified04-20', embryo_path_name)
+    # file_name = embryo_name + '_' + tp + '_segCell.nii.gz'
+    # dict_cell_membrane, dict_center_points = get_nib_embryo_membrane_dict(embryo_path,
+    #                                                                       file_name)
+    num_cell_name, cell_num = get_cell_name_affine_table()
+    keys_tmp = cell_num[cell_name]
+
+    with open(os.path.join(r'./DATA/cshaper_contact_data', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
+        data = load(fp)
+    display_key_list = []
+    for idx in data.keys():
+
+        if str(keys_tmp) in idx:
+            display_key_list.append(idx)
+
+    fig_contact_info = plt.figure()
+    plt.axis('off')
+    item_count = 1
+    for idx in display_key_list:
+        if item_count > 6:
+            break
+        draw_points_list = []
+
+        for item_str in data[idx]:
+            x, y, z = item_str.split('_')
+            x, y, z = int(x), int(y), int(z)
+            print(item_str)
+            print(x, y, z)
+            draw_points_list.append([x, y, z])
+
+        a=idx.split('_')
+        a.remove(str(keys_tmp))
+        contact_cell_num = int(a[0])
+        ax = fig_contact_info.add_subplot(2, 3, item_count,projection='3d')
+        draw_3D_points(np.array(draw_points_list), fig_name=cell_name + '_' + num_cell_name[contact_cell_num], ax=ax)
+
+        item_count += 1
+    plt.show()
 
 
 if __name__ == "__main__":
     print('test2 run')
-
-    show_cell_SPCSMs_info()
+    print(str(190) in '190_11')
+    display_contact_points()
+    # show_cell_SPCSMs_info()

@@ -4,6 +4,7 @@ import os
 import config
 
 import utils.general_func as general_f
+from transformation.SH_represention import get_SH_coeffient_from_surface_points
 
 
 def main():
@@ -25,7 +26,7 @@ def main():
     for file_name in os.listdir(path_tmp):
         if os.path.isfile(os.path.join(path_tmp,file_name)):
             print(path_tmp)
-            SH_func.get_SH_coeffient_from_surface_points(embryo_path=path_tmp, sample_N=100, lmax=49,
+            get_SH_coeffient_from_surface_points(embryo_path=path_tmp, sample_N=100, lmax=49,
                                                          file_name=file_name)
     # -------------------------------------------------------------------------------------------------------
 
