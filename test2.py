@@ -33,6 +33,7 @@ from datetime import datetime
 
 from matplotlib.font_manager import FontProperties
 
+from transformation.PCA import calculate_PCA_zk_norm
 from transformation.SH_represention import get_nib_embryo_membrane_dict, get_SH_coeffient_from_surface_points
 from utils.cell_func import get_cell_name_affine_table
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
@@ -583,53 +584,97 @@ def calculate_cell_contact_surface():
 
 
 def display_contact_points():
+    # Sample20,ABalaaapa,126
+    # Sample20,Dpaap,158
     # Sample20,ABalaapa,078
+
     print('waiting type you input: samplename and timepoints for embryogenesis')
     embryo_name, cell_name, tp = str(input()).split(',')
 
-    # embryo_path_name = embryo_name + 'LabelUnified'
-    # embryo_path = os.path.join(r'.\DATA\SegmentCellUnified04-20', embryo_path_name)
-    # file_name = embryo_name + '_' + tp + '_segCell.nii.gz'
-    # dict_cell_membrane, dict_center_points = get_nib_embryo_membrane_dict(embryo_path,
-    #                                                                       file_name)
+    # get center points
+    embryo_path_name = embryo_name + 'LabelUnified'
+    embryo_path = os.path.join(r'.\DATA\SegmentCellUnified04-20', embryo_path_name)
+    file_name = embryo_name + '_' + tp + '_segCell.nii.gz'
+    _, dict_center_points = get_nib_embryo_membrane_dict(embryo_path, file_name)
     num_cell_name, cell_num = get_cell_name_affine_table()
-    keys_tmp = cell_num[cell_name]
+
+    this_cell_keys = cell_num[cell_name]
 
     with open(os.path.join(r'./DATA/cshaper_contact_data', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
         data = load(fp)
     display_key_list = []
     for idx in data.keys():
 
-        if str(keys_tmp) in idx:
+        if str(this_cell_keys) in idx:
             display_key_list.append(idx)
 
     fig_contact_info = plt.figure()
     plt.axis('off')
     item_count = 1
+    this_cell_center = dict_center_points[this_cell_keys]
     for idx in display_key_list:
-        if item_count > 6:
+        if item_count > 9:
             break
         draw_points_list = []
-
+        print(idx)
         for item_str in data[idx]:
             x, y, z = item_str.split('_')
             x, y, z = int(x), int(y), int(z)
-            print(item_str)
-            print(x, y, z)
+            # print(item_str)
+            # print(x, y, z)
             draw_points_list.append([x, y, z])
 
-        a=idx.split('_')
-        a.remove(str(keys_tmp))
+        a = idx.split('_')
+        a.remove(str(this_cell_keys))
         contact_cell_num = int(a[0])
-        ax = fig_contact_info.add_subplot(2, 3, item_count,projection='3d')
+        ax = fig_contact_info.add_subplot(3, 3, item_count, projection='3d')
         draw_3D_points(np.array(draw_points_list), fig_name=cell_name + '_' + num_cell_name[contact_cell_num], ax=ax)
+
+        dfs = pd.read_excel(config.cell_fate_path, sheet_name=None)['CellFate']
+        fate_cell = dfs[dfs['Name'] == cell_name + '\'']['Fate'].values[0].split('\'')[0]
+        # for idx in dfs.index:
+        #     # print(row)
+        #     name = dfs.loc[idx]['Name'].split('\'')[0]
+        #     fate = dfs.loc[idx]['Fate'].split('\'')[0]
+        #     fate_dict[name] = fate
+
+        ax.text(this_cell_center[0], this_cell_center[1], this_cell_center[2], cell_name + '_' + fate_cell,
+                (-1, 1, 0), ha='center')
+
+        contact_cell_fate = dfs[dfs['Name'] == num_cell_name[contact_cell_num] + '\'']['Fate'].values[0].split('\'')[0]
+        contact_cell_center = dict_center_points[contact_cell_num]
+        ax.text(contact_cell_center[0], contact_cell_center[1], contact_cell_center[2],
+                num_cell_name[contact_cell_num] + '_' + contact_cell_fate,
+                (-1, 1, 0), ha='center')
+
+        #
+        # contact_arrow = Arrow3D([0, 0], [0, 0],
+        #                  [0, sn + 23], mutation_scale=20,
+        #                  lw=3, arrowstyle="-|>", color="r")
+        # ax.add_artist(contact_arrow)
 
         item_count += 1
     plt.show()
 
+def calculate_SH_PCA_coordinate():
+    PCA_matrices_saving_path = os.path.join(r'.\DATA\my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
+
+    path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
+    df_SHc_norm = read_csv_to_df(path_saving_csv_normalized)
+    print('finish read all embryo cell df_sh_norm_coefficients--------------')
+
+    sh_PCA = PCA(n_components=24)
+    pd.DataFrame(data=sh_PCA.fit_transform(df_SHc_norm.values),index=df_SHc_norm.index).to_csv(PCA_matrices_saving_path)
+
+
+
+
 
 if __name__ == "__main__":
-    print('test2 run')
-    print(str(190) in '190_11')
-    display_contact_points()
+
+    calculate_SH_PCA_coordinate()
+    #
+    # print('test2 run')
+    # print(str(190) in '190_11')
+    # display_contact_points()
     # show_cell_SPCSMs_info()
