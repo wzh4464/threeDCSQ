@@ -3,6 +3,11 @@ from re import match, search
 
 from scipy.ndimage import generate_binary_structure, grey_dilation
 
+from sklearn.kernel_approximation import Nystroem
+from sklearn.linear_model import SGDClassifier
+from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.preprocessing import StandardScaler
+
 import config
 import numpy as np
 import os
@@ -25,7 +30,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import PCA
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 from matplotlib import cm
 import matplotlib.patches
 
@@ -241,7 +246,7 @@ def build_label_supervised_learning():
         tmp_cell_name = cell_name
         while tmp_cell_name not in fate_dict.keys():
             tmp_cell_name = tmp_cell_name[:-1]
-        cshaper_data_label_df.loc[idx] = fate_dict[tmp_cell_name]
+        cshaper_data_label_df.loc[idx] = dict.cell_fate_map[fate_dict[tmp_cell_name]]
     print(cshaper_data_label_df)
     cshaper_data_label_df.to_csv(os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv',
                                               '17_embryo_fate_label.csv'))
@@ -256,99 +261,102 @@ def SPCSMs_SVM():
     cshaper_Y = read_csv_to_df(
         os.path.join('.\DATA\my_data_csv\SH_time_domain_csv',
                      '17_embryo_fate_label.csv'))
+    print('Unspecified', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index))
+    print('Other', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Other']].index))
+    print('Death', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Death']].index))
+    print('Neuron', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Neuron']].index))
+    print('Intestin', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Intestin']].index))
+    print('Muscle', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Muscle']].index))
+    print('Pharynx', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Pharynx']].index))
+    print('Skin', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Skin']].index))
+    print('Germ Cell', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Germ Cell']].index))
+    # #
+    # cshaper_X.drop(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index, inplace=True)
+    # cshaper_Y.drop(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index, inplace=True)
+
     X_train, X_test, y_train, y_test = train_test_split(
         cshaper_X.values, cshaper_Y.values.reshape((cshaper_Y.values.shape[0],)), test_size=0.2,
         random_state=datetime.now().microsecond)
     print("reading done in %0.3fs" % (time() - t0))
 
-    print(X_train.shape)
-    print(y_train.shape)
+    print('train distribution', len(y_train))
+    print('train Unspecified', (y_train == dict.cell_fate_map['Unspecified']).sum())
+    print('train Other', (y_train == dict.cell_fate_map['Other']).sum())
+    print('train Death', (y_train == dict.cell_fate_map['Death']).sum())
+    print('train Neuron', (y_train == dict.cell_fate_map['Neuron']).sum())
+    print('train Intestin', (y_train == dict.cell_fate_map['Intestin']).sum())
+    print('train Muscle', (y_train == dict.cell_fate_map['Muscle']).sum())
+    print('train Pharynx', (y_train == dict.cell_fate_map['Pharynx']).sum())
+    print('train Skin', (y_train == dict.cell_fate_map['Skin']).sum())
+    print('train Germ Cell', (y_train == dict.cell_fate_map['Germ Cell']).sum())
+
+    print('test distribution', len(y_test))
+    print('test Unspecified', (y_test == dict.cell_fate_map['Unspecified']).sum())
+    print('test Other', (y_test == dict.cell_fate_map['Other']).sum())
+    print('test Death', (y_test == dict.cell_fate_map['Death']).sum())
+    print('test Neuron', (y_test == dict.cell_fate_map['Neuron']).sum())
+    print('test Intestin', (y_test == dict.cell_fate_map['Intestin']).sum())
+    print('test Muscle', (y_test == dict.cell_fate_map['Muscle']).sum())
+    print('test Pharynx', (y_test == dict.cell_fate_map['Pharynx']).sum())
+    print('test Skin', (y_test == dict.cell_fate_map['Skin']).sum())
+    print('test Germ Cell', (y_test == dict.cell_fate_map['Germ Cell']).sum())
 
     print("Total dataset size:")
     print("n_samples: %d" % cshaper_X.values.shape[0])
     print("n_spectrum: %d" % cshaper_X.values.shape[1])
     print("n_classes: %d" % len(dict.cell_fate_dict))
 
-    # #############################################################################
-    # Compute a PCA (eigen shape) on the face dataset (treated as unlabeled
+    # ==================================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
     # dataset): unsupervised feature extraction / dimensionality reduction
-    n_components = 48
+    # n_components = 12
+    # print("Extracting the top %d eigenfaces from %d cells"
+    #       % (n_components, X_train.shape[0]))
+    # t0 = time()
+    # pca = PCA(n_components=n_components, svd_solver='randomized',
+    #           whiten=True).fit(X_train)
+    # print("done in %0.3fs" % (time() - t0))
 
-    print("Extracting the top %d eigenshape from %d cells"
-          % (n_components, X_train.shape[0]))
-    t0 = time()
-    pca = PCA(n_components=n_components, svd_solver='randomized', whiten=True).fit(X_train)
-    print("done in %0.3fs" % (time() - t0))
-
-    print("Projecting the input data on the eigenshape orthonormal basis")
-    t0 = time()
-    X_train_pca = pca.transform(X_train)
-    X_test_pca = pca.transform(X_test)
-    print("done in %0.3fs" % (time() - t0))
-    #
-    # print(X_train.shape)
-    # print(X_train_pca.shape)
-    # print(X_test_pca.shape)
-    # print(pca.inverse_transform(X_train_pca))
-
-    # #############################################################################
+    # print("Projecting the input data on the eigenshape orthonormal basis")
+    # t0 = time()
+    # X_train_pca = pca.transform(X_train)
+    # X_test_pca = pca.transform(X_test)
+    # print("done in %0.3fs" % (time() - t0))
     # Train a SVM classification model
 
-    print("Fitting the classifier to the training set")
+    # print("Fitting the classifier to the training set")
+    print('going through pipeline searching best classifier')
     t0 = time()
-    # param_grid = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
-    #               'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
-    #
-    # param_grid = {'C': [1e4],
-    #               'gamma': [0.001], }
-    # clf = GridSearchCV(
-    #     SVC(kernel='rbf', class_weight='balanced'), param_grid
-    # )
-    # clf = clf.fit(X_train_pca, y_train)
-    from sklearn.pipeline import make_pipeline
-    from sklearn.preprocessing import StandardScaler
-    clf = make_pipeline(StandardScaler(), SVC(gamma='auto', probability=True))
-    #
-    # print(y_train.shape)
-    #
-    # random_indices=np.random.choice(X_train_pca.shape[0],size=100000,replace=False)
-    # print(random_indices)
-    # X_train_cut=X_train_pca[random_indices,:]
-    #
-    # print(X_train_cut.shape)
-    # print(X_train_pca.shape)
-    #
-    # y_train_cut=y_train[random_indices]
-    #
-    #
-    # print(y_train.shape)
 
-    clf.fit(X_train_pca, y_train)
-    print('test score', clf.score(X_test_pca, y_test))
+    pca = PCA()
+    nystroem_transformer = Nystroem(gamma=0.001, random_state=datetime.now().microsecond)
+    linearsvc_classifier = LinearSVC(random_state=datetime.now().microsecond, tol=1e-5)
+    pipe = Pipeline(steps=[("pca", pca), ("scale", StandardScaler()), ("transformer", nystroem_transformer),
+                           ("classifier", linearsvc_classifier)])
+    param_grid = {
+        "pca__n_components": [12, 24, 48, 96],
 
+        "transformer__gamma": [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
+        "classifier__C": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e2, 1e3, 1e4, 1e5]
+    }
+    search = GridSearchCV(pipe, param_grid, pre_dispatch=6)
+    clf=search.fit(X_train, y_train)
+    print(search.cv_results_)
+    print("Best parameter (CV score=%0.3f):" % search.best_score_)
+    print(search.best_params_)
     print("done in %0.3fs" % (time() - t0))
-    print("Best estimator found by grid search:")
-    print(clf)
 
-    # #############################################################################
     # Quantitative evaluation of the model quality on the test set
-
     print("Predicting cell fate on the test set")
     t0 = time()
-    y_pred = clf.predict(X_test_pca)
+    y_pred = search.predict(X_test)
     print("done in %0.3fs" % (time() - t0))
-
-    print(clf.classes_)
     print(classification_report(y_test, y_pred, target_names=dict.cell_fate_dict))
-    print(confusion_matrix(y_test, y_pred, labels=dict.cell_fate_dict))
-
-    print("Predicting probability of cell fate on the test set")
-    t0 = time()
-    clf.predict_proba(X_test_pca).tofile('test_proba.csv', sep=',', format='%10.5f')
-    print("done in %0.3fs" % (time() - t0))
+    print(confusion_matrix(y_test, y_pred, labels=dict.cell_fate_num))
+    # ==================================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
-def draw_figure_for_science():
+def figure_for_science():
     # Sample06,Dpaap,158
     # Sample06,ABalaapa,078
     print('waiting type you input1')
@@ -392,7 +400,7 @@ def draw_figure_for_science():
     # embryo_path_name = embryo_name + 'LabelUnified'
     # embryo_path = os.path.join('D:/cell_shape_quantification/DATA/SegmentCellUnified04-20', embryo_path_name)
     # file_name = embryo_name + '_' + tp + '_segCell.nii.gz'
-    # dict_cell_membrane, dict_center_points = sh_represent.get_nib_embryo_membrane_dict(embryo_path,
+    # dict_cell_membrane, dict_center_points =  get_nib_embryo_membrane_dict(embryo_path,
     #                                                                                    file_name)
     instance_tmp = pysh.SHCoeffs.from_array(collapse_flatten_clim(embryo_csv.loc[tp + '::' + cell_name]))
     axes_tmp3 = fig_SPCSMs_info.add_subplot(2, 2, 3, projection='3d')
