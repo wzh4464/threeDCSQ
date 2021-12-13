@@ -212,8 +212,7 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
         for index_tmp in df_embryo_time_slices.index:
             fig = plt.figure()
 
-            shc_instance = pysh.SHCoeffs.from_array(
-                SH_A_f.collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp])))
+            shc_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp])))
             shc_reconstruction = do_reconstruction_for_SH(30, shc_instance)
             axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
             draw_3D_points(shc_reconstruction, fig_name='original sh coefficient', ax=axes_tmp)

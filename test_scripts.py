@@ -983,8 +983,6 @@ def test_2021_7_19_1_modified_2021_10_31():
     print("done in %0.3fs" % (time() - t0))
 
 
-
-
 def test_2021_8_2():
     # index would be {list_index}::{theta}::{phi}
 
