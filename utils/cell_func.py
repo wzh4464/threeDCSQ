@@ -5,12 +5,11 @@ import config
 
 from scipy import ndimage
 from collections import Counter
-from nibabel.viewers import OrthoSlicer3D
 import csv
 
 import os
 
-import functional_func.general_func as general_f
+import utils.general_func as general_f
 
 
 def get_cell_name_affine_table():
@@ -19,16 +18,16 @@ def get_cell_name_affine_table():
     :return: a set of NO. to name LIST and name to NO. DICTIONARY:
     zero first, but actually there are no zero, remember to plus 1
     """
-    name_list = []
-    NO_dic = {}
+    number_cell = []
+    cell_number = {}
     with open(os.path.join('./DATA', 'name_dictionary.csv'), newline='') as name_table:
         name_reader = csv.reader(name_table, delimiter=' ', quotechar='|')
-        name_list.append('background')
+        number_cell.append('background')
         for row in name_reader:
-            NO_dic[row[0].split(',')[1]] = len(name_list)
-            name_list.append(row[0].split(',')[1])
+            cell_number[row[0].split(',')[1]] = len(number_cell)
+            number_cell.append(row[0].split(',')[1])
 
-    return name_list, NO_dic
+    return number_cell, cell_number
 
 
 def nii_get_cell_surface(this_image, save_name=None):

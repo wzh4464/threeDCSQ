@@ -5,7 +5,7 @@ from shapely.geometry.polygon import Polygon
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
+from tqdm import tqdm
 
 def read_solid_file(solid_file_path):
     with open(solid_file_path) as f:
@@ -80,9 +80,9 @@ def random_sample_on_surface(vertices_2d, vertices_order):
         # generate point on x z
         for index_tmp, _ in enumerate(vertices_order):
             points_for_polygon.append((vertices_2d[index_tmp][0], vertices_2d[index_tmp][2]))
-        print('generating polygon on xz plane===>', points_for_polygon)
+        # print('generating polygon on xz plane===>', points_for_polygon)
         polygon = Polygon(points_for_polygon)
-        print('finish generating polygon on xz plane, begin to generate uniform points on xy plane')
+        # print('finish generating polygon on xz plane, begin to generate uniform points on xy plane')
         while len(face_sample) <= 1000:
             x = random.uniform(x_min, x_max)
             z = random.uniform(z_min, z_max)
@@ -95,9 +95,9 @@ def random_sample_on_surface(vertices_2d, vertices_order):
         # generate point on y z
         for index_tmp, _ in enumerate(vertices_order):
             points_for_polygon.append((vertices_2d[index_tmp][1], vertices_2d[index_tmp][2]))
-        print('generating polygon on yz plane===>', points_for_polygon)
+        # print('generating polygon on yz plane===>', points_for_polygon)
         polygon = Polygon(points_for_polygon)
-        print('finish generating polygon on yz plane, begin to generate uniform points on xy plane')
+        # print('finish generating polygon on yz plane, begin to generate uniform points on xy plane')
         while len(face_sample) <= 1000:
             y = random.uniform(y_min, y_max)
             z = random.uniform(z_min, z_max)
@@ -109,9 +109,9 @@ def random_sample_on_surface(vertices_2d, vertices_order):
         # generate point on x y
         for index_tmp, _ in enumerate(vertices_order):
             points_for_polygon.append((vertices_2d[index_tmp][0], vertices_2d[index_tmp][1]))
-        print('generating polygon on xy plane===>', points_for_polygon)
+        # print('generating polygon on xy plane===>', points_for_polygon)
         polygon = Polygon(points_for_polygon)
-        print('finish generating polygon on xy plane, begin to generate uniform points on xy plane')
+        # print('finish generating polygon on xy plane, begin to generate uniform points on xy plane')
         while len(face_sample) <= 1000:
             x = random.uniform(x_min, x_max)
             y = random.uniform(y_min, y_max)
@@ -119,7 +119,7 @@ def random_sample_on_surface(vertices_2d, vertices_order):
             if polygon.contains(Point(x, y)):
                 z = (-a * x - b * y - d) / c
                 face_sample.append([x, y, z])
-    print('finish generate sample points')
+    # print('finish generate sample points')
     # z = (-a * x - b * y - d) / c
     return face_sample
 
@@ -150,11 +150,12 @@ def draw_3D_points_geometry(points_data, fig_name="DEFAULT", fig_size=(10, 10), 
 
 def get_sample_on_geometric_object(tmp_path):
     vertices, faces = read_solid_file(tmp_path)
-    print(vertices, faces)
+    # print(vertices, faces)
     shape_sample = []
-    for index, _ in enumerate(faces):
+    print('generating random points on this regular object surface')
+    for index, _ in enumerate(tqdm(faces)):
         vertex_point_list = []
-        print('item tmp!!', index)
+        # print('item tmp!!', index)
         for item_tmp in faces[index]:
             vertex_point_list.append(vertices[item_tmp])
         shape_sample = shape_sample + random_sample_on_surface(vertex_point_list, faces[index])

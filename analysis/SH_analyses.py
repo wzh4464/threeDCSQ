@@ -1,13 +1,9 @@
 import random
-from typing import Dict
 
-import functional_func.general_func as general_f
-import functional_func.cell_func as cell_f
-import functional_func.draw_func as draw_f
-import particular_func.SH_represention as SH_represention
-
-import numpy.linalg as la
-import scipy.linalg as spla
+import utils.general_func as general_f
+import utils.cell_func as cell_f
+import utils.draw_func as draw_f
+import transformation.SH_represention as SH_represention
 
 from matplotlib import pyplot as plt
 import pyshtools as pysh
@@ -21,10 +17,9 @@ import re
 
 from tqdm import tqdm
 
-from scipy import stats
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from functional_func.spherical_func import normalize_SHc
+from utils.spherical_func import normalize_SHc
 
 cluster_AB_list = ['ABa', 'ABp', 'ABal', 'ABar', 'ABpl', 'ABpr', 'ABala', 'ABalp', 'ABara', 'ABarp', 'ABpla', 'ABplp',
                    'ABpra', 'ABprp']
@@ -564,13 +559,14 @@ def compute_embryo_sh_descriptor_csv(embryo_path, l_degree, path_saving_csv):
     data_embryo_time_slices.to_csv(path_saving_csv)
     # print(count)
 
-def analysis_compare_represent_method(embryo_path):
 
-    embryo_time_list=[]
+def analysis_compare_represent_method(embryo_path):
+    embryo_time_list = []
     for file_name in os.listdir(embryo_path):
         if os.path.isfile(os.path.join(embryo_path, file_name)):
             # print(path_tmp)
             embryo_time_list.append(file_name)
+
 
 def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
     """
@@ -737,8 +733,6 @@ def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
             # there is actually one loop for this embryo this time each cells
             for cell_name in tqdm(cells_list, desc="dealing with {}".format(l_degree)):
 
-
-
                 # ------------------------calculate shc error------------------------------------
                 cell_SH_path = os.path.join(this_embryo_dir, cell_name)
                 sh_coefficient_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=l_degree)
@@ -769,31 +763,66 @@ def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
     # -------------------------------end-------analysis : error----------------------------------------------------
 
 
-def do_reconstruction_for_SH(sample_N, sh_coefficient_instance):
-    """
-    :param sample_N: sample N, total samples will be 2*sample_N**2
-    :param sh_coefficient_instance: the SH transform result
-    :param average_sampling: np.mean(array(shape=average_sampling))
-    :return:  SH transform xyz reconstruction
-    """
-    plane_representation_lat = np.arange(-90, 90, 180 / sample_N)
-    plane_representation_lon = np.arange(0, 360, 360 / (2 * sample_N))
-    plane_LAT, plane_LON = np.meshgrid(plane_representation_lat, plane_representation_lon)
 
-    plane_LAT_FLATTEN = plane_LAT.flatten(order='F')
-    plane_LON_FLATTEN = plane_LON.flatten(order='F')
-    grid = sh_coefficient_instance.expand(lat=plane_LAT_FLATTEN, lon=plane_LON_FLATTEN)
+def generate_3D_matrix_from_SHc(sh_instance, dense=100, multiplier=2):
+    '''
+    not just surface but inside
+    :param sh_instance:
+    :param dense: x y z dense (number of points)
+    :return:
+    '''
+    matrix_3d = np.zeros((dense, dense, dense))
+    # matrix_tmp = np.zeros((dense, dense, dense))
 
-    plane_LAT_FLATTEN = plane_LAT_FLATTEN / 180 * math.pi
-    plane_LON_FLATTEN = plane_LON_FLATTEN / 180 * math.pi
+    error_test_point_num = 10
+    map_tmp = [[random.uniform(0, math.pi), random.uniform(0, 2 * math.pi)] for i in
+               range(error_test_point_num)]
+    R_SHc, shc_sample_xyz = get_points_with_SHc(sh_instance,
+                                                colat=np.array(map_tmp)[:, 0],
+                                                lon=np.array(map_tmp)[:, 1],
+                                                is_return_xyz=True)
+    max_r_index = np.argmax(R_SHc)
+    bound_cube = max(np.abs(shc_sample_xyz[max_r_index])) * multiplier
+    interval_coordinate = bound_cube / (dense / 2)
 
-    reconstruction_matrix = []
-    for i in range(grid.data.shape[0]):
-        reconstruction_matrix.append([grid.data[i], plane_LAT_FLATTEN[i], plane_LON_FLATTEN[i]])
+    for i in range(dense):
+        for j in range(dense):
+            for k in range(dense):
+                x_i, y_j, z_k = -bound_cube + i * interval_coordinate, -bound_cube + j * interval_coordinate, -bound_cube + k * interval_coordinate
+                r, colat, lon = general_f.descartes2spherical2([[x_i, y_j, z_k]])[0]
+                r_shc, _ = get_points_with_SHc(sh_instance, colat=np.array([colat]), lon=np.array([lon]))
+                if r < r_shc:
+                    matrix_3d[i][j][k] = 1
+    return matrix_3d
 
-    reconstruction_xyz = general_f.sph2descartes(np.array(reconstruction_matrix))
+
+def get_points_with_SHc(sh_instance, colat, lon, is_return_xyz=False):
+    '''
+    co latitude
+    :param cilm: the sh instance. coeffs
+    :param colat: the co-latitude points
+    :param lon: the lon points
+    :return: the R of above latitude
+    '''
+
+    sph_list = []
+
+    lat = -(colat - math.pi / 2)
+    f_lm_array = sh_instance.expand(lat=lat, lon=lon, degrees=False)
+    for idx, _ in enumerate(lat):
+        sph_list.append([f_lm_array[idx], lat[idx], lon[idx]])
+
+    reconstruction_xyz = general_f.sph2descartes(np.array(sph_list))
     reconstruction_xyz[:, 2] = -reconstruction_xyz[:, 2]
-    return reconstruction_xyz
+
+    # return the co-latitude!
+    sph_list = general_f.descartes2spherical2(reconstruction_xyz)
+    # print(sph_list[:,1]-colat)
+    # sph_list=np.array(sph_list)
+    if is_return_xyz is True:
+        return sph_list[:, 0], np.array(reconstruction_xyz)
+
+    return sph_list[:, 0], sph_list
 
 
 def do_contraction_image(sh_coefficient_instance, sh_show_N, points_membrane_local):
@@ -802,68 +831,6 @@ def do_contraction_image(sh_coefficient_instance, sh_show_N, points_membrane_loc
     p.start()
     draw_f.draw_3D_points(points_membrane_local)
 
-
-def flatten_clim(sh_coefficient_instance):
-    """
-    # -----------------------------------
-    # cilm coefficient:
-    # [0,:,:]---->m >= 0
-    # [1,:,:]---->m <0
-    # -----------------------------------
-    :param sh_coefficient_instance:
-    :return:
-    """
-    flatten_array = []
-    coefficient_degree = sh_coefficient_instance.coeffs.shape[1]
-    # print(coefficient_degree)
-    for l_degree in range(coefficient_degree):
-        # m<0
-        for m_order in np.arange(l_degree, 0, step=-1):
-            flatten_array.append(sh_coefficient_instance.coeffs[1, l_degree, m_order])
-            # print(1, l_degree, m_order)
-        # m>=0
-        for m_order in np.arange(0, l_degree + 1):
-            flatten_array.append(sh_coefficient_instance.coeffs[0, l_degree, m_order])
-            # print(0, l_degree, m_order)
-
-    return np.array(flatten_array)
-
-
-def collapse_flatten_clim(flatten_clim):
-    l_degree = int(math.sqrt(len(flatten_clim)))
-    # print(l_degree)
-    clim_array = np.zeros((2, l_degree, l_degree))
-    for l_i in range(l_degree):
-        # enumerate_times = 2 * l_i + 1
-        for m_j in np.arange(-l_i, l_i + 1, step=1):
-            if m_j < 0:
-                # print(l_i, m_j, 2 * l_i + m_j)
-                clim_array[1, l_i, np.abs(m_j)] = flatten_clim[l_i ** 2 + m_j + l_i]
-            else:
-                # print(l_i, m_j, 2 * l_i + m_j)
-                clim_array[0, l_i, m_j] = flatten_clim[l_i ** 2 + m_j + l_i]
-    return clim_array
-
-
-def get_flatten_ldegree_morder(degree):
-    """
-
-    :param degree: see the l_degree explanation, that's why I need to plus one in func:get_flatten_ldegree_morder
-    :return:  index slice : in dataframe it's called columns
-    """
-    index_slice = []
-    # print(coefficient_degree)
-    for l_degree in range(degree + 1):
-        # m<0
-        for m_order in np.arange(l_degree, 0, step=-1):
-            index_slice.append('l' + str(l_degree) + '-m' + str(-m_order))
-            # print(1, l_degree, m_order)
-        # m>=0
-        for m_order in np.arange(0, l_degree + 1):
-            index_slice.append('l' + str(l_degree) + '-m' + str(m_order))
-            # print(0, l_degree, m_order)
-    # in dataframe it's called columns
-    return index_slice
 
 
 def conclude_cluster_in_percentage(cluster_result, cell_index, cluster_cell_list, cluster_num):
@@ -919,4 +886,3 @@ def conclude_cluster_in_percentage(cluster_result, cell_index, cluster_cell_list
 
 # def do_SHc_
 # if __name__ == "__main__":
-#     做experiemtn for sh in Spherical Wavelet Descriptors for Content-based 3D Model Retrieva

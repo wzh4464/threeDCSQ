@@ -1,22 +1,10 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import pyshtools as pysh
+# import pyshtools as pysh
 
-import csv
 import os
 import config
 
-import particular_func.SH_represention as SH_func
-
-import particular_func.SH_analyses as SH_A_func
-
-import functional_func.cell_func as cell_f
-import functional_func.general_func as general_f
-import pandas as pd
-from multiprocessing import Process
-import functional_func.draw_func as draw_f
-
-import test_scripts
+import utils.general_func as general_f
+from transformation.SH_represention import get_SH_coeffient_from_surface_points
 
 
 def main():
@@ -24,20 +12,23 @@ def main():
 
     # ------------------------------R fibonacci representation------------------------------------------------
     # img_1 = general_f.load_nitf2_img(os.path.join(config.dir_segemented, 'Embryo04_000_segCell.nii.gz'))
+    general_f.show_nitf2_img(os.path.join(config.dir_segemented_tmp1, 'Embryo04_068_segCell.nii.gz'))
+
+
     # _ = cell_f.nii_get_cell_surface(img_1, save_name='Embryo04_000_segCell.nii.gz')
 
     # img_2 = general_f.show_nitf2_img(os.path.join(config.dir_my_data, 'membrane' + 'Embryo04_001_segCell.nii.gz'))
     # R_func.build_R_array_for_embryo(128)
     # ---------------------------------------------------------------------------------------------------------
 
-    # # ------------------------------calculate SHC for each cell ----------------------------------------------
-    # path_tmp=r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
-    # for file_name in os.listdir(path_tmp):
-    #     if os.path.isfile(os.path.join(path_tmp,file_name)):
-    #         print(path_tmp)
-    #         SH_func.get_SH_coeffient_from_surface_points(embryo_path=path_tmp, sample_N=100, lmax=49,
-    #                                                      file_name=file_name)
-    # # -------------------------------------------------------------------------------------------------------
+    # ------------------------------calculate SHC for each cell ----------------------------------------------
+    path_tmp=r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
+    for file_name in os.listdir(path_tmp):
+        if os.path.isfile(os.path.join(path_tmp,file_name)):
+            print(path_tmp)
+            get_SH_coeffient_from_surface_points(embryo_path=path_tmp, sample_N=100, lmax=49,
+                                                         file_name=file_name)
+    # -------------------------------------------------------------------------------------------------------
 
     # ------------------------------do contraction with sh expand and shc expand------------------------------
 
@@ -49,8 +40,8 @@ def main():
     #                             args=(path_tmp, 'Embryo04_009_segCell.nii.gz', 'draw_contraction',))
     # p.start()
 
-    SH_A_func.analysis_compare_SHc(embryo_path=config.dir_segemented_tmp1,
-                                   file_name='Embryo04_009_segCell.nii.gz', behavior='draw_contraction')
+    # SH_A_func.analysis_compare_SHc(embryo_path=config.dir_segemented_tmp1,
+    #                                file_name='Embryo04_009_segCell.nii.gz', behavior='draw_contraction')
 
     # ---------------------------------------------------------------------------------------------------------
 

@@ -1,14 +1,17 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 import os
 import config
 import random
-import pandas as pd
 import pyshtools as pysh
 
-import particular_func.SH_analyses as SH_A_f
-import functional_func.general_func as general_f
+
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
+
+from utils.general_func import read_csv_to_df
+from utils.sh_cooperation import do_reconstruction_for_SH, collapse_flatten_clim
 
 
 def generate_2D_Z_ARRAY(x, y, z):
@@ -108,7 +111,7 @@ def draw_3D_points_in_new_coordinate(points, center=None):
     return points_new
 
 
-def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None):
+def draw_3D_points(points_data, fig_name="", fig_size=(10, 10), ax=None, cmap='viridis'):
     x = points_data[:, 0]  # first column of the 2D matrix
     y = points_data[:, 1]
     z = points_data[:, 2]
@@ -116,16 +119,20 @@ def draw_3D_points(points_data, fig_name="DEFAULT", fig_size=(10, 10), ax=None):
     if ax == None:
         fig = plt.figure(figsize=fig_size)
         ax = Axes3D(fig)
-        ax.scatter3D(x, y, z, cmap='BuRd', marker='o')
-        ax.set_zlabel('Z')  # 坐标轴
-        ax.set_ylabel('Y')
-        ax.set_xlabel('X')
+        # ax.scatter3D(x, y, z, marker='o', c=z, cmap=cmap)
+        ax.scatter3D(x, y, z, c=z, cmap=cmap)
+
+        ax.set_zlabel('Z').set_fontstyle('italic')  # 坐标轴
+        ax.set_ylabel('Y').set_fontstyle('italic')
+        ax.set_xlabel('X').set_fontstyle('italic')
         ax.set_title(fig_name)
 
         plt.title(fig_name)
         plt.show()
     else:
-        ax.scatter3D(x, y, z, cmap='BuRd', marker='o')
+        # ax.scatter3D(x, y, z, marker='o', c=z, cmap=cmap)
+        ax.scatter3D(x, y, z, c=z, cmap=cmap)
+
         ax.set_zlabel('Z')  # 坐标轴
         ax.set_ylabel('Y')
         ax.set_xlabel('X')
@@ -149,7 +156,7 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
         print("==EEERRRROOOOR==========no embryo normalized sh coefficient df!!!!!!!!!!!!!==================")
         return
     # after build it, we can read it directly
-    df_embryo_time_slices = general_f.read_csv_to_df(path_saving_csv_normalized)
+    df_embryo_time_slices = read_csv_to_df(path_saving_csv_normalized)
     #
     # df_embryo_time_slices = pd.read_csv(path_saving_csv_normalized)
     # df_index_tmp = df_embryo_time_slices.values[:, :1]
@@ -167,7 +174,7 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
         print("==EEERRRROOOOR==========no SH PCA coefficient df!!!!!!!!!!!!!==================")
         return
 
-    df_PCA_matrix = general_f.read_csv_to_df(PCA_matrices_saving_path)
+    df_PCA_matrix = read_csv_to_df(PCA_matrices_saving_path)
     # df_PCA_matrix = pd.read_csv(PCA_matrices_saving_path)
     # df_index_tmp = df_PCA_matrix.values[:, :1]
     # df_PCA_matrix.drop(columns=df_PCA_matrix.columns[0], inplace=True)
@@ -191,7 +198,7 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
         print("==EEERRRROOOOR==========no SHcPCA coefficient df!!!!!!!!!!!!!==================")
         return
 
-    df_SHcPCA_coeffs = general_f.read_csv_to_df(embryo_time_matrices_saving_path)
+    df_SHcPCA_coeffs = read_csv_to_df(embryo_time_matrices_saving_path)
     # df_SHcPCA_coeffs = pd.read_csv(embryo_time_matrices_saving_path)
     # df_index_tmp = df_SHcPCA_coeffs.values[:, :1]
     # df_SHcPCA_coeffs.drop(columns=df_SHcPCA_coeffs.columns[0], inplace=True)
@@ -207,13 +214,13 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
 
             shc_instance = pysh.SHCoeffs.from_array(
                 SH_A_f.collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp])))
-            shc_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shc_instance)
+            shc_reconstruction = do_reconstruction_for_SH(30, shc_instance)
             axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
             draw_3D_points(shc_reconstruction, fig_name='original sh coefficient', ax=axes_tmp)
 
             shcPCA_shc_list = list(mean_PCA + np.dot(df_PCA_matrix.values[:12, :].T, df_SHcPCA_coeffs.loc[index_tmp]))
-            shcPCA_instance = pysh.SHCoeffs.from_array(SH_A_f.collapse_flatten_clim(shcPCA_shc_list))
-            shcPCA_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shcPCA_instance)
+            shcPCA_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(shcPCA_shc_list))
+            shcPCA_reconstruction = do_reconstruction_for_SH(30, shcPCA_instance)
             axes_tmp = fig.add_subplot(1, 2, 2, projection='3d')
             draw_3D_points(shcPCA_reconstruction, fig_name=' sh coefficient PCA', ax=axes_tmp)
             plt.show()
@@ -224,8 +231,8 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
             fig = plt.figure()
             # SHc representation
             shc_instance = pysh.SHCoeffs.from_array(
-                SH_A_f.collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp][:PCA_NUM])))
-            shc_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shc_instance)
+                collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp][:PCA_NUM])))
+            shc_reconstruction = do_reconstruction_for_SH(30, shc_instance)
             axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
             draw_3D_points(shc_reconstruction, fig_name=index_tmp + '  original SHc', ax=axes_tmp)
 
@@ -233,8 +240,8 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
             shcPCA_shc_list = list(
                 mean_PCA + np.dot(df_PCA_matrix.values[:used_PCA_num, :].T,
                                   df_SHcPCA_coeffs.loc[index_tmp][:used_PCA_num]))
-            shcPCA_instance = pysh.SHCoeffs.from_array(SH_A_f.collapse_flatten_clim(shcPCA_shc_list))
-            shcPCA_reconstruction = SH_A_f.do_reconstruction_for_SH(30, shcPCA_instance)
+            shcPCA_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(shcPCA_shc_list))
+            shcPCA_reconstruction = do_reconstruction_for_SH(30, shcPCA_instance)
 
             print('SHc--->', list(df_embryo_time_slices.loc[index_tmp][:20]))
             print('SHcPCA--->', shcPCA_shc_list[:20])
@@ -242,3 +249,30 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
             axes_tmp = fig.add_subplot(1, 2, 2, projection='3d')
             draw_3D_points(shcPCA_reconstruction, fig_name=index_tmp + '  SHcPCA coefficient', ax=axes_tmp)
             plt.show()
+
+
+
+
+
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        FancyArrowPatch.draw(self, renderer)
+
+
+def set_size(w,h, ax=None):
+    """ w, h: width, height in inches """
+    if not ax: ax=plt.gca()
+    l = ax.figure.subplotpars.left
+    r = ax.figure.subplotpars.right
+    t = ax.figure.subplotpars.top
+    b = ax.figure.subplotpars.bottom
+    figw = float(w)/(r-l)
+    figh = float(h)/(t-b)
+    ax.figure.set_size_inches(figw, figh)

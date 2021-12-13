@@ -38,6 +38,7 @@ def descartes2spherical(points_xyz):
     :param points_xyz:
     :return: [r,latitude(inclination angle,from y),longitude]
     """
+    points_xyz = np.array(points_xyz)
     pts_sph = np.zeros(points_xyz.shape)
 
     # https://en.wikipedia.org/wiki/Spherical_coordinate_system
@@ -56,6 +57,7 @@ def sph2descartes(points_sph):
     :param points_sph: latitude is used in latitude -90-90 degrees
     :return:
     """
+    points_sph = np.array(points_sph)
     points_xyz = np.zeros(points_sph.shape)
 
     radius = points_sph[:, 0]
@@ -81,13 +83,14 @@ def descartes2spherical2(points_xyz):
     :param points_xyz:
     :return: [r,co-latitude(from z),longitude]
     """
+    points_xyz = np.array(points_xyz)
     pts_sph = np.zeros(points_xyz.shape)
 
     # https://en.wikipedia.org/wiki/Spherical_coordinate_system
     # be careful, this is my transform base formula. There are many different transformation methods I thinks.
     xy = points_xyz[:, 0] ** 2 + points_xyz[:, 1] ** 2
     pts_sph[:, 0] = np.sqrt(xy + points_xyz[:, 2] ** 2)
-    pts_sph[:, 1] = np.arctan2(np.sqrt(xy), points_xyz[:, 2])  # lat phi
+    pts_sph[:, 1] = np.arctan2(np.sqrt(xy), points_xyz[:, 2])  # colat phi
     # pts_sph[:,1] = np.arctan2(xyz[:,2], np.sqrt(xy)) # for elevation angle defined from XY-plane up
     pts_sph[:, 2] = np.arctan2(points_xyz[:, 1], points_xyz[:, 0]) % (2 * math.pi)  # lon theta
     return pts_sph
@@ -96,9 +99,10 @@ def descartes2spherical2(points_xyz):
 def sph2descartes2(points_sph):
     """
 
-    :param points_sph: latitude is used in co-latitude 0-180
+    :param points_sph: used in co-latitude 0-180
     :return:
     """
+    points_sph = np.array(points_sph)
     points_xyz = np.zeros(points_sph.shape)
 
     radius = points_sph[:, 0]
@@ -203,9 +207,9 @@ def read_csv_to_df(csv_path):
     :return:
     """
     # ---------------read SHcPCA coefficient-------------------
-    if not os.path.exists(csv_path):
-        print('error detected! no SHcPCA matrix csv file can be found')
-        return
+    # if not os.path.exists(csv_path):
+    #     print('error detected! no SHcPCA matrix csv file can be found')
+    #     return
     df_read = pd.read_csv(csv_path)
     df_index_tmp = df_read.values[:, :1]
     df_read.drop(columns=df_read.columns[0], inplace=True)
@@ -223,6 +227,7 @@ def combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv, l_degree=25, is
         path_saving_csv_normalized_tmp = os.path.join(dir_my_data_SH_time_domain_csv,
                                                       embryo_name_tmp + '_l_' + str(l_degree) + '.csv')
     together_df = pd.DataFrame(columns=read_csv_to_df(path_saving_csv_normalized_tmp).columns)
+
     for cell_index in np.arange(start=4, stop=21, step=1):
         # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
         # print(path_tmp)
@@ -233,8 +238,12 @@ def combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv, l_degree=25, is
         embryo_name = 'Sample{}LabelUnified'.format(embryo_num)
         print(embryo_name)
 
-        path_saving_csv_normalized = os.path.join(dir_my_data_SH_time_domain_csv,
-                                                  embryo_name + '_l_' + str(l_degree) + '_norm.csv')
+        if is_norm:
+            path_saving_csv_normalized = os.path.join(dir_my_data_SH_time_domain_csv,
+                                                      embryo_name + '_l_' + str(l_degree) + '_norm.csv')
+        else:
+            path_saving_csv_normalized = os.path.join(dir_my_data_SH_time_domain_csv,
+                                                      embryo_name + '_l_' + str(l_degree) + '.csv')
         norm_df = read_csv_to_df(path_saving_csv_normalized)
         # go through this norm df
         print('reconstructing the index in together dataframe')
@@ -247,7 +256,6 @@ def combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv, l_degree=25, is
         together_df.to_csv(os.path.join(dir_my_data_SH_time_domain_csv, 'SHc_norm.csv'))
     else:
         together_df.to_csv(os.path.join(dir_my_data_SH_time_domain_csv, 'SHc.csv'))
-
 
 
 def rotate_points_lon(points_list, phi):
