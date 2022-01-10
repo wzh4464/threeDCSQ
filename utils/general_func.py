@@ -1,13 +1,17 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# import dependency library
+import os
 import math
-import tqdm as tqdm
 
 import nibabel as nib
-import os
 from nibabel.viewers import OrthoSlicer3D
 
 import numpy as np
 import pandas as pd
 
+# import user defined library
 
 def load_nitf2_img(path):
     return nib.load(path)

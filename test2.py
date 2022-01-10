@@ -1,8 +1,9 @@
 # import dependency library
-import copy
+import open3d as o3d
 import json
 from random import uniform
 
+from skimage.measure import marching_cubes_lewiner, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import make_pipeline, Pipeline
@@ -45,9 +46,9 @@ from utils.cell_func import get_cell_name_affine_table
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
 from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
-from utils.shape_model import generate_alpha_shape
+from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 
-from utils.shape_preprocess import get_contact_area, export_points_json
+from utils.shape_preprocess import get_contact_area, export_dia_cell_points_json, export_dia_cell_surface_points_json
 
 """
 Sample06,ABalaapa,078
@@ -364,7 +365,7 @@ def SPCSMs_SVM():
 
 
 def figure_for_science():
-    # Sample06,Dpaap,158
+    # Sample06,Capp,079
     # Sample06,ABalaapa,078
     print('waiting type you input1')
     embryo_name1, cell_name1, tp1 = str(input()).split(',')
@@ -374,16 +375,14 @@ def figure_for_science():
     # cell_name = str(input())
     # tp = str(input())
 
-    print(embryo_name, cell_name, tp)
-
     embryo_path_csv = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
-    # plt.rcParams['text.latex.preamble'] = [r"\usepackage{lmodern}"]
-    params = {'text.usetex': True,
-              }
-    plt.rcParams.update(params)
+    plt.rcParams['text.usetex'] = True
+    # params = {'text.usetex': True,
+    #           }
+    # plt.rcParams.update(params)
     fig_SPCSMs_info = plt.figure()
 
     axes_tmp1 = fig_SPCSMs_info.add_subplot(2, 2, 1, projection='3d')
@@ -397,11 +396,15 @@ def figure_for_science():
 
     axes_tmp1.plot_surface(X2d, Y2d, instance_tmp1_expanded, cmap=cm.coolwarm,
                            linewidth=0, antialiased=False, rstride=60, cstride=10)
+    axes_tmp1.set_zlabel(r'\textit{z}')  # 坐标轴
+    axes_tmp1.set_ylabel(r'\textit{y}')
+    axes_tmp1.set_xlabel(r'\textit{x}')
+    axes_tmp1.colorbar()
 
     axes_tmp2 = fig_SPCSMs_info.add_subplot(2, 2, 2)
     instance_tmp1.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                       xlabel='x of X-Y plane',
-                       ylabel='y of X-Y plane', axes_labelsize=12, tick_interval=[60, 60])
+                       xlabel=r'\textit{x}',
+                       ylabel=r'\textit{y}', axes_labelsize=12, tick_interval=[60, 60])
     set_size(5, 5, ax=axes_tmp2)
 
     # embryo_path_name = embryo_name + 'LabelUnified'
@@ -445,7 +448,7 @@ def figure_for_science():
     y_lon = np.sqrt(225 - np.power(x_lon, 2))
     # print(y_lon)
     axes_tmp3.scatter3D(x_lon, y_lon, np.zeros(1000), s=3, color='blue')
-    axes_tmp3.text(23, 23, 0, 'longitude', (-1, 1, 0), ha='center')
+    axes_tmp3.text(19, 19, 0, 'longitude', (-1, 1, 0), ha='center')
 
     # latitude circle
     y_lat = np.arange(0, 15, 15 / 1000)
@@ -453,20 +456,19 @@ def figure_for_science():
     axes_tmp3.scatter3D(np.zeros(1000), y_lat, z_lat, s=3, color='black')
     axes_tmp3.text(0, 18, 18, 'latitude', (-1, 1, 0), ha='center')
 
-    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, 'x', (-1, 1, 0), ha='center').set_fontstyle('italic')
-    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, 'y', (-1, 1, 0), ha='center').set_fontstyle('italic')
-    axes_tmp3.text(-0.1 * sn, 0, sn + 10, 'z', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, r'\textit{x}', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, r'\textit{y}', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(-0.1 * sn, 0, sn + 10, r'\textit{z}', (-1, 1, 0), ha='center').set_fontstyle('italic')
 
-    axes_tmp3.text('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold',
-                   style='italic')
     # axes_tmp3.annotate('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold', style='italic')
 
     axes_tmp4 = fig_SPCSMs_info.add_subplot(2, 2, 4)
     grid_tmp = instance_tmp.expand(lmax=100)
     # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
     grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                  xlabel='Longitude (X-Y plane)',
-                  ylabel='Latitude (Y-Z plane)', axes_labelsize=12, tick_interval=[60, 60])
+                  xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
+                  ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)', axes_labelsize=12,
+                  tick_interval=[60, 60])
 
     fig_SPCSMs_info.text(0, 0.7, '3D Surface Mapping', fontsize=12)
     fig_SPCSMs_info.text(0, 0.25, '3D Object Mapping', fontsize=12)
@@ -495,7 +497,7 @@ def figure_for_science():
     plt.show()
 
 
-def calculate_cell_contact_surface():
+def calculate_cell_contact_points():
     # Sample06,Dpaap,158
     # Sample06,ABalaapa,078
     # print('waiting type you input1')
@@ -543,16 +545,32 @@ def calculate_cell_points():
             this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
             img_arr = this_img.get_data()
 
-            cell_points = export_points_json(img_arr)
-            # print(cell_points)
+            cell_points = export_dia_cell_points_json(img_arr)
+            dia_cell_saving = r'./DATA/cell_dia_points'
+
+            with open(os.path.join(dia_cell_saving, file_name.split('.')[0] + '.json'), 'w') as fp:
+                json.dump(cell_points, fp)
+
+            print("done in %0.3fs" % (time() - t0))
+
+
+def calculate_cell_surface_points():
+    # ------------------------calculate surface points using dialation for each cell --------------------
+    path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
+    for file_name in os.listdir(path_tmp):
+        if os.path.isfile(os.path.join(path_tmp, file_name)):
+            t0 = time()
+            print(path_tmp, file_name)
+            this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
+            img_arr = this_img.get_data()
+
+            cell_points = export_dia_cell_surface_points_json(img_arr)
             dia_surface_saving = r'./DATA/cell_dia_surface'
 
             with open(os.path.join(dia_surface_saving, file_name.split('.')[0] + '.json'), 'w') as fp:
                 json.dump(cell_points, fp)
 
             print("done in %0.3fs" % (time() - t0))
-
-            # print(cell_surface)
 
 
 def display_contact_points():
@@ -563,15 +581,6 @@ def display_contact_points():
     # Sample20,MSp,035
     print('waiting type you input: samplename and timepoints for embryogenesis')
     embryo_name, cell_name, tp = str(input()).split(',')
-
-    # get center points
-    # embryo_path_name = embryo_name + 'LabelUnified'
-    # embryo_path = os.path.join(r'.\DATA\SegmentCellUnified04-20', embryo_path_name)
-    # file_name = embryo_name + '_' + tp + '_segCell.nii.gz'
-    # dict_cell_points, dict_center_points = get_nib_embryo_membrane_dict(embryo_path, file_name)
-    # ax.text(this_cell_center[0], this_cell_center[1], this_cell_center[2], cell_name + '_' + fate_cell,
-    #         (-1, 1, 0), ha='center')
-    # this_cell_center = dict_center_points[this_cell_keys]
 
     num_cell_name, cell_num = get_cell_name_affine_table()
     this_cell_keys = cell_num[cell_name]
@@ -586,8 +595,8 @@ def display_contact_points():
         if str(this_cell_keys) in label1_2:
             display_key_list.append(idx)
 
-    fig_contact_info = plt.figure()
-    plt.axis('off')
+    # fig_contact_info = plt.figure()
+    # plt.axis('off')
     item_count = 1
     print('contact number', len(display_key_list))
     for idx in display_key_list:
@@ -601,39 +610,33 @@ def display_contact_points():
         for item_str in data[idx]:
             x, y, z = item_str.split('_')
             x, y, z = int(x), int(y), int(z)
-            # print(item_str)
-            # print(x, y, z)
             draw_points_list.append([x, y, z])
 
-        a = idx.split('_')
-        a.remove(str(this_cell_keys))
-        contact_cell_num = int(a[0])
-        ax = fig_contact_info.add_subplot(3, 3, item_count, projection='3d')
-        draw_3D_points(np.array(draw_points_list), fig_name=cell_name + '_' + num_cell_name[contact_cell_num], ax=ax)
+        [x_tmp, y_tmp, z_tmp] = np.amax(np.array(draw_points_list), axis=0)
+        contact_mask = np.zeros((x_tmp * 2, y_tmp * 2, z_tmp * 2))
+        for [x_tmp, y_tmp, z_tmp] in draw_points_list:
+            contact_mask[x_tmp, y_tmp, z_tmp] = True
+        verts, faces, _, _ = marching_cubes_lewiner(contact_mask)
+        contact_mesh = o3d.geometry.TriangleMesh(o3d.cpu.pybind.utility.Vector3dVector(verts),
+                                                 o3d.cpu.pybind.utility.Vector3iVector(faces))
 
-        dfs = pd.read_excel(config.cell_fate_path, sheet_name=None)['CellFate']
-        fate_cell = dfs[dfs['Name'] == cell_name + '\'']['Fate'].values[0].split('\'')[0]
-        # for idx in dfs.index:
-        #     # print(row)
-        #     name = dfs.loc[idx]['Name'].split('\'')[0]
-        #     fate = dfs.loc[idx]['Fate'].split('\'')[0]
-        #     fate_dict[name] = fate
+        print(idx,'  matching cubes method surface area:',mesh_surface_area(verts, faces) / 2)
 
-        #
-        # contact_cell_fate = dfs[dfs['Name'] == num_cell_name[contact_cell_num] + '\'']['Fate'].values[0].split('\'')[0]
-        # contact_cell_center = dict_center_points[contact_cell_num]
-        # ax.text(contact_cell_center[0], contact_cell_center[1], contact_cell_center[2],
-        #         num_cell_name[contact_cell_num] + '_' + contact_cell_fate,
-        #         (-1, 1, 0), ha='center')
+        contact_mesh.compute_vertex_normals()
+        o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
 
-        #
-        # contact_arrow = Arrow3D([0, 0], [0, 0],
-        #                  [0, sn + 23], mutation_scale=20,
-        #                  lw=3, arrowstyle="-|>", color="r")
-        # ax.add_artist(contact_arrow)
+
+        # a = idx.split('_')
+        # a.remove(str(this_cell_keys))
+        # contact_cell_num = int(a[0])
+        # ax = fig_contact_info.add_subplot(3, 3, item_count, projection='3d')
+        # draw_3D_points(np.array(draw_points_list), fig_name=cell_name + '_' + num_cell_name[contact_cell_num], ax=ax)
+
+        # dfs = pd.read_excel(config.cell_fate_path, sheet_name=None)['CellFate']
+        # fate_cell = dfs[dfs['Name'] == cell_name + '\'']['Fate'].values[0].split('\'')[0]
 
         item_count += 1
-    plt.show()
+    # plt.show()
 
 
 def display_contact_alpha_surface():
@@ -647,73 +650,28 @@ def display_contact_alpha_surface():
     num_cell_name, cell_num = get_cell_name_affine_table()
     this_cell_keys = cell_num[cell_name]
 
-    # getting all data points including dialation surface points
-    with open(os.path.join(r'./DATA/cell_dia_surface', embryo_name + '_' + tp + '_segCell.json')) as fp:
-        data = json.load(fp)
+    # -------getting all data points including dilation  points -- for generate alpha shape--------
+    with open(os.path.join(r'./DATA/cell_dia_points', embryo_name + '_' + tp + '_segCell.json')) as fp:
+        cell_data = json.load(fp)
     cell_points_building_as = []
-    print(data.keys())
-    for item_str in data[str(this_cell_keys)]:
+    print(cell_data.keys())
+    for item_str in cell_data[str(this_cell_keys)]:
         x, y, z = item_str.split('_')
         x, y, z = float(x) + uniform(0, 0.001), float(y) + uniform(0, 0.001), float(
             z) + uniform(0, 0.001)
         cell_points_building_as.append([x, y, z])
     cell_points_building_as = np.array(cell_points_building_as)
     print(cell_points_building_as)
-    m_mesh = generate_alpha_shape(cell_points_building_as, displaying=True)
+    m_mesh = generate_alpha_shape(cell_points_building_as,displaying=True)
+    # ---------------------------finished generating alpha shape -------------------------------
 
+    with open(os.path.join(r'./DATA/cell_dia_surface', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
+        surface_data = json.load(fp)
 
-    import open3d as o3d
-
-    # o3d.visualization.draw_geometries([m_mesh.filter_sharpen()], mesh_show_back_face=True, mesh_show_wireframe=True)
-
-    print(np.asarray(m_mesh.vertices))
-    cell_vertices=np.asarray(m_mesh.vertices).astype(int)
-    print(cell_vertices)
-
-    cell_triangles=np.asarray(m_mesh.triangles)
-
-    # getting contact surface and build its triangulation mesh
     with open(os.path.join(r'./DATA/cshaper_contact_data', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
         surface_contact_data = json.load(fp)
 
-    display_key_list = []
-    for idx in surface_contact_data.keys():
-        # print(idx, len(surface_contact_data[idx]))
-        label1_2 = idx.split('_')
-        if str(this_cell_keys) in label1_2:
-            display_key_list.append(idx)
-
-    item_count = 1
-    print('contact number', len(display_key_list))
-
-    for idx in display_key_list:
-        contact_mask_not = [True for i in range(len(cell_vertices))]
-        print(idx)
-        for item_str in surface_contact_data[idx]:
-            x, y, z = item_str.split('_')
-            x,y,z=int(x),int(y),int(z)
-            print(cell_vertices)
-            print(x,y,z)
-            print(np.prod(cell_vertices == [x, y, z], axis=-1))
-            contact_vertices_loc = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
-            # t1,
-            if len(contact_vertices_loc[0])!=0:
-                contact_mask_not[contact_vertices_loc[0][0]]=False
-
-        # contact_vertices_loc=np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
-        # contact_mask_not=np.logical_not(np.prod(cell_vertices == [x, y, z], axis=-1))
-        contact_mesh=copy.deepcopy(m_mesh)
-        print(contact_mask_not)
-        contact_mesh.remove_vertices_by_mask(contact_mask_not)
-
-        o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
-        # p = Process(target=generate_alpha_shape,
-        #             args=(np.array(draw_points_list), True,2,))
-        # p.start()
-
-        item_count += 1
-
-
+    get_contact_surface_mesh(this_cell_keys, surface_data, surface_contact_data, m_mesh, True)
 
 
 def calculate_SH_PCA_coordinate():
@@ -731,5 +689,6 @@ def calculate_SH_PCA_coordinate():
 if __name__ == "__main__":
     print('test2 run')
     display_contact_alpha_surface()
+    # figure_for_science()
     # display_contact_points()
     # show_cell_SPCSMs_info()

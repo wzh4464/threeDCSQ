@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+# import dependency library
+
 import nibabel as nib
 import numpy as np
 import pandas as pd
@@ -9,10 +15,12 @@ import csv
 
 import os
 
+# import user defined library
+
 import utils.general_func as general_f
 
 
-def get_cell_name_affine_table():
+def get_cell_name_affine_table(path=r'./DATA/name_dictionary_no_name.csv'):
     """
 
     :return: a set of NO. to name LIST and name to NO. DICTIONARY:
@@ -20,7 +28,7 @@ def get_cell_name_affine_table():
     """
     number_cell = []
     cell_number = {}
-    with open(os.path.join('./DATA', 'name_dictionary.csv'), newline='') as name_table:
+    with open(path, newline='') as name_table:
         name_reader = csv.reader(name_table, delimiter=' ', quotechar='|')
         number_cell.append('background')
         for row in name_reader:
@@ -114,4 +122,3 @@ def count_volume_surface_normalization_tocsv(path_tmp):
                                                                                                     1 / 3)
     embryo_name = os.path.split(path_tmp)[-1]
     data_embryo_time_slices.to_csv(os.path.join(config.dir_my_data_volume_surface, embryo_name + '.csv'))
-

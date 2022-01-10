@@ -1,9 +1,7 @@
-import analysis.SH_analyses as sh_analysis
-from pyshtools import SHCoeffs
-from utils.draw_func import draw_3D_points
-from matplotlib import pyplot as plt
-import utils.general_func as general_f
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+# import dependency library
 import os
 import config
 
@@ -11,6 +9,16 @@ import numpy as np
 import pandas as pd
 import numpy.linalg as la
 from tqdm import tqdm
+from matplotlib import pyplot as plt
+from pyshtools import SHCoeffs
+
+# import user defined library
+
+import analysis.SH_analyses as sh_analysis
+from utils.draw_func import draw_3D_points
+import utils.general_func as general_f
+
+
 
 
 def draw_PCA(sh_PCA_path):

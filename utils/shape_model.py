@@ -1,20 +1,90 @@
-# import dependency library
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+
+# import dependency library
+from copy import deepcopy
+from json import load
 
 import open3d as o3d
 import numpy as np
-import PIL.Image
-import IPython.display
 import os
 import urllib.request
 import tarfile
 import gzip
-import zipfile
 import shutil
-import sys
 
 
 # import user defined library
+
+
+def get_contact_surface_mesh(cell_key: int, surface_data: dict, surface_contact_data: dict,
+                             m_mesh: o3d.geometry.TriangleMesh,
+                             displaying=False):
+    '''
+    getting contact surface and build its triangulation mesh
+
+    :param surface_data:
+    :param surface_contact_data:
+    :param cell_key:
+    :param m_mesh:
+    :param displaying:
+    :return:
+    '''
+    cell_vertices = np.asarray(m_mesh.vertices).astype(int)
+
+    display_key_list = []
+    for idx in surface_contact_data.keys():
+        label1_2 = idx.split('_')
+        if str(cell_key) in label1_2:
+            display_key_list.append(idx)
+
+    item_count = 1
+    print('contact cell number', len(display_key_list))
+    print(len(surface_data[str(cell_key)]))
+
+    # enumerate each contact surface (cell - cell)
+    for idx in display_key_list:
+        # build a mask to erase not contact points
+        contact_mask_not = [False for i in range(len(cell_vertices))]
+        print(idx)
+        # enumerate each points in contact,
+        for item_str in surface_data[str(cell_key)]:
+            if item_str not in surface_contact_data[idx]:
+                x, y, z = item_str.split('_')
+                x, y, z = int(x), int(y), int(z)
+                # print(np.prod(cell_vertices == [x, y, z], axis=-1))
+                contact_vertices_loc = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
+                # t1,
+                if len(contact_vertices_loc[0]) != 0:
+                    contact_mask_not[contact_vertices_loc[0][0]] = True
+
+        # contact_vertices_loc=np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
+        # contact_mask_not=np.logical_not(np.prod(cell_vertices == [x, y, z], axis=-1))
+        contact_mesh = deepcopy(m_mesh)
+        contact_mesh.remove_vertices_by_mask(contact_mask_not)
+
+        print('mesh info', contact_mesh)
+        print('edge manifold', contact_mesh.is_edge_manifold(allow_boundary_edges=True))
+        # print('edge manifold boundary', contact_mesh.is_edge_manifold(allow_boundary_edges=False))
+
+        if displaying:
+            contact_mesh.compute_vertex_normals()
+
+            vertex_colors = 0.75 * np.ones((len(contact_mesh.vertices), 3))
+            for boundary in contact_mesh.get_non_manifold_edges(allow_boundary_edges=False):
+                for vertex_id in boundary:
+                    vertex_colors[vertex_id] = [1, 0, 0]
+            contact_mesh.vertex_colors = o3d.utility.Vector3dVector(vertex_colors)
+
+            print(idx,'  alpha shape method contace surface area',contact_mesh.get_surface_area())
+
+            o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
+        # p = Process(target=generate_alpha_shape,
+        #             args=(np.array(draw_points_list), True,2,))
+        # p.start()
+
+        item_count += 1
 
 
 def get_armadillo_mesh():
@@ -72,83 +142,38 @@ def generate_alpha_shape(points_np: np.array, displaying: bool = False, alpha_va
     :param view_name:
     :return:
     '''
-    pcd = o3d.geometry.PointCloud()
-    # print(np.mean(points_np, axis=0))
-    # print(points_np)
-    pcd.points = o3d.utility.Vector3dVector(points_np)
-    # print(np.asarray(pcd.points))
-    # o3d.visualization.draw_geometries([pcd])
+    m_pcd = o3d.geometry.PointCloud()
 
-    # mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, alpha_value)
+    m_pcd.points = o3d.utility.Vector3dVector(points_np)  # observe the points with np.asarray(pcd.points)
 
-    # tetra_mesh, pt_map = o3d.geometry.TetraMesh.create_from_point_cloud(pcd)
-    # o3d.visualization.draw_geometries([pcd, tetra_mesh])
+    # the mesh is developed from http://www.open3d.org/docs/release/python_api/open3d.geometry.TriangleMesh.html
+    m_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(m_pcd, alpha_value)
 
-    # pcd.estimate_normals()
-    # radii = [0.1,0.5, 1, 2, 4,8,16,32]
-    # rec_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
-    #     pcd, o3d.utility.DoubleVector(radii))
-    mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, alpha_value)
+    print('mesh info',m_mesh)
+    print('edge manifold', m_mesh.is_edge_manifold(allow_boundary_edges=True))
+    print('edge manifold boundary', m_mesh.is_edge_manifold(allow_boundary_edges=False))
+    # print('vertex manifold', m_mesh.is_vertex_manifold())
+    # print('self intersection ', m_mesh.is_self_intersecting())
+    print('watertight', m_mesh.is_watertight())
+    print(f"alpha={alpha_value:.3f}")
+
     if displaying:
 
-        print('edge manifold', mesh.is_edge_manifold(allow_boundary_edges=True))
-        print('edge manifold boundary', mesh.is_edge_manifold(allow_boundary_edges=False))
-        print('vertex manifold', mesh.is_vertex_manifold())
-        # print('self intersection ', mesh.is_self_intersecting())
-        # print('watertight', mesh.is_watertight())
-        print(f"alpha={alpha_value:.3f}")
 
-        # mesh.remove_non_manifold_edges()
-        mesh.compute_vertex_normals()
+        # add normals, add light effect
+        m_mesh.compute_vertex_normals()
 
-        print(len(np.asarray(mesh.get_non_manifold_edges())))
-        vertex_colors = 0.75 * np.ones((len(mesh.vertices), 3))
-        for boundary in mesh.get_non_manifold_edges():
+        # make the non manifold vertices become red
+        vertex_colors = 0.75 * np.ones((len(m_mesh.vertices), 3))
+        for boundary in m_mesh.get_non_manifold_edges():
             for vertex_id in boundary:
                 vertex_colors[vertex_id] = [1, 0, 0]
-        mesh.vertex_colors = o3d.utility.Vector3dVector(vertex_colors)
+        m_mesh.vertex_colors = o3d.utility.Vector3dVector(vertex_colors)
 
-        print(len(np.asarray(mesh.get_non_manifold_vertices())))
-
-        o3d.visualization.draw_geometries([pcd, mesh], mesh_show_back_face=True, mesh_show_wireframe=True,
+        o3d.visualization.draw_geometries([m_pcd, m_mesh], mesh_show_back_face=True, mesh_show_wireframe=True,
                                           window_name=view_name)
-    return mesh
+    return m_mesh
 
 
 if __name__ == '__main__':
-    # mesh = get_bunny_mesh()
-    # pcd = mesh.sample_points_poisson_disk(3000)
-    mesh = get_armadillo_mesh()
-    pcd = mesh.sample_points_poisson_disk(750)
-    print(np.asarray(pcd.points))
-    # print(np.max(np.asarray(pcd.points)), np.min(np.asarray(pcd.points)), np.average(np.asarray(pcd.points)))
-    # o3d.visualization.draw_geometries_with_editing([pcd])
-    alpha = 35
-    print(f"alpha={alpha:.3f}")
-    mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, alpha)
-
-    print('edge manifold', mesh.is_edge_manifold(allow_boundary_edges=True))
-    print('edge manifold boundary', mesh.is_edge_manifold(allow_boundary_edges=False))
-    print('vertex manifold', mesh.is_vertex_manifold())
-    print('self intersection ', mesh.is_self_intersecting())
-    print('watertight', mesh.is_watertight())
-    print(f"alpha={alpha:.3f}")
-
-    mesh.compute_vertex_normals()
-    # o3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
-
-    # bbox = o3d.geometry.AxisAlignedBoundingBox()
-    # bbox.min_bound = [-1, -1, -1]
-    # bbox.max_bound = [0, 0, 0]
-    # mesh = mesh.crop(bbox)
-    # het_mesh = o3d.geometry.HalfEdgeTriangleMesh.create_from_triangle_mesh(mesh)
-    # o3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
-    #
-    vertex_colors = 0.75 * np.ones((len(mesh.vertices), 3))
-    for boundary in mesh.get_non_manifold_edges():
-        for vertex_id in boundary:
-            vertex_colors[vertex_id] = [1, 0, 0]
-    mesh.vertex_colors = o3d.utility.Vector3dVector(vertex_colors)
-    o3d.visualization.draw_geometries([pcd, mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
-
     generate_alpha_shape(np.random.uniform(size=(10, 3)), displaying=True, alpha_value=1)
