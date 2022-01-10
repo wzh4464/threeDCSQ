@@ -69,7 +69,7 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
     # fig.colorbar(sc,ax=ax,)
     plt.axis('off')
     # plt.colorbar(sc,aspect=100,orientation="horizontal")
-    plt.title(plot_title)
+    plt.title(plot_title,fontsize=40)
 
     saving_path = os.path.join(data_path+r'lineage_tree/tree_plot', embryo_name)
     if not os.path.exists(saving_path):
@@ -82,11 +82,12 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
     # time axis !
     # plt.arrow(-8500,220, 0, -100, shape='full', lw=0, length_includes_head=True, head_width=5)
     plt.arrow(-8500, 20, 0, -230, width=20,shape='full',head_length=15)
-    plt.text(-8700,0,'0',fontsize=10)
-    plt.text(-8700,-50,'50',fontsize=10)
-    plt.text(-8700,-100,'100',fontsize=10)
-    plt.text(-8700,-150,'150',fontsize=10)
-    plt.text(-8700,-200,'200',fontsize=10)
+    plt.text(-8600,-240,'min',fontsize=20)
+    plt.text(-8700,0,'0',fontsize=20)
+    plt.text(-8700,-50,'50',fontsize=20)
+    plt.text(-8700,-100,'100',fontsize=20)
+    plt.text(-8700,-150,'150',fontsize=20)
+    plt.text(-8700,-200,'200',fontsize=20)
 
 
     # plt.show()

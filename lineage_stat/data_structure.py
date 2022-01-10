@@ -30,7 +30,7 @@ def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=da
     cell_div_files_path = data_path + r"CDFilesBackup/CDSample{}.csv".format('06')
     tree_distance_num = 12
     name_dictionary_file_path = data_path + r"name_dictionary_no_name.csv"
-    max_time = 150
+    max_time = 160
     cell_tree_final = construct_basic_cell_name_tree(cell_div_files_path=cell_div_files_path, max_time=max_time,
                                                      tree_distance_num=tree_distance_num,
                                                      name_dictionary_path=name_dictionary_file_path)

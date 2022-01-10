@@ -10,6 +10,7 @@
 1. this file would use function **construct_basic_tree** which would build a tree base on CD file with x position by cells' generation which time list is empty.
 2. code in file **generate_life_span.py** would add cells' frames to the trees base on CD files.
 3.  the CShaper embryo info, so i use embryo 06 to build basic tree in funcion **draw_PCA_combined**. 
+4. the parameter max_time in function **get_combined_lineage_tree** is very import.
 ```
 04   begin cell ABa  cell number 819 embryo max frame 150
 05   begin cell ABa  cell number 1081 embryo max frame 170
@@ -33,9 +34,10 @@
 * draw the average tree
     1. first, function **draw_PCA_combined** would construct a average lineage tree for all embryos.
     2. second, the function **get_combined_lineage_tree** would go through this lineage tree and get the frame cells' values depend on time/frame resolutions.
-    3.  
+    3. third, at the drawing step, we would calculate all average value first and give cells values at different tp.
+    4. fourth, we go through the tree again and do interpolation for the lost cells. 
 
-
+* the legend frontzise is set at function **draw_life_span_tree**. 
 ## environment 
 Please update conda by running
 
@@ -43,8 +45,10 @@ Please update conda by running
 
 
 *  My environment setting
+```
+# environment location: C:\Users\zelinli6\miniconda3\envs\CellShapeAnalysis
 
-    * environment location: C:\Users\zelinli6\miniconda3\envs\CellShapeAnalysis
-
-    * conda activate CellShapeAnalysis
+$ conda activate CellShapeAnalysis
+```
+    
 

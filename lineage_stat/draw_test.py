@@ -49,7 +49,7 @@ def draw_PCA(embryo_name, embryo_time_tree, print_num=4):
     #           'dodgerblue2', 'dodgerblue3', 'dodgerblue4']
     colors2 = np.array(
         [(139, 0, 0), (205, 0, 0), (238, 0, 0), (255, 0, 0), (255, 69, 0), (255, 128, 0),
-         (162,205,90), (188,238,104), (162,205,90),
+         (162, 205, 90), (188, 238, 104), (162, 205, 90),
          (89, 210, 255), (63, 180, 255), (30, 144, 255), (28, 134, 238), (24, 116, 205), (16, 78, 139)]) / 255
     cmap_list = ListedColormap(colors2)
     cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
@@ -92,12 +92,35 @@ def draw_PCA_combined(print_num=2):
                 if frame_and_cell_index in df_pd_values_dict[embryo_name].index:
                     # print(frame_and_cell_index,df_pd_values_dict[embryo_name].loc[frame_and_cell_index][column])
                     tp_value_list.append(df_pd_values_dict[embryo_name].at[frame_and_cell_index, column])
+
             # we have already got all values at this time from all(17) embryos, we just need to draw its average
             tp_and_cell_index = f'{time_int:03}' + '::' + node_id
-
-            if len(tp_value_list) == 0: # need to do interpolation
+            if len(tp_value_list) == 0:  # need to do interpolation
                 print(tp_and_cell_index, tp_value_list)
-            values_dict[tp_and_cell_index] = np.average(tp_value_list)
+            else:
+                values_dict[tp_and_cell_index] = np.average(tp_value_list)
+
+    # do interpolation for the lost cell value!
+    for node_id in cell_combine_tree.expand_tree(sorting=False):
+        for time_int in cell_combine_tree.get_node(node_id).data.get_time():
+            tp_value_list = []
+            tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+
+            if tp_and_cell_index not in values_dict.keys():  # need to do interpolation
+                print(tp_and_cell_index, tp_value_list)
+                if cell_combine_tree.get_node(node_id).is_leaf() and time_int == \
+                        cell_combine_tree.get_node(node_id).data.get_time()[-1]:
+                    pass
+                else:
+                    for i in range(10):
+                        complement_pre_tp_and_cell_index = f'{(time_int - i):03}' + '::' + node_id
+                        complement_post_tp_and_cell_index = f'{(time_int + i):03}' + '::' + node_id
+                        if complement_pre_tp_and_cell_index in values_dict.keys():
+                            values_dict[tp_and_cell_index] = values_dict[complement_pre_tp_and_cell_index]
+                            break
+                        elif complement_post_tp_and_cell_index in values_dict.keys():
+                            values_dict[tp_and_cell_index] = values_dict[complement_post_tp_and_cell_index]
+                            break
 
     from matplotlib.colors import ListedColormap, LinearSegmentedColormap
     # https: // www.webucator.com / article / python - color - constants - module /
@@ -105,14 +128,14 @@ def draw_PCA_combined(print_num=2):
     #           'dodgerblue2', 'dodgerblue3', 'dodgerblue4']
     colors2 = np.array(
         [(139, 0, 0), (205, 0, 0), (238, 0, 0), (255, 0, 0), (255, 69, 0), (255, 128, 0),
-         (188,238,104)	, (202,255,112), (188,238,104)	,
+         (188, 238, 104), (202, 255, 112), (188, 238, 104),
          (89, 210, 255), (63, 180, 255), (30, 144, 255), (28, 134, 238), (24, 116, 205), (16, 78, 139)]) / 255
 
     # cmap_list = ListedColormap(colors)
     cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
     draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
                         embryo_name='combine_tree',
-                        plot_title='PCA_' + column, color_map=cmap1)
+                        plot_title='average SPHARM\'s ' + column + 'th principle component', color_map=cmap1)
 
 
 def draw_tree_test():
