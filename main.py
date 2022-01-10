@@ -5,17 +5,18 @@ import config
 
 import utils.general_func as general_f
 from transformation.SH_represention import get_SH_coeffient_from_surface_points
+from utils.cell_func import nii_get_cell_surface
 
 
 def main():
     print("start cell shape analysis")
 
     # ------------------------------R fibonacci representation------------------------------------------------
-    # img_1 = general_f.load_nitf2_img(os.path.join(config.dir_segemented, 'Embryo04_000_segCell.nii.gz'))
+    img_1 = general_f.load_nitf2_img(os.path.join(config.dir_segemented, 'Embryo04_068_segCell.nii.gz'))
     general_f.show_nitf2_img(os.path.join(config.dir_segemented_tmp1, 'Embryo04_068_segCell.nii.gz'))
 
 
-    # _ = cell_f.nii_get_cell_surface(img_1, save_name='Embryo04_000_segCell.nii.gz')
+    _ = nii_get_cell_surface(img_1, save_name='Embryo04_068_segCell.nii.gz')
 
     # img_2 = general_f.show_nitf2_img(os.path.join(config.dir_my_data, 'membrane' + 'Embryo04_001_segCell.nii.gz'))
     # R_func.build_R_array_for_embryo(128)

@@ -1,7 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+
+# import dependency library
 import numpy as np
 import math
 import pyshtools as pysh
+
+
+# import user defined library
 
 from utils.general_func import sph2descartes
 

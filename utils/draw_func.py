@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# import dependency library
+
 from matplotlib import pyplot as plt
 import numpy as np
 import os
@@ -9,6 +14,8 @@ import pyshtools as pysh
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
+
+# import user defined library
 
 from utils.general_func import read_csv_to_df
 from utils.sh_cooperation import do_reconstruction_for_SH, collapse_flatten_clim
@@ -27,90 +34,6 @@ def generate_2D_Z_ARRAY(x, y, z):
     return Z
 
 
-def draw_3D_curve_with_lines(points_data, fig_name="DEFAULT", fig_size=(6, 6)):
-    fig = plt.figure(figsize=fig_size)
-    ax = Axes3D(fig)
-
-    # x = points_data[:, 0]  # first column of the 2D matrix
-    # y = points_data[:, 1]
-    # z = points_data[:, 2]
-
-    num_points_half = int(len(points_data) / 2)
-    num_points_quarter = int(len(points_data) / 4)
-
-    points_data = points_data[points_data[:, 0].argsort()]
-    # print(points_data.shape)
-    # print(points_data)
-    # print(points_data[0:num_points_half, :])
-
-    points_data_xnegative = points_data[:num_points_half, :]
-    points_data_xnegative = points_data_xnegative[points_data_xnegative[:, 1].argsort()]
-    points_data_xnegative_ynegative = points_data_xnegative[:num_points_quarter]
-    points_data_xnegative_ynegative = points_data_xnegative_ynegative[points_data_xnegative_ynegative[:, 2].argsort()]
-    points_data_xnegative_ypositive = points_data_xnegative[num_points_quarter:]
-    points_data_xnegative_ypositive = points_data_xnegative_ypositive[points_data_xnegative_ypositive[:, 2].argsort()]
-
-    points_data_xpositive = points_data[num_points_half:]
-    points_data_xpositive = points_data_xpositive[points_data_xpositive[:, 1].argsort()]
-    points_data_xpositive_ynegative = points_data_xpositive[:num_points_quarter]
-    # points_data_xpositive_ynegative = points_data_xpositive_ynegative[points_data_xpositive_ynegative[:, 2].argsort()]
-    points_data_xpositive_ypositive = points_data_xpositive[num_points_quarter:]
-    points_data_xpositive_ypositive = points_data_xpositive_ypositive[points_data_xpositive_ypositive[:, 2].argsort()]
-
-    x = points_data_xnegative_ynegative[:, 0]  # first column of the 2D matrix
-    y = points_data_xnegative_ynegative[:, 1]
-    z = points_data_xnegative_ynegative[:, 2]
-    ax.plot3D(x, y, z, 'blue')
-
-    x = points_data_xnegative_ypositive[:, 0]  # first column of the 2D matrix
-    y = points_data_xnegative_ypositive[:, 1]
-    z = points_data_xnegative_ypositive[:, 2]
-    ax.plot3D(x, y, z, 'grey')
-
-    x = points_data_xpositive_ynegative[:, 0]  # first column of the 2D matrix
-    y = points_data_xpositive_ynegative[:, 1]
-    z = points_data_xpositive_ynegative[:, 2]
-    ax.scatter3D(x, y, z, c=z, cmap="Greens")
-
-    x = points_data_xpositive_ypositive[:, 0]  # first column of the 2D matrix
-    y = points_data_xpositive_ypositive[:, 1]
-    z = points_data_xpositive_ypositive[:, 2]
-    ax.plot3D(x, y, z, 'red')
-
-    ax.set_zlabel('Z')  # 坐标轴
-    ax.set_ylabel('Y')
-    ax.set_xlabel('X')
-    plt.title(fig_name)
-    plt.show()
-
-
-def draw_3D_curve_with_triangle(points_data, fig_name="DEFAULT", fig_size=(10, 10)):
-    fig = plt.figure(figsize=fig_size)
-    fig.suptitle(fig_name)
-
-    ax = Axes3D(fig)
-
-    x = points_data[:, 0]  # first column of the 2D matrix
-    y = points_data[:, 1]
-    z = points_data[:, 2]
-    ax.plot_trisurf(x, y, z)
-
-    ax.set_zlabel('Z')  # 坐标轴
-    ax.set_ylabel('Y')
-    ax.set_xlabel('X')
-    ax.set_title(fig_name)
-    # plt.title(fig_name)
-    plt.show()
-
-
-def draw_3D_points_in_new_coordinate(points, center=None):
-    if center is None:
-        center = [0, 0, 0]
-    points_new = points - center
-    draw_3D_points(points_new)
-    return points_new
-
-
 def draw_3D_points(points_data, fig_name="", fig_size=(10, 10), ax=None, cmap='viridis'):
     x = points_data[:, 0]  # first column of the 2D matrix
     y = points_data[:, 1]
@@ -122,9 +45,9 @@ def draw_3D_points(points_data, fig_name="", fig_size=(10, 10), ax=None, cmap='v
         # ax.scatter3D(x, y, z, marker='o', c=z, cmap=cmap)
         ax.scatter3D(x, y, z, c=z, cmap=cmap)
 
-        ax.set_zlabel('Z').set_fontstyle('italic')  # 坐标轴
-        ax.set_ylabel('Y').set_fontstyle('italic')
-        ax.set_xlabel('X').set_fontstyle('italic')
+        ax.set_zlabel('\textit{z}')  # 坐标轴
+        ax.set_ylabel('\textit{y}')
+        ax.set_xlabel('\textit{x}')
         ax.set_title(fig_name)
 
         plt.title(fig_name)
@@ -133,9 +56,9 @@ def draw_3D_points(points_data, fig_name="", fig_size=(10, 10), ax=None, cmap='v
         # ax.scatter3D(x, y, z, marker='o', c=z, cmap=cmap)
         ax.scatter3D(x, y, z, c=z, cmap=cmap)
 
-        ax.set_zlabel('Z')  # 坐标轴
-        ax.set_ylabel('Y')
-        ax.set_xlabel('X')
+        ax.set_zlabel('\textit{z}')  # 坐标轴
+        ax.set_ylabel('\textit{y}')
+        ax.set_xlabel('\textit{x}')
         ax.set_title(fig_name)
 
 
@@ -212,8 +135,7 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
         for index_tmp in df_embryo_time_slices.index:
             fig = plt.figure()
 
-            shc_instance = pysh.SHCoeffs.from_array(
-                SH_A_f.collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp])))
+            shc_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp])))
             shc_reconstruction = do_reconstruction_for_SH(30, shc_instance)
             axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
             draw_3D_points(shc_reconstruction, fig_name='original sh coefficient', ax=axes_tmp)
@@ -249,10 +171,6 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
             axes_tmp = fig.add_subplot(1, 2, 2, projection='3d')
             draw_3D_points(shcPCA_reconstruction, fig_name=index_tmp + '  SHcPCA coefficient', ax=axes_tmp)
             plt.show()
-
-
-
-
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):

@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# import dependency library
+
 import math
 import numpy as np
 from utils.general_func import read_csv_to_df

@@ -1,8 +1,9 @@
-from pickle import dump, load
-from re import match, search
+# import dependency library
+import open3d as o3d
+import json
+from random import uniform
 
-from scipy.ndimage import generate_binary_structure, grey_dilation
-
+from skimage.measure import marching_cubes_lewiner, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import make_pipeline, Pipeline
@@ -35,8 +36,9 @@ from matplotlib import cm
 import matplotlib.patches
 
 from datetime import datetime
+from multiprocessing import Process
 
-from matplotlib.font_manager import FontProperties
+# import user defined library
 
 from transformation.PCA import calculate_PCA_zk_norm
 from transformation.SH_represention import get_nib_embryo_membrane_dict, get_SH_coeffient_from_surface_points
@@ -44,7 +46,9 @@ from utils.cell_func import get_cell_name_affine_table
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
 from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
-from itertools import combinations
+from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
+
+from utils.shape_preprocess import get_contact_area, export_dia_cell_points_json, export_dia_cell_surface_points_json
 
 """
 Sample06,ABalaapa,078
@@ -270,12 +274,12 @@ def SPCSMs_SVM():
     print('Pharynx', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Pharynx']].index))
     print('Skin', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Skin']].index))
     print('Germ Cell', len(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Germ Cell']].index))
-    # #
-    # cshaper_X.drop(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index, inplace=True)
-    # cshaper_Y.drop(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index, inplace=True)
+
+    cshaper_X.drop(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index, inplace=True)
+    cshaper_Y.drop(cshaper_Y[cshaper_Y['Fate'] == dict.cell_fate_map['Unspecified']].index, inplace=True)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        cshaper_X.values, cshaper_Y.values.reshape((cshaper_Y.values.shape[0],)), test_size=0.2,
+        cshaper_X.values[:30000], cshaper_Y.values[:30000].reshape((cshaper_Y.values[:30000].shape[0],)), test_size=0.2,
         random_state=datetime.now().microsecond)
     print("reading done in %0.3fs" % (time() - t0))
 
@@ -309,38 +313,42 @@ def SPCSMs_SVM():
     # ==================================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
     # dataset): unsupervised feature extraction / dimensionality reduction
-    # n_components = 12
-    # print("Extracting the top %d eigenfaces from %d cells"
-    #       % (n_components, X_train.shape[0]))
-    # t0 = time()
-    # pca = PCA(n_components=n_components, svd_solver='randomized',
-    #           whiten=True).fit(X_train)
-    # print("done in %0.3fs" % (time() - t0))
+    n_components = 24
+    print("Extracting the top %d eigenfaces from %d cells"
+          % (n_components, X_train.shape[0]))
+    t0 = time()
+    pca = PCA(n_components=n_components, svd_solver='randomized',
+              whiten=True).fit(X_train)
+    print("done in %0.3fs" % (time() - t0))
 
-    # print("Projecting the input data on the eigenshape orthonormal basis")
-    # t0 = time()
-    # X_train_pca = pca.transform(X_train)
-    # X_test_pca = pca.transform(X_test)
-    # print("done in %0.3fs" % (time() - t0))
+    print("Projecting the input data on the eigenshape orthonormal basis")
+    t0 = time()
+    X_train_pca = pca.transform(X_train)
+    X_test_pca = pca.transform(X_test)
+    print("done in %0.3fs" % (time() - t0))
     # Train a SVM classification model
 
-    # print("Fitting the classifier to the training set")
+    print("Fitting the classifier to the training set")
     print('going through pipeline searching best classifier')
     t0 = time()
 
-    pca = PCA()
-    nystroem_transformer = Nystroem(gamma=0.001, random_state=datetime.now().microsecond)
-    linearsvc_classifier = LinearSVC(random_state=datetime.now().microsecond, tol=1e-5)
-    pipe = Pipeline(steps=[("pca", pca), ("scale", StandardScaler()), ("transformer", nystroem_transformer),
-                           ("classifier", linearsvc_classifier)])
+    # ===================================================================================
+    nystroem_transformer = Nystroem(random_state=datetime.now().microsecond)
+    linearsvc_classifier = LinearSVC(random_state=datetime.now().microsecond)
+    pipe = Pipeline(
+        [("scale", StandardScaler()), ("transformer", nystroem_transformer), ("classifier", linearsvc_classifier)])
     param_grid = {
-        "pca__n_components": [12, 24, 48, 96],
+        # "pca__n_components": [12,48, 96],
+        # {'classifier__C': [1e3, 1e4] 1000.0, 'classifier__tol': [1e-2, 1e-3] 0.01, 'transformer__gamma': [0.0001, 0.001] 0.001}
 
-        "transformer__gamma": [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
-        "classifier__C": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e2, 1e3, 1e4, 1e5]
+        "transformer__gamma": [0.01, 0.001],
+        "classifier__tol": [1e-2, 1e-1],
+        "classifier__C": [1e3, 1e2]
     }
-    search = GridSearchCV(pipe, param_grid, pre_dispatch=6)
-    clf=search.fit(X_train, y_train)
+    # =====================================================================================
+
+    search = GridSearchCV(pipe, param_grid, n_jobs=-1)
+    clf = search.fit(X_train_pca, y_train)
     print(search.cv_results_)
     print("Best parameter (CV score=%0.3f):" % search.best_score_)
     print(search.best_params_)
@@ -349,15 +357,15 @@ def SPCSMs_SVM():
     # Quantitative evaluation of the model quality on the test set
     print("Predicting cell fate on the test set")
     t0 = time()
-    y_pred = search.predict(X_test)
+    y_pred = search.predict(X_test_pca)
     print("done in %0.3fs" % (time() - t0))
-    print(classification_report(y_test, y_pred, target_names=dict.cell_fate_dict))
-    print(confusion_matrix(y_test, y_pred, labels=dict.cell_fate_num))
+    print(classification_report(y_test, y_pred, target_names=dict.cell_fate_dict[1:]))
+    print(confusion_matrix(y_test, y_pred, labels=dict.cell_fate_num[1:]))
     # ==================================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
 def figure_for_science():
-    # Sample06,Dpaap,158
+    # Sample06,Capp,079
     # Sample06,ABalaapa,078
     print('waiting type you input1')
     embryo_name1, cell_name1, tp1 = str(input()).split(',')
@@ -367,16 +375,14 @@ def figure_for_science():
     # cell_name = str(input())
     # tp = str(input())
 
-    print(embryo_name, cell_name, tp)
-
     embryo_path_csv = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
-    # plt.rcParams['text.latex.preamble'] = [r"\usepackage{lmodern}"]
-    params = {'text.usetex': True,
-              }
-    plt.rcParams.update(params)
+    plt.rcParams['text.usetex'] = True
+    # params = {'text.usetex': True,
+    #           }
+    # plt.rcParams.update(params)
     fig_SPCSMs_info = plt.figure()
 
     axes_tmp1 = fig_SPCSMs_info.add_subplot(2, 2, 1, projection='3d')
@@ -390,11 +396,15 @@ def figure_for_science():
 
     axes_tmp1.plot_surface(X2d, Y2d, instance_tmp1_expanded, cmap=cm.coolwarm,
                            linewidth=0, antialiased=False, rstride=60, cstride=10)
+    axes_tmp1.set_zlabel(r'\textit{z}')  # 坐标轴
+    axes_tmp1.set_ylabel(r'\textit{y}')
+    axes_tmp1.set_xlabel(r'\textit{x}')
+    axes_tmp1.colorbar()
 
     axes_tmp2 = fig_SPCSMs_info.add_subplot(2, 2, 2)
     instance_tmp1.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                       xlabel='x of X-Y plane',
-                       ylabel='y of X-Y plane', axes_labelsize=12, tick_interval=[60, 60])
+                       xlabel=r'\textit{x}',
+                       ylabel=r'\textit{y}', axes_labelsize=12, tick_interval=[60, 60])
     set_size(5, 5, ax=axes_tmp2)
 
     # embryo_path_name = embryo_name + 'LabelUnified'
@@ -438,7 +448,7 @@ def figure_for_science():
     y_lon = np.sqrt(225 - np.power(x_lon, 2))
     # print(y_lon)
     axes_tmp3.scatter3D(x_lon, y_lon, np.zeros(1000), s=3, color='blue')
-    axes_tmp3.text(23, 23, 0, 'longitude', (-1, 1, 0), ha='center')
+    axes_tmp3.text(19, 19, 0, 'longitude', (-1, 1, 0), ha='center')
 
     # latitude circle
     y_lat = np.arange(0, 15, 15 / 1000)
@@ -446,20 +456,19 @@ def figure_for_science():
     axes_tmp3.scatter3D(np.zeros(1000), y_lat, z_lat, s=3, color='black')
     axes_tmp3.text(0, 18, 18, 'latitude', (-1, 1, 0), ha='center')
 
-    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, 'x', (-1, 1, 0), ha='center').set_fontstyle('italic')
-    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, 'y', (-1, 1, 0), ha='center').set_fontstyle('italic')
-    axes_tmp3.text(-0.1 * sn, 0, sn + 10, 'z', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, r'\textit{x}', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, r'\textit{y}', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.text(-0.1 * sn, 0, sn + 10, r'\textit{z}', (-1, 1, 0), ha='center').set_fontstyle('italic')
 
-    axes_tmp3.text('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold',
-                   style='italic')
     # axes_tmp3.annotate('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold', style='italic')
 
     axes_tmp4 = fig_SPCSMs_info.add_subplot(2, 2, 4)
     grid_tmp = instance_tmp.expand(lmax=100)
     # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
     grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                  xlabel='Longitude (X-Y plane)',
-                  ylabel='Latitude (Y-Z plane)', axes_labelsize=12, tick_interval=[60, 60])
+                  xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
+                  ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)', axes_labelsize=12,
+                  tick_interval=[60, 60])
 
     fig_SPCSMs_info.text(0, 0.7, '3D Surface Mapping', fontsize=12)
     fig_SPCSMs_info.text(0, 0.25, '3D Object Mapping', fontsize=12)
@@ -488,7 +497,7 @@ def figure_for_science():
     plt.show()
 
 
-def calculate_cell_contact_surface():
+def calculate_cell_contact_points():
     # Sample06,Dpaap,158
     # Sample06,ABalaapa,078
     # print('waiting type you input1')
@@ -503,166 +512,167 @@ def calculate_cell_contact_surface():
     path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
     for file_name in os.listdir(path_tmp):
         if os.path.isfile(os.path.join(path_tmp, file_name)):
+            t0 = time()
+
             print(path_tmp, file_name)
 
             this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
 
             img_arr = this_img.get_data()
 
-            x_num, y_num, z_num = img_arr.shape
-
-            # arr_unique,arr_indices,arr_count=np.unique(img_arr,return_counts=True,return_index=True)
-            arr_unique = np.unique(img_arr)
-            # print(arr_unique)
-            # print(arr_indices)
-            # print(arr_count)
-
-            dict_img_cell_calculate = {}
-            for x in range(x_num):
-                for y in range(y_num):
-                    for z in range(z_num):
-                        dict_key = img_arr[x][y][z]
-                        if dict_key != 0:
-                            if dict_key in dict_img_cell_calculate:
-                                dict_img_cell_calculate[dict_key].append([x, y, z])
-                            else:
-                                dict_img_cell_calculate[dict_key] = [[x, y, z]]
-            cell_points_dict = {}
-
-            t0 = time()
-
-            for cell_number in arr_unique[1:]:
-                print('dealing with ', cell_number, 'dilation things')
-                targe_arr = np.array(dict_img_cell_calculate[cell_number])
-                # print(dict_img_cell_calculate[cell_number])
-                # print(dict_img_cell_calculate[cell_number][:, 0])
-                x_min_boundary = np.min(targe_arr[:, 0]) - 1
-                x_max_boundary = np.max(targe_arr[:, 0]) + 1
-
-                y_min_boundary = np.min(targe_arr[:, 1]) - 1
-                y_max_boundary = np.max(targe_arr[:, 1]) + 1
-
-                z_min_boundary = np.min(targe_arr[:, 2]) - 1
-                z_max_boundary = np.max(targe_arr[:, 2]) + 1
-
-                cut_img_arr = img_arr[x_min_boundary:x_max_boundary, y_min_boundary:y_max_boundary,
-                              z_min_boundary:z_max_boundary]
-
-                # set all points as zero expect cell_number dealing with
-                cut_img_arr = (cut_img_arr == cell_number).astype(int)
-
-                # print(np.unique(cut_img_arr,return_counts=True))
-                # with the original image data
-                struct_element = generate_binary_structure(3, -1)
-                cut_img_arr_dilation = grey_dilation(cut_img_arr, footprint=struct_element)
-                # print(np.unique(cut_img_arr_dilation,return_counts=True))
-
-                cut_img_arr_dilation = cut_img_arr_dilation - cut_img_arr
-                print(np.unique(cut_img_arr_dilation, return_counts=True))
-
-                point_position_x, point_position_y, point_position_z = np.where(cut_img_arr_dilation == 1)
-                cell_points_dict[cell_number] = []
-                for i in range(len(point_position_x)):
-                    cell_points_dict[cell_number].append(str(point_position_x[i] + x_min_boundary) + '_' + str(
-                        point_position_y[i] + y_min_boundary) + '_' + str(point_position_z[i] + z_min_boundary))
-                # print(cell_points_dict[cell_number])
-
-            contact_points_dict = {}
-            key_list_tmp = combinations(cell_points_dict.keys(), 2)
-
-            for idx in key_list_tmp:
-                print(idx, 'cell contact surface points counting')
-                y = [x for x in cell_points_dict[idx[0]] if x in cell_points_dict[idx[1]]]
-                if len(y) > 0:
-                    print(len(y))
-                    str_key = str(idx[0]) + '_' + str(idx[1])
-                    contact_points_dict[str_key] = y
-            # print(contact_points_dict)
+            _, _, contact_points_dict = get_contact_area(img_arr)
 
             contact_saving_path = r'./DATA/cshaper_contact_data'
-            with open(os.path.join(contact_saving_path, file_name.split('.')[0] + '.json'), 'wb') as fp:
-                dump(contact_points_dict, fp)
+            with open(os.path.join(contact_saving_path, file_name.split('.')[0] + '.json'), 'w') as fp:
+                json.dump(contact_points_dict, fp)
 
             # load()
+            # you can find out the method about loading json in python
             print("done in %0.3fs" % (time() - t0))
 
-            # print(cell_points_dict)
+            # print(contact_points_dict)
 
     # -------------------------------------------------------------------------------------------------------
 
 
+def calculate_cell_points():
+    # ------------------------calculate surface points using dialation for each cell --------------------
+    path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
+    for file_name in os.listdir(path_tmp):
+        if os.path.isfile(os.path.join(path_tmp, file_name)):
+            t0 = time()
+            print(path_tmp, file_name)
+            this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
+            img_arr = this_img.get_data()
+
+            cell_points = export_dia_cell_points_json(img_arr)
+            dia_cell_saving = r'./DATA/cell_dia_points'
+
+            with open(os.path.join(dia_cell_saving, file_name.split('.')[0] + '.json'), 'w') as fp:
+                json.dump(cell_points, fp)
+
+            print("done in %0.3fs" % (time() - t0))
+
+
+def calculate_cell_surface_points():
+    # ------------------------calculate surface points using dialation for each cell --------------------
+    path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
+    for file_name in os.listdir(path_tmp):
+        if os.path.isfile(os.path.join(path_tmp, file_name)):
+            t0 = time()
+            print(path_tmp, file_name)
+            this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
+            img_arr = this_img.get_data()
+
+            cell_points = export_dia_cell_surface_points_json(img_arr)
+            dia_surface_saving = r'./DATA/cell_dia_surface'
+
+            with open(os.path.join(dia_surface_saving, file_name.split('.')[0] + '.json'), 'w') as fp:
+                json.dump(cell_points, fp)
+
+            print("done in %0.3fs" % (time() - t0))
+
+
 def display_contact_points():
-    # Sample20,ABalaaapa,126
+    # Sample20,ABplpapapa,150
     # Sample20,Dpaap,158
     # Sample20,ABalaapa,078
-
+    # Sample20,ABa,005
+    # Sample20,MSp,035
     print('waiting type you input: samplename and timepoints for embryogenesis')
     embryo_name, cell_name, tp = str(input()).split(',')
 
-    # get center points
-    embryo_path_name = embryo_name + 'LabelUnified'
-    embryo_path = os.path.join(r'.\DATA\SegmentCellUnified04-20', embryo_path_name)
-    file_name = embryo_name + '_' + tp + '_segCell.nii.gz'
-    _, dict_center_points = get_nib_embryo_membrane_dict(embryo_path, file_name)
     num_cell_name, cell_num = get_cell_name_affine_table()
-
     this_cell_keys = cell_num[cell_name]
 
-    with open(os.path.join(r'./DATA/cshaper_contact_data', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
-        data = load(fp)
+    with open(os.path.join(r'./DATA/cshaper_contact_data', embryo_name + '_' + tp + '_segCell.json'), ) as fp:
+        data = json.load(fp)
     display_key_list = []
     for idx in data.keys():
-
-        if str(this_cell_keys) in idx:
+        print(idx, len(data[idx]))
+        # if re.match('^' + str(this_cell_keys) + '_\d', idx) or re.match('\d_' + str(this_cell_keys) + '$', idx):
+        label1_2 = idx.split('_')
+        if str(this_cell_keys) in label1_2:
             display_key_list.append(idx)
 
-    fig_contact_info = plt.figure()
-    plt.axis('off')
+    # fig_contact_info = plt.figure()
+    # plt.axis('off')
     item_count = 1
-    this_cell_center = dict_center_points[this_cell_keys]
+    print('contact number', len(display_key_list))
     for idx in display_key_list:
         if item_count > 9:
             break
+
+        # if len(data[idx]) < 30:
+        #     continue
         draw_points_list = []
         print(idx)
         for item_str in data[idx]:
             x, y, z = item_str.split('_')
             x, y, z = int(x), int(y), int(z)
-            # print(item_str)
-            # print(x, y, z)
             draw_points_list.append([x, y, z])
 
-        a = idx.split('_')
-        a.remove(str(this_cell_keys))
-        contact_cell_num = int(a[0])
-        ax = fig_contact_info.add_subplot(3, 3, item_count, projection='3d')
-        draw_3D_points(np.array(draw_points_list), fig_name=cell_name + '_' + num_cell_name[contact_cell_num], ax=ax)
+        [x_tmp, y_tmp, z_tmp] = np.amax(np.array(draw_points_list), axis=0)
+        contact_mask = np.zeros((x_tmp * 2, y_tmp * 2, z_tmp * 2))
+        for [x_tmp, y_tmp, z_tmp] in draw_points_list:
+            contact_mask[x_tmp, y_tmp, z_tmp] = True
+        verts, faces, _, _ = marching_cubes_lewiner(contact_mask)
+        contact_mesh = o3d.geometry.TriangleMesh(o3d.cpu.pybind.utility.Vector3dVector(verts),
+                                                 o3d.cpu.pybind.utility.Vector3iVector(faces))
 
-        dfs = pd.read_excel(config.cell_fate_path, sheet_name=None)['CellFate']
-        fate_cell = dfs[dfs['Name'] == cell_name + '\'']['Fate'].values[0].split('\'')[0]
-        # for idx in dfs.index:
-        #     # print(row)
-        #     name = dfs.loc[idx]['Name'].split('\'')[0]
-        #     fate = dfs.loc[idx]['Fate'].split('\'')[0]
-        #     fate_dict[name] = fate
+        print(idx,'  matching cubes method surface area:',mesh_surface_area(verts, faces) / 2)
 
-        ax.text(this_cell_center[0], this_cell_center[1], this_cell_center[2], cell_name + '_' + fate_cell,
-                (-1, 1, 0), ha='center')
+        contact_mesh.compute_vertex_normals()
+        o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
 
-        contact_cell_fate = dfs[dfs['Name'] == num_cell_name[contact_cell_num] + '\'']['Fate'].values[0].split('\'')[0]
-        contact_cell_center = dict_center_points[contact_cell_num]
-        ax.text(contact_cell_center[0], contact_cell_center[1], contact_cell_center[2],
-                num_cell_name[contact_cell_num] + '_' + contact_cell_fate,
-                (-1, 1, 0), ha='center')
 
-        #
-        # contact_arrow = Arrow3D([0, 0], [0, 0],
-        #                  [0, sn + 23], mutation_scale=20,
-        #                  lw=3, arrowstyle="-|>", color="r")
-        # ax.add_artist(contact_arrow)
+        # a = idx.split('_')
+        # a.remove(str(this_cell_keys))
+        # contact_cell_num = int(a[0])
+        # ax = fig_contact_info.add_subplot(3, 3, item_count, projection='3d')
+        # draw_3D_points(np.array(draw_points_list), fig_name=cell_name + '_' + num_cell_name[contact_cell_num], ax=ax)
+
+        # dfs = pd.read_excel(config.cell_fate_path, sheet_name=None)['CellFate']
+        # fate_cell = dfs[dfs['Name'] == cell_name + '\'']['Fate'].values[0].split('\'')[0]
 
         item_count += 1
-    plt.show()
+    # plt.show()
+
+
+def display_contact_alpha_surface():
+    # Sample20,ABplpapapa,150
+    # Sample20,ABalaapa,078
+    # Sample20,ABa,005
+    # Sample20,MSp,035
+    print('waiting type you input: sample name and time points for embryogenesis')
+    embryo_name, cell_name, tp = str(input()).split(',')
+
+    num_cell_name, cell_num = get_cell_name_affine_table()
+    this_cell_keys = cell_num[cell_name]
+
+    # -------getting all data points including dilation  points -- for generate alpha shape--------
+    with open(os.path.join(r'./DATA/cell_dia_points', embryo_name + '_' + tp + '_segCell.json')) as fp:
+        cell_data = json.load(fp)
+    cell_points_building_as = []
+    print(cell_data.keys())
+    for item_str in cell_data[str(this_cell_keys)]:
+        x, y, z = item_str.split('_')
+        x, y, z = float(x) + uniform(0, 0.001), float(y) + uniform(0, 0.001), float(
+            z) + uniform(0, 0.001)
+        cell_points_building_as.append([x, y, z])
+    cell_points_building_as = np.array(cell_points_building_as)
+    print(cell_points_building_as)
+    m_mesh = generate_alpha_shape(cell_points_building_as,displaying=True)
+    # ---------------------------finished generating alpha shape -------------------------------
+
+    with open(os.path.join(r'./DATA/cell_dia_surface', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
+        surface_data = json.load(fp)
+
+    with open(os.path.join(r'./DATA/cshaper_contact_data', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
+        surface_contact_data = json.load(fp)
+
+    get_contact_surface_mesh(this_cell_keys, surface_data, surface_contact_data, m_mesh, True)
+
 
 def calculate_SH_PCA_coordinate():
     PCA_matrices_saving_path = os.path.join(r'.\DATA\my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
@@ -672,17 +682,13 @@ def calculate_SH_PCA_coordinate():
     print('finish read all embryo cell df_sh_norm_coefficients--------------')
 
     sh_PCA = PCA(n_components=24)
-    pd.DataFrame(data=sh_PCA.fit_transform(df_SHc_norm.values),index=df_SHc_norm.index).to_csv(PCA_matrices_saving_path)
-
-
-
+    pd.DataFrame(data=sh_PCA.fit_transform(df_SHc_norm.values), index=df_SHc_norm.index).to_csv(
+        PCA_matrices_saving_path)
 
 
 if __name__ == "__main__":
-
-    calculate_SH_PCA_coordinate()
-    #
-    # print('test2 run')
-    # print(str(190) in '190_11')
+    print('test2 run')
+    display_contact_alpha_surface()
+    # figure_for_science()
     # display_contact_points()
     # show_cell_SPCSMs_info()
