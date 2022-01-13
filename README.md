@@ -2,6 +2,19 @@
 
 ## Files and Function usages
 
+### Curvature Of cell
+
+#### Gaussian curvature using libigl
+
+https://libigl.github.io/libigl-python-bindings/tut-chapter1/
+
+
+**Principal curvatures**： the biggest and smallest radius of the points. 
+
+https://zh.wikipedia.org/wiki/%E4%B8%BB%E6%9B%B2%E7%8E%87
+https://zh.wikipedia.org/wiki/%E9%AB%98%E6%96%AF%E6%9B%B2%E7%8E%87
+
+
 ### Lineage tree draw
 * generate the tree files with command first go to lineage_stat folder
 ```bash
