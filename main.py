@@ -4,7 +4,6 @@ import os
 import config
 
 import utils.general_func as general_f
-from transformation.SH_represention import get_SH_coeffient_from_surface_points
 from utils.cell_func import nii_get_cell_surface
 
 
@@ -22,14 +21,7 @@ def main():
     # R_func.build_R_array_for_embryo(128)
     # ---------------------------------------------------------------------------------------------------------
 
-    # ------------------------------calculate SHC for each cell ----------------------------------------------
-    path_tmp=r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
-    for file_name in os.listdir(path_tmp):
-        if os.path.isfile(os.path.join(path_tmp,file_name)):
-            print(path_tmp)
-            get_SH_coeffient_from_surface_points(embryo_path=path_tmp, sample_N=100, lmax=49,
-                                                         file_name=file_name)
-    # -------------------------------------------------------------------------------------------------------
+
 
     # ------------------------------do contraction with sh expand and shc expand------------------------------
 

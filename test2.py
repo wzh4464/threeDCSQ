@@ -41,7 +41,7 @@ from multiprocessing import Process
 # import user defined library
 
 from transformation.PCA import calculate_PCA_zk_norm
-from transformation.SH_represention import get_nib_embryo_membrane_dict, get_SH_coeffient_from_surface_points
+from transformation.SH_represention import get_nib_embryo_membrane_dict
 from utils.cell_func import get_cell_name_affine_table
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
@@ -65,7 +65,7 @@ def show_cell_SPCSMs_info():
 
     print(embryo_name, cell_name, tp)
 
-    embryo_path_csv = os.path.join(r'.\DATA\my_data_csv\SH_time_domain_csv',
+    embryo_path_csv = os.path.join(config.data_path + r'my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
@@ -620,11 +620,10 @@ def display_contact_points():
         contact_mesh = o3d.geometry.TriangleMesh(o3d.cpu.pybind.utility.Vector3dVector(verts),
                                                  o3d.cpu.pybind.utility.Vector3iVector(faces))
 
-        print(idx,'  matching cubes method surface area:',mesh_surface_area(verts, faces) / 2)
+        print(idx, '  matching cubes method surface area:', mesh_surface_area(verts, faces) / 2)
 
         contact_mesh.compute_vertex_normals()
         o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
-
 
         # a = idx.split('_')
         # a.remove(str(this_cell_keys))
@@ -662,7 +661,7 @@ def display_contact_alpha_surface():
         cell_points_building_as.append([x, y, z])
     cell_points_building_as = np.array(cell_points_building_as)
     print(cell_points_building_as)
-    m_mesh = generate_alpha_shape(cell_points_building_as,displaying=True)
+    m_mesh = generate_alpha_shape(cell_points_building_as, displaying=True)
     # ---------------------------finished generating alpha shape -------------------------------
 
     with open(os.path.join(r'./DATA/cell_dia_surface', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:

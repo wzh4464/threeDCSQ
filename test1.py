@@ -1,10 +1,13 @@
-from typing import Optional, Any, Union, Tuple
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-import config
+# import dependency library
 import numpy as np
 import os
 import pandas as pd
 from time import time
+import config
+from typing import Optional, Any, Union, Tuple
 
 from multiprocessing import Process
 from sklearn.cluster import KMeans
@@ -12,9 +15,7 @@ from sklearn.decomposition import PCA
 
 import multiprocessing
 import pyshtools as pysh
-import transformation.SH_represention as sh_represent
-import transformation.PCA as PCA_f
-import experiment.geometry as geo_f
+
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
@@ -24,6 +25,12 @@ import random
 import numpy.linalg as la
 
 import seaborn as sns
+
+# import user defined library
+
+import transformation.SH_represention as sh_represent
+import transformation.PCA as PCA_f
+import experiment.geometry as geo_f
 
 from analysis.SH_analyses import analysis_SHc_Kmeans_One_embryo, get_points_with_SHc, generate_3D_matrix_from_SHc
 from utils.cell_func import nii_count_volume_surface, get_cell_name_affine_table
@@ -48,6 +55,17 @@ def compare_fibonacci_sample_and_average_sample():
     sphere_points = average_lat_lon_sphere()
     p2 = Process(target=draw_3D_points, args=(sphere_points,))
     p2.start()
+
+
+def calculate_SPHARM_embryo_in_life_span():
+    # ------------------------------calculate SHC for each cell ----------------------------------------------
+    path_tmp = config.data_path + r'SegmentCellUnified04-20/Sample20LabelUnified'
+    for file_name in os.listdir(path_tmp):
+        if os.path.isfile(os.path.join(path_tmp, file_name)):
+            print(path_tmp)
+            sh_represent.get_SH_coefficient_of_embryo(embryo_path=path_tmp, sample_N=50, lmax=24,
+                                                      file_name=file_name)
+    # -------------------------------------------------------------------------------------------------------
 
 
 def test_2021_6_15():
@@ -1130,17 +1148,4 @@ def test_2021_8_6():
 # show
 # def test_2021_9_20_2():
 if __name__ == "__main__":
-    test_11_1_2021()
-
-    # sns.set_style("whitegrid")
-    # tips = sns.load_dataset("tips")
-    # box_plot = sns.boxplot(x="day", y="total_bill", data=tips)
-    # print(tips)
-    #
-    # medians = tips.groupby(['day'])['total_bill'].median()
-    # vertical_offset = tips['total_bill'].median() * 0.05  # offset from median for display
-    #
-    # for xtick in box_plot.get_xticks():
-    #     box_plot.text(xtick, medians[xtick] + vertical_offset, medians[xtick],
-    #                   horizontalalignment='center', size='x-small', color='w', weight='semibold')
-    # plt.show()
+    calculate_SPHARM_embryo_in_life_span()
