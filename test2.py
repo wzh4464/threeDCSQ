@@ -3,7 +3,7 @@ import open3d as o3d
 import json
 from random import uniform
 
-from skimage.measure import marching_cubes_lewiner, mesh_surface_area
+from skimage.measure import marching_cubes, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import make_pipeline, Pipeline
@@ -42,7 +42,7 @@ from multiprocessing import Process
 
 from transformation.PCA import calculate_PCA_zk_norm
 from transformation.SH_represention import get_nib_embryo_membrane_dict
-from utils.cell_func import get_cell_name_affine_table
+from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
 from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
@@ -51,7 +51,7 @@ from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 from utils.shape_preprocess import get_contact_area, export_dia_cell_points_json, export_dia_cell_surface_points_json
 
 """
-Sample06,ABalaapa,078
+Sample05,ABalaapa,078
 """
 
 
@@ -364,6 +364,7 @@ def SPCSMs_SVM():
     # ==================================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
+# really stupid, figures for paper you just plot one by one then combine via vision or ppt any way
 def figure_for_science():
     # Sample06,Capp,079
     # Sample06,ABalaapa,078
@@ -616,7 +617,7 @@ def display_contact_points():
         contact_mask = np.zeros((x_tmp * 2, y_tmp * 2, z_tmp * 2))
         for [x_tmp, y_tmp, z_tmp] in draw_points_list:
             contact_mask[x_tmp, y_tmp, z_tmp] = True
-        verts, faces, _, _ = marching_cubes_lewiner(contact_mask)
+        verts, faces, _, _ = marching_cubes(contact_mask)
         contact_mesh = o3d.geometry.TriangleMesh(o3d.cpu.pybind.utility.Vector3dVector(verts),
                                                  o3d.cpu.pybind.utility.Vector3iVector(faces))
 
@@ -685,9 +686,81 @@ def calculate_SH_PCA_coordinate():
         PCA_matrices_saving_path)
 
 
+
+def plot_voxel_and_reconstructed_surface():
+    # Sample05,ABpl,015
+    """
+    plot original surface and reconstructed surface through SPHARM
+    """
+
+    print('waiting type you input: sample name and time points for embryogenesis')
+    embryo_name, cell_name, tp = str(input()).split(',')
+
+    num_cell_name, cell_num = get_cell_name_affine_table()
+    this_cell_keys = cell_num[cell_name]
+
+    """
+    the following plotted figure need configure then capture to .png
+    
+    camera position and rotation: paste action in figure window
+    
+    {
+	"class_name" : "ViewTrajectory",
+	"interval" : 29,
+	"is_loop" : false,
+	"trajectory" : 
+	[
+		{
+			"boundingbox_max" : [ 58.949796990685456, 73.062096966802002, 17.53928827322666 ],
+			"boundingbox_min" : [ -58.050203009314544, -64.937903033197998, -32.46071172677334 ],
+			"field_of_view" : 60.0,
+			"front" : [ -0.022170625825107981, 0.031107593735803508, -0.9992701241218469 ],
+			"lookat" : [ 0.44979699068545642, 4.0620969668020024, -7.46071172677334 ],
+			"up" : [ 0.039903629142300223, 0.99874686470810126, 0.030205969890268435 ],
+			"zoom" : 0.69999999999999996
+		}
+	],
+	"version_major" : 1,
+	"version_minor" : 0
+    }
+    
+    choose: shift+2
+    press 3-5 time + to make points grow bigger
+    remember: L to open shining and shadow
+    
+    then press P , the capture figure .png would save to where the python command you run 
+    
+    """
+    # ===========plot original dialation surface for particular shape====================================
+    # embryo_img = load_nitf2_img(
+    #     os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+    #                  embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
+    # cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
+    # # print((cell_surface_points - center).shape)
+    # print(np.max((cell_surface_points-center),axis=0))
+    # m_pcd = o3d.geometry.PointCloud()
+    # m_pcd.points = o3d.utility.Vector3dVector(cell_surface_points - center)
+    # m_pcd.estimate_normals()
+    # o3d.visualization.draw_geometries([m_pcd])
+    # =========================================================================================
+
+    # ==============plot reconstruction surface============================================
+    # the path need to change to non-norm path
+    # SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    # df_SHcPCA = read_csv_to_df(SHc_path)
+    # sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
+    # m_pcd = o3d.geometry.PointCloud()
+    # resctruct_xyz = do_reconstruction_for_SH(200, sh_instance)
+    # m_pcd.points = o3d.utility.Vector3dVector(resctruct_xyz)
+    # m_pcd.estimate_normals()
+    # o3d.visualization.draw_geometries([m_pcd])
+    # ==================================================================================
+
+# def
+
 if __name__ == "__main__":
     print('test2 run')
-    display_contact_alpha_surface()
+    plot_voxel_and_reconstructed_surface()
     # figure_for_science()
     # display_contact_points()
     # show_cell_SPCSMs_info()
