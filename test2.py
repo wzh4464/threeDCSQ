@@ -3,6 +3,7 @@ import open3d as o3d
 import json
 from random import uniform
 
+from pyshtools import SHGrid
 from skimage.measure import marching_cubes, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import SGDClassifier
@@ -36,12 +37,12 @@ from matplotlib import cm
 import matplotlib.patches
 
 from datetime import datetime
-from multiprocessing import Process
 
+import seaborn as sns
 # import user defined library
 
 from transformation.PCA import calculate_PCA_zk_norm
-from transformation.SH_represention import get_nib_embryo_membrane_dict
+from transformation.SH_represention import get_nib_embryo_membrane_dict, do_sampling_with_interval
 from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
@@ -686,7 +687,6 @@ def calculate_SH_PCA_coordinate():
         PCA_matrices_saving_path)
 
 
-
 def plot_voxel_and_reconstructed_surface():
     # Sample05,ABpl,015
     """
@@ -756,11 +756,86 @@ def plot_voxel_and_reconstructed_surface():
     # o3d.visualization.draw_geometries([m_pcd])
     # ==================================================================================
 
-# def
+
+def plot_and_save_5_type_figures():
+    # Sample05,ABpl,014
+
+    print('waiting type you input: sample name and time points for embryogenesis')
+    embryo_name, cell_name, tp = str(input()).split(',')
+
+    num_cell_name, cell_num = get_cell_name_affine_table()
+    this_cell_keys = cell_num[cell_name]
+
+    embryo_img = load_nitf2_img(
+        os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+                     embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
+    cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
+
+    # ====================plot 2. 2D mapping parameterization============================
+    # plt.rcParams['text.usetex'] = True
+    #
+    # fig_SPCSMs_info = plt.figure()
+    #
+    # grid_data, _ = do_sampling_with_interval(24, cell_surface_points - center, average_num=3)
+    #
+    # axes_tmp4 = fig_SPCSMs_info.add_subplot(111)
+    # grid_tmp = SHGrid.from_array(grid_data)
+    # # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
+    # grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='3D Surface Spherical Mapping',
+    #               xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
+    #               ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)', axes_labelsize=12,
+    #               tick_interval=[60, 60], colorbar='right', cb_label='Distance')
+    # # plt.show()
+    #
+    # saving_path = os.path.join(
+    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+    #     embryo_name + cell_name + tp + '2DMap.svg')
+    # plt.savefig(saving_path, format='svg')
+    # =================================================================================================
+
+    # ============== plot 3.  SPHARM surface ARRAY============================================
+    # plt.rcParams['text.usetex'] = True
+    #
+    # fig_SPCSMs_info = plt.figure()
+    # axes_tmp = fig_SPCSMs_info.add_subplot(111)
+    #
+    # # the path need to change to non-norm path
+    # SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    # df_SHcPCA = read_csv_to_df(SHc_path)
+    # sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
+    # sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array',ax=axes_tmp,degree_label=r'SPAHRM degree \textit{l}',
+    #                     order_label=r'SPAHRM order \textit{m}',  cmap='RdBu',cb_label='Component value Colorbar',cb_triangles='both')
+    # saving_path = os.path.join(
+    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+    #     embryo_name + cell_name + tp + 'SPHARM.svg')
+    # # plt.show()
+    # plt.savefig(saving_path, format='svg')
+    # ==================================================================================
+
+    # ==============4. plot SPHARM spectrum vector============================================
+    plt.rcParams['text.usetex'] = True
+
+    fig_SPCSMs_info = plt.figure()
+    axes_tmp = fig_SPCSMs_info.add_subplot(111)
+
+    # the path need to change to non-norm path
+    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    df_SHcPCA = read_csv_to_df(SHc_path)
+    sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
+    print(sh_instance.spectrum())
+    sns.histplot(data=sh_instance.spectrum(), x="flipper_length_mm", kde=True)
+
+    saving_path = os.path.join(
+        r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+        embryo_name + cell_name + tp + 'SPHARM.svg')
+    # plt.show()
+    plt.savefig(saving_path, format='svg')
+    # ==================================================================================
+
 
 if __name__ == "__main__":
     print('test2 run')
-    plot_voxel_and_reconstructed_surface()
+    plot_and_save_5_type_figures()
     # figure_for_science()
     # display_contact_points()
     # show_cell_SPCSMs_info()

@@ -1,5 +1,25 @@
 # CellShapeAnalysis
 
+## TODO List
+
+### 01paper
+- [ ] FIGURE01 workflow figure 
+    - [ ] replace array with matrix in figure: 2D Spherical matrix, SPHARM coefficient matrix
+
+- [ ] FIGURE02 the figure help reader understand 2D Spherical matrix.
+
+- [ ] FIGURE03 confirm point distance unit, use correct distance, volume and surface in 2DMAP feature array.
+- [ ] calculate 2DMap PCA.
+- [ ] draw 2DMap PCA and SPAHRM PCA in histogram.
+- [ ] combine five feature schematic diagram.
+
+- [ ] FIGURE04 average lineage tree.
+
+- [ ] FIGURE05 shape reproducibility.
+
+- [ ] FIGURE06 skin cell recognize.
+
+- [ ] FIGURE07 cluster result (internal error and external error)
 ## Files and Function usages
 
 ### Curvature Of cell
