@@ -3,7 +3,10 @@
 import os
 import config
 
+import numpy as np
+
 import utils.general_func as general_f
+
 from utils.cell_func import nii_get_cell_surface
 
 
@@ -11,11 +14,14 @@ def main():
     print("start cell shape analysis")
 
     # ------------------------------R fibonacci representation------------------------------------------------
-    img_1 = general_f.load_nitf2_img(os.path.join(config.dir_segemented, 'Embryo04_068_segCell.nii.gz'))
-    general_f.show_nitf2_img(os.path.join(config.dir_segemented_tmp1, 'Embryo04_068_segCell.nii.gz'))
+    for cell_index in np.arange(start=4, stop=21, step=1):
+        path_tmp = config.data_path+r'Segmentation Results\SegmentedCell/Sample' + f'{cell_index:02}' + 'LabelUnified'
+        img_1 = general_f.load_nitf2_img(os.path.join(path_tmp,'Sample{}_068_segCell.nii.gz'.format(f'{cell_index:02}')))
+        print('Sample{}_segCell.nii.gz'.format(f'{cell_index:02}'),img_1.get_fdata().shape)
+        # print(general_f.load_nitf2_img(os.path.join(config.data_path,r'Segmentation Results\SegmentedCell\Sample04LabelUnified','Sample04_100_segCell.nii.gz')).get_fdata().shape)
+    # general_f.show_nitf2_img(os.path.join(config.dir_segemented_tmp1, 'Embryo04_068_segCell.nii.gz'))
 
 
-    _ = nii_get_cell_surface(img_1, save_name='Embryo04_068_segCell.nii.gz')
 
     # img_2 = general_f.show_nitf2_img(os.path.join(config.dir_my_data, 'membrane' + 'Embryo04_001_segCell.nii.gz'))
     # R_func.build_R_array_for_embryo(128)

@@ -3,23 +3,47 @@
 ## TODO List
 
 ### 01paper
-- [ ] FIGURE01 workflow figure 
-    - [ ] replace array with matrix in figure: 2D Spherical matrix, SPHARM coefficient matrix
+- [x] FIGURE01 workflow figure 
+    - [x] replace array with matrix in figure: 2D Spherical matrix, SPHARM coefficient matrix
 
-- [ ] FIGURE02 the figure help reader understand 2D Spherical matrix.
+- [x] FIGURE02 the figure help reader understand 2D Spherical matrix.
 
-- [ ] FIGURE03 confirm point distance unit, use correct distance, volume and surface in 2DMAP feature array.
-- [ ] calculate 2DMap PCA.
-- [ ] draw 2DMap PCA and SPAHRM PCA in histogram.
-- [ ] combine five feature schematic diagram.
+- [x] FIGURE03 confirm point distance unit, use correct distance, volume and surface in 2DMAP feature array.
+  - [x] calculate 2DMap PCA.
+  - [] draw 2DMap PCA and SPAHRM PCA in histogram.
+  - [ ] combine five feature schematic diagram.
 
 - [ ] FIGURE04 average lineage tree.
 
-- [ ] FIGURE05 shape reproducibility.
+- [x] FIGURE05 shape reproducibility. (linear relation)
 
 - [ ] FIGURE06 skin cell recognize.
 
-- [ ] FIGURE07 cluster result (internal error and external error)
+- [ ] NOT NOW - FIGURE07 cluster result (internal error and external error)
+
+### points surface display
+
+o3d configuration:
+{
+	"class_name" : "ViewTrajectory",
+	"interval" : 29,
+	"is_loop" : false,
+	"trajectory" : 
+	[
+		{
+			"boundingbox_max" : [ 58.949796990685456, 73.062096966802002, 17.53928827322666 ],
+			"boundingbox_min" : [ -58.050203009314544, -64.937903033197998, -32.46071172677334 ],
+			"field_of_view" : 60.0,
+			"front" : [ -0.022170625825107981, 0.031107593735803508, -0.9992701241218469 ],
+			"lookat" : [ 0.44979699068545642, 4.0620969668020024, -7.46071172677334 ],
+			"up" : [ 0.039903629142300223, 0.99874686470810126, 0.030205969890268435 ],
+			"zoom" : 0.69999999999999996
+		}
+	],
+	"version_major" : 1,
+	"version_minor" : 0
+}
+
 ## Files and Function usages
 
 ### Curvature Of cell

@@ -377,20 +377,19 @@ def figure_for_science():
     # cell_name = str(input())
     # tp = str(input())
 
-    embryo_path_csv = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\SH_time_domain_csv',
+    embryo_path_csv = os.path.join(r'D:\cell_shape_quantification\DATA', r'my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
+    print(embryo_path_csv)
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
     plt.rcParams['text.usetex'] = True
-    # params = {'text.usetex': True,
-    #           }
-    # plt.rcParams.update(params)
+
     fig_SPCSMs_info = plt.figure()
 
     axes_tmp1 = fig_SPCSMs_info.add_subplot(2, 2, 1, projection='3d')
     instance_tmp1 = pysh.SHCoeffs.from_array(
-        collapse_flatten_clim(embryo_csv.loc[tp1 + '::' + cell_name1])).expand(lmax=100)
-    instance_tmp1_expanded = instance_tmp1.data
+        collapse_flatten_clim(embryo_csv.loc[tp1 + '::' + cell_name1]))
+    instance_tmp1_expanded = instance_tmp1.expand(lmax=100).data
 
     Y2d = np.arange(-90, 90, 180 / 203)
     X2d = np.arange(0, 360, 360 / 405)
@@ -401,12 +400,14 @@ def figure_for_science():
     axes_tmp1.set_zlabel(r'\textit{z}')  # 坐标轴
     axes_tmp1.set_ylabel(r'\textit{y}')
     axes_tmp1.set_xlabel(r'\textit{x}')
-    axes_tmp1.colorbar()
+    # axes_tmp1.colorbar()
 
     axes_tmp2 = fig_SPCSMs_info.add_subplot(2, 2, 2)
-    instance_tmp1.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                       xlabel=r'\textit{x}',
-                       ylabel=r'\textit{y}', axes_labelsize=12, tick_interval=[60, 60])
+    grid_2 = instance_tmp1.expand(lmax=100)
+    grid_2.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
+                xlabel=r'\textit{x}',
+                ylabel=r'\textit{y}', axes_labelsize=12, tick_interval=[60, 60], colorbar='right',
+                cb_label=r'\textit{z} value / 0.015625 $\mu M$')
     set_size(5, 5, ax=axes_tmp2)
 
     # embryo_path_name = embryo_name + 'LabelUnified'
@@ -450,17 +451,20 @@ def figure_for_science():
     y_lon = np.sqrt(225 - np.power(x_lon, 2))
     # print(y_lon)
     axes_tmp3.scatter3D(x_lon, y_lon, np.zeros(1000), s=3, color='blue')
-    axes_tmp3.text(19, 19, 0, 'longitude', (-1, 1, 0), ha='center')
+    axes_tmp3.text(19, 19, 0, r'\textit{longitude}', (-1, 1, 0), ha='center')
 
     # latitude circle
     y_lat = np.arange(0, 15, 15 / 1000)
     z_lat = np.sqrt(225 - np.power(y_lat, 2))
     axes_tmp3.scatter3D(np.zeros(1000), y_lat, z_lat, s=3, color='black')
-    axes_tmp3.text(0, 18, 18, 'latitude', (-1, 1, 0), ha='center')
+    axes_tmp3.text(0, 18, 18, r'\textit{latitude}', (-1, 1, 0), ha='center')
 
     axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, r'\textit{x}', (-1, 1, 0), ha='center').set_fontstyle('italic')
     axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, r'\textit{y}', (-1, 1, 0), ha='center').set_fontstyle('italic')
     axes_tmp3.text(-0.1 * sn, 0, sn + 10, r'\textit{z}', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.set_zlabel(r'\textit{z}')  # 坐标轴
+    axes_tmp3.set_ylabel(r'\textit{y}')
+    axes_tmp3.set_xlabel(r'\textit{x}')
 
     # axes_tmp3.annotate('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold', style='italic')
 
@@ -468,20 +472,16 @@ def figure_for_science():
     grid_tmp = instance_tmp.expand(lmax=100)
     # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
     grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                  xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
+                  xlabel=r'Longitude \textit{x}-\textit{y} plane (degree \textdegree)',
                   ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)', axes_labelsize=12,
-                  tick_interval=[60, 60])
+                  tick_interval=[60, 60], colorbar='right', cb_label=r'distance from centroid / 0.015625 $\mu M$')
 
-    fig_SPCSMs_info.text(0, 0.7, '3D Surface Mapping', fontsize=12)
-    fig_SPCSMs_info.text(0, 0.25, '3D Object Mapping', fontsize=12)
-    # Sample06,Dpaap,158
-    # Sample06,ABalaapa,078
-
-    # axes_tmp1.add_patch(
-    #     matplotlib.patches.Rectangle((200., -4.), 50., 6., transform=axes_tmp1.transData, alpha=0.3, color="g"))
+    fig_SPCSMs_info.text(0.1, 0.7, '3D Surface ', fontsize=12)
+    fig_SPCSMs_info.text(0.1, 0.25, '3D Closed Surface', fontsize=12)
+    # Sample06,Dpaap,158   Sample06,ABalaapa,078
 
     arrow = matplotlib.patches.FancyArrowPatch(
-        (0.4, 0.7), (0.6, 0.7), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
+        (0.4, 0.7), (0.5, 0.7), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
         fc="g", connectionstyle="arc3,rad=0.2", arrowstyle='simple', alpha=0.3,
         mutation_scale=40.
     )
@@ -489,7 +489,7 @@ def figure_for_science():
     fig_SPCSMs_info.patches.append(arrow)
 
     arrow = matplotlib.patches.FancyArrowPatch(
-        (0.4, 0.3), (0.6, 0.3), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
+        (0.4, 0.3), (0.5, 0.3), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
         fc="g", connectionstyle="arc3,rad=0.2", arrowstyle='simple', alpha=0.3,
         mutation_scale=40.
     )
@@ -497,6 +497,10 @@ def figure_for_science():
     fig_SPCSMs_info.patches.append(arrow)
 
     plt.show()
+    # saving_path = os.path.join(
+    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+    #     embryo_name + cell_name + tp + 'spherical_matrix.svg')
+    # plt.savefig(saving_path, format='svg')
 
 
 def calculate_cell_contact_points():
@@ -813,24 +817,31 @@ def plot_and_save_5_type_figures():
     # ==================================================================================
 
     # ==============4. plot SPHARM spectrum vector============================================
+
     plt.rcParams['text.usetex'] = True
 
-    fig_SPCSMs_info = plt.figure()
-    axes_tmp = fig_SPCSMs_info.add_subplot(111)
 
     # the path need to change to non-norm path
     SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     print(sh_instance.spectrum())
-    sns.histplot(data=sh_instance.spectrum(), x="flipper_length_mm", kde=True)
+    fig, ax = plt.subplots()
+    # s_list = [7870, 81937, 17529598, 6225227]
+    l_list = np.arange(1,26)
+    ax.bar(l_list, np.log(sh_instance.spectrum()[1:]))
 
-    saving_path = os.path.join(
-        r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
-        embryo_name + cell_name + tp + 'SPHARM.svg')
-    # plt.show()
-    plt.savefig(saving_path, format='svg')
+    plt.title('Numbers of Four eventtypes')
+    plt.xlabel('Eventtype')
+    plt.ylabel('Number')
+    plt.show()
+    # saving_path = os.path.join(
+    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+    #     embryo_name + cell_name + tp + 'SPHARM.svg')
+    # plt.savefig(saving_path, format='svg')
     # ==================================================================================
+    # Sample05,ABpl,014
+
 
 
 if __name__ == "__main__":
