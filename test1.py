@@ -62,7 +62,7 @@ def compare_fibonacci_sample_and_average_sample():
     p2.start()
 
 
-def calculate_SPHARM_embryo_in_life_span():
+def calculate_SPHARM_embryo_for_cells():
     # ------------------------------calculate SHC for each cell ----------------------------------------------
     path_tmp = config.data_path + r'SegmentCellUnified04-20/Sample20LabelUnified'
     for file_name in os.listdir(path_tmp):
@@ -73,12 +73,6 @@ def calculate_SPHARM_embryo_in_life_span():
     # -------------------------------------------------------------------------------------------------------
 
 
-def test_2021_6_15():
-    print('hello 2021 6 14')
-    points = geo_f.get_sample_on_geometric_object(r'./DATA/template_shape_stl/unit-regular-tetrahedron.solid')
-    instance = sh_represent.sample_and_SHc_with_surface(surface_points=points, sample_N=30, lmax=14,
-                                                        surface_average_num=3)
-    draw_3D_points(do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance))
 
 
 # do PCA and transform it to 1/10 reduction dimension!!!! 24 or 48
@@ -119,88 +113,76 @@ def test_2021_6_21_3():
     # RECOSTRUCT THE SHcPCA, draw tree fuck
 
 
-def test_2021_6_22_1():
-    for cell_index in np.arange(start=4, stop=21, step=1):
-        path_tmp = r'./DATA/SegmentCellUnified04-20/Sample' + f'{cell_index:02}' + 'LabelUnified'
-        print(path_tmp)
-        analysis_SHc_Kmeans_One_embryo(embryo_path=path_tmp, used_degree=16, cluster_num=4,
-                                       is_show_cluster=False)
-    #  analysis_SHcPCA_KMEANS_clustering(embryo_path=path_tmp, used_degree=16, cluster_num=4)
-
-    #  analysis_SHcPCA_energy_ratio(embryo_path=path_tmp, used_degree=9)
-    #  analysis_SHcPCA_maximum_clustering(embryo_path=path_tmp, used_degree=16)
-
-
 def test_2021_6_30_3():
     combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv=config.dir_my_data_SH_time_domain_csv,
                                  is_norm=False)
 
-
-# draw three methods contraction, figure plot
-def test_2021_7_1_1():
-    embryo_path = config.dir_segemented_tmp1
-    k = 48  # 16+1 square
-    degree = 12
-
-    embryo_name = os.path.basename(embryo_path)
-
-    # the whole PCA for embryo is the same one ,read before loop avoiding redundant reading
-    PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm_PCA.csv')
-    pca_means, variation, df_n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
-    # the path need to change to non-norm path
-    SHcPCA_path = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}_norm.csv'.format(k))
-    df_SHcPCA = read_csv_to_df(SHcPCA_path)
-    # seg_files_path=[]
-    No_cell, _ = get_cell_name_affine_table()
-    # ------------------------draw original, sample, SHc, SHcPCA reconstruction result--------------------
-    # for file_name in reversed(os.listdir(embryo_path)):
-    for file_name in os.listdir(embryo_path):
-
-        if os.path.isfile(os.path.join(embryo_path, file_name)):
-            path_embryo = os.path.join(embryo_path, file_name)
-            print(path_embryo)
-            tp = file_name.split('_')[1]
-            # seg_files_path.append(file_name)
-            dict_cell_membrane, dict_center_points = sh_represent.get_nib_embryo_membrane_dict(embryo_path, file_name)
-            # print(dict_cell_membrane)
-            # print(dict_center_points)
-            for keys_tmp in dict_cell_membrane.keys():
-                cell_name = No_cell[keys_tmp]
-                idx_SHcPCA: str = tp + '::' + cell_name
-
-                local_surface_points = dict_cell_membrane[keys_tmp] - dict_center_points[keys_tmp]
-                fig = plt.figure()
-
-                # original cell plot
-                ax1 = fig.add_subplot(2, 2, 1, projection='3d')
-                draw_3D_points(local_surface_points, fig_name='original' + idx_SHcPCA, ax=ax1)
-
-            sh_show_N = 20
-            # just for show 20 x 20 x 2 sample
-            ax2 = fig.add_subplot(2, 2, 2, projection='3d')
-            _, sample_surface = sh_represent.do_sampling_with_interval(sh_show_N, local_surface_points, 3,
-                                                                       is_return_xyz=True)
-            draw_3D_points(sample_surface, fig_name='Sample' + idx_SHcPCA, ax=ax2)
-
-        # SHc cell plot
-        SHc_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
-        cell_SH_path = os.path.join(SHc_embryo_dir, cell_name)
-        sh_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=degree)
-        reconstruction_xyz = do_reconstruction_for_SH(sh_show_N, sh_instance)
-        ax3 = fig.add_subplot(2, 2, 3, projection='3d')
-        draw_3D_points(reconstruction_xyz, fig_name='SHc' + idx_SHcPCA, ax=ax3)
-
-    # SHcPCA plot
-
-    zk = df_SHcPCA.loc[idx_SHcPCA]
-    # x_hat is a sh coefficients instance
-    x_hat = df_n_components.values[:k].T.dot(zk) + pca_means
-    sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(x_hat))
-    reconstruction_xyz = do_reconstruction_for_SH(sh_show_N, sh_instance)
-    ax4 = fig.add_subplot(2, 2, 4, projection='3d')
-    draw_3D_points(reconstruction_xyz, fig_name='SHcPCA' + idx_SHcPCA, ax=ax4)
-    plt.show()
-
+#
+# # draw three methods contraction, figure plot
+# def test_2021_7_1_1():
+#     embryo_path = config.dir_segemented_tmp1
+#     k = 48  # 16+1 square
+#     degree = 12
+#
+#     embryo_name = os.path.basename(embryo_path)
+#
+#     # the whole PCA for embryo is the same one ,read before loop avoiding redundant reading
+#     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm_PCA.csv')
+#     pca_means, variation, df_n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
+#     # the path need to change to non-norm path
+#     SHcPCA_path = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}_norm.csv'.format(k))
+#     df_SHcPCA = read_csv_to_df(SHcPCA_path)
+#     # seg_files_path=[]
+#     No_cell, _ = get_cell_name_affine_table()
+#     # ------------------------draw original, sample, SHc, SHcPCA reconstruction result--------------------
+#     # for file_name in reversed(os.listdir(embryo_path)):
+#     for file_name in os.listdir(embryo_path):
+#
+#         if os.path.isfile(os.path.join(embryo_path, file_name)):
+#             path_embryo = os.path.join(embryo_path, file_name)
+#             print(path_embryo)
+#             tp = file_name.split('_')[1]
+#             # seg_files_path.append(file_name)
+#             dict_cell_membrane, dict_center_points = sh_represent.get_nib_embryo_membrane_dict(embryo_path, file_name)
+#             # print(dict_cell_membrane)
+#             # print(dict_center_points)
+#             for keys_tmp in dict_cell_membrane.keys():
+#                 cell_name = No_cell[keys_tmp]
+#                 idx_SHcPCA: str = tp + '::' + cell_name
+#
+#                 local_surface_points = dict_cell_membrane[keys_tmp] - dict_center_points[keys_tmp]
+#                 fig = plt.figure()
+#
+#                 # original cell plot
+#                 ax1 = fig.add_subplot(2, 2, 1, projection='3d')
+#                 draw_3D_points(local_surface_points, fig_name='original' + idx_SHcPCA, ax=ax1)
+#
+#             sh_show_N = 20
+#             # just for show 20 x 20 x 2 sample
+#             ax2 = fig.add_subplot(2, 2, 2, projection='3d')
+#             _, sample_surface = sh_represent.do_sampling_with_interval(sh_show_N, local_surface_points, 3,
+#                                                                        is_return_xyz=True)
+#             draw_3D_points(sample_surface, fig_name='Sample' + idx_SHcPCA, ax=ax2)
+#
+#         # SHc cell plot
+#         SHc_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
+#         cell_SH_path = os.path.join(SHc_embryo_dir, cell_name)
+#         sh_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=degree)
+#         reconstruction_xyz = do_reconstruction_for_SH(sh_show_N, sh_instance)
+#         ax3 = fig.add_subplot(2, 2, 3, projection='3d')
+#         draw_3D_points(reconstruction_xyz, fig_name='SHc' + idx_SHcPCA, ax=ax3)
+#
+#     # SHcPCA plot
+#
+#     zk = df_SHcPCA.loc[idx_SHcPCA]
+#     # x_hat is a sh coefficients instance
+#     x_hat = df_n_components.values[:k].T.dot(zk) + pca_means
+#     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(x_hat))
+#     reconstruction_xyz = do_reconstruction_for_SH(sh_show_N, sh_instance)
+#     ax4 = fig.add_subplot(2, 2, 4, projection='3d')
+#     draw_3D_points(reconstruction_xyz, fig_name='SHcPCA' + idx_SHcPCA, ax=ax4)
+#     plt.show()
+#
 
 def test_2021_7_1_2():
     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_PCA.csv')
@@ -208,114 +190,117 @@ def test_2021_7_1_2():
     PCA_f.calculate_PCA_zk_norm(embryo_path=config.dir_segemented_tmp1,
                                 PCA_matrices_saving_path=PCA_matrices_saving_path, k=12)
 
+#
+# # draw three methods contraction, error estimate # TIME CONSUMING AND
+# def test_2021_7_2_1():
+#     # draw three methods contraction
+#     embryo_path = config.dir_segemented_tmp1
+#
+#     # degree = 16
+#
+#     embryo_name = os.path.basename(embryo_path)
+#     # the whole PCA for embryo is the same one ,read before loop avoiding redundant reading
+#     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_PCA.csv')
+#     pca_means, variation, df_n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
+#     # the path need to change to non-norm path
+#
+#     # seg_files_path=[]
+#     No_cell, _ = get_cell_name_affine_table()
+#
+#     l_degree_range = np.arange(5, 26, 1)
+#
+#     df_err = pd.DataFrame(columns=['outline', 'outlinePCA', 'SHc', 'SHcPCA'])
+#
+#     # ------calculate sample, SHc, SHcPCA reconstruction error by random, one cell one average error result--------
+#     # for file_name in reversed(os.listdir(embryo_path)):
+#     # for l_degree in l_degree_range:
+#
+#     # N = 25
+#     # just for show 20 x 20 x 2 sample
+#     for file_name in os.listdir(embryo_path):
+#         if os.path.isfile(os.path.join(embryo_path, file_name)):
+#             path_embryo = os.path.join(embryo_path, file_name)
+#             tp = file_name.split('_')[1]
+#             # seg_files_path.append(file_name)
+#             dict_cell_membrane, dict_center_points = sh_represent.get_nib_embryo_membrane_dict(embryo_path,
+#                                                                                                file_name)
+#             # print(dict_cell_membrane)
+#             # print(dict_center_points)
+#             for l_degree in reversed(l_degree_range):
+#
+#                 # outline extraction number
+#                 N: int = int(math.sqrt((l_degree + 1) ** 2 / 2) + 1)
+#                 k: int = (l_degree + 1) ** 2  # 16+1 square
+#                 SHcPCA_path = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}.csv'.format(k))
+#                 if not os.path.exists(SHcPCA_path):
+#                     PCA_f.calculate_PCA_zk(embryo_path, PCA_matrices_saving_path, k)
+#                 df_SHcPCA = read_csv_to_df(SHcPCA_path)
+#                 print(path_embryo, 'degree', l_degree)
+#
+#                 for keys_tmp in tqdm(dict_cell_membrane.keys()):
+#                     cell_name = No_cell[keys_tmp]
+#                     idx_ = tp + '::' + cell_name
+#                     idx = tp + '::' + cell_name + '::' + str(l_degree)
+#
+#                     # co-latitude 0-math.pi
+#                     error_test_point_num = 1000
+#                     map_testing = [[random.uniform(0, math.pi), random.uniform(0, 2 * math.pi)] for i in
+#                                    range(error_test_point_num)]
+#
+#                     # --------------------------ground truth from original---------------------------------------
+#                     local_surface_points = dict_cell_membrane[keys_tmp] - dict_center_points[keys_tmp]
+#                     R_from_lat_lon, original_xyz = sh_represent.do_sampling_with_lat_lon(local_surface_points,
+#                                                                                          map_testing,
+#                                                                                          average_num=10,
+#                                                                                          is_return_xyz=True)
+#                     # --------------------------outline extraction------------------------------------------------
+#                     grid_date, sample_surface = sh_represent.do_sampling_with_interval(N, local_surface_points, 10,
+#                                                                                        is_return_xyz=True)
+#
+#                     R_sample, sample_xyz = sh_represent.do_sampling_with_lat_lon(sample_surface, map_testing,
+#                                                                                  average_num=1,
+#                                                                                  is_return_xyz=True)
+#
+#                     # SHc cell plot
+#                     # --------------------------------shc-------------------------------------------------------
+#                     SHc_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
+#                     cell_SH_path = os.path.join(SHc_embryo_dir, cell_name)
+#                     sh_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=l_degree)
+#                     # R_SHc =  do_reconstruction_for_SH(lat_num, sh_instance)
+#                     # print(type(map_random))
+#                     R_SHc, shc_sample_xyz = get_points_with_SHc(sh_instance,
+#                                                                 colat=np.array(map_testing)[:, 0],
+#                                                                 lon=np.array(map_testing)[:, 1],
+#                                                                 is_return_xyz=True)
+#
+#                     # # SHcPCA
+#                     # ------------------------------shcpca--------------------------------------------------------
+#                     zk = df_SHcPCA.loc[idx_]
+#                     x_hat = df_n_components.values[:k].T.dot(zk) + pca_means
+#                     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(x_hat))
+#                     R_SHcPCA, shcpca_sample_xyz = get_points_with_SHc(sh_instance,
+#                                                                       colat=np.array(map_testing)[:, 0],
+#                                                                       lon=np.array(map_testing)[:, 1],
+#                                                                       is_return_xyz=True)
+#
+#                     err_sample: Union[Tuple[Any, Optional[Any]], Any] = np.average(np.abs(R_sample - R_from_lat_lon))
+#                     err_SHc = np.average(np.abs(R_SHc - R_from_lat_lon))
+#                     err_SHcPCA = np.average(np.abs(R_SHcPCA - R_from_lat_lon))
+#
+#                     # print(err_sample, 0, err_SHc, err_SHcPCA)
+#                     # err_SHcPCA = 0
+#                     # print(err_sample, err_SHc, err_SHcPCA)
+#
+#                     df_err.loc[idx] = [err_sample, 0, err_SHc, err_SHcPCA]
+#
+#     df_err.to_csv(os.path.join(config.dir_my_data_err_est_dir, embryo_name + 'test2.csv'))
+#
 
-# draw three methods contraction, error estimate # TIME CONSUMING AND
-def test_2021_7_2_1():
-    # draw three methods contraction
-    embryo_path = config.dir_segemented_tmp1
-
-    # degree = 16
-
-    embryo_name = os.path.basename(embryo_path)
-    # the whole PCA for embryo is the same one ,read before loop avoiding redundant reading
-    PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_PCA.csv')
-    pca_means, variation, df_n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
-    # the path need to change to non-norm path
-
-    # seg_files_path=[]
-    No_cell, _ = get_cell_name_affine_table()
-
-    l_degree_range = np.arange(5, 26, 1)
-
-    df_err = pd.DataFrame(columns=['outline', 'outlinePCA', 'SHc', 'SHcPCA'])
-
-    # ------calculate sample, SHc, SHcPCA reconstruction error by random, one cell one average error result--------
-    # for file_name in reversed(os.listdir(embryo_path)):
-    # for l_degree in l_degree_range:
-
-    # N = 25
-    # just for show 20 x 20 x 2 sample
-    for file_name in os.listdir(embryo_path):
-        if os.path.isfile(os.path.join(embryo_path, file_name)):
-            path_embryo = os.path.join(embryo_path, file_name)
-            tp = file_name.split('_')[1]
-            # seg_files_path.append(file_name)
-            dict_cell_membrane, dict_center_points = sh_represent.get_nib_embryo_membrane_dict(embryo_path,
-                                                                                               file_name)
-            # print(dict_cell_membrane)
-            # print(dict_center_points)
-            for l_degree in reversed(l_degree_range):
-
-                # outline extraction number
-                N: int = int(math.sqrt((l_degree + 1) ** 2 / 2) + 1)
-                k: int = (l_degree + 1) ** 2  # 16+1 square
-                SHcPCA_path = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}.csv'.format(k))
-                if not os.path.exists(SHcPCA_path):
-                    PCA_f.calculate_PCA_zk(embryo_path, PCA_matrices_saving_path, k)
-                df_SHcPCA = read_csv_to_df(SHcPCA_path)
-                print(path_embryo, 'degree', l_degree)
-
-                for keys_tmp in tqdm(dict_cell_membrane.keys()):
-                    cell_name = No_cell[keys_tmp]
-                    idx_ = tp + '::' + cell_name
-                    idx = tp + '::' + cell_name + '::' + str(l_degree)
-
-                    # co-latitude 0-math.pi
-                    error_test_point_num = 1000
-                    map_testing = [[random.uniform(0, math.pi), random.uniform(0, 2 * math.pi)] for i in
-                                   range(error_test_point_num)]
-
-                    # --------------------------ground truth from original---------------------------------------
-                    local_surface_points = dict_cell_membrane[keys_tmp] - dict_center_points[keys_tmp]
-                    R_from_lat_lon, original_xyz = sh_represent.do_sampling_with_lat_lon(local_surface_points,
-                                                                                         map_testing,
-                                                                                         average_num=10,
-                                                                                         is_return_xyz=True)
-                    # --------------------------outline extraction------------------------------------------------
-                    grid_date, sample_surface = sh_represent.do_sampling_with_interval(N, local_surface_points, 10,
-                                                                                       is_return_xyz=True)
-
-                    R_sample, sample_xyz = sh_represent.do_sampling_with_lat_lon(sample_surface, map_testing,
-                                                                                 average_num=1,
-                                                                                 is_return_xyz=True)
-
-                    # SHc cell plot
-                    # --------------------------------shc-------------------------------------------------------
-                    SHc_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
-                    cell_SH_path = os.path.join(SHc_embryo_dir, cell_name)
-                    sh_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=l_degree)
-                    # R_SHc =  do_reconstruction_for_SH(lat_num, sh_instance)
-                    # print(type(map_random))
-                    R_SHc, shc_sample_xyz = get_points_with_SHc(sh_instance,
-                                                                colat=np.array(map_testing)[:, 0],
-                                                                lon=np.array(map_testing)[:, 1],
-                                                                is_return_xyz=True)
-
-                    # # SHcPCA
-                    # ------------------------------shcpca--------------------------------------------------------
-                    zk = df_SHcPCA.loc[idx_]
-                    x_hat = df_n_components.values[:k].T.dot(zk) + pca_means
-                    sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(x_hat))
-                    R_SHcPCA, shcpca_sample_xyz = get_points_with_SHc(sh_instance,
-                                                                      colat=np.array(map_testing)[:, 0],
-                                                                      lon=np.array(map_testing)[:, 1],
-                                                                      is_return_xyz=True)
-
-                    err_sample: Union[Tuple[Any, Optional[Any]], Any] = np.average(np.abs(R_sample - R_from_lat_lon))
-                    err_SHc = np.average(np.abs(R_SHc - R_from_lat_lon))
-                    err_SHcPCA = np.average(np.abs(R_SHcPCA - R_from_lat_lon))
-
-                    # print(err_sample, 0, err_SHc, err_SHcPCA)
-                    # err_SHcPCA = 0
-                    # print(err_sample, err_SHc, err_SHcPCA)
-
-                    df_err.loc[idx] = [err_sample, 0, err_SHc, err_SHcPCA]
-
-    df_err.to_csv(os.path.join(config.dir_my_data_err_est_dir, embryo_name + 'test2.csv'))
-
-
-# test sph2des and des2sph ; calculate zk
 def test_2021_7_6_1():
+    '''
+    test sph2des and des2sph ; calculate zk
+    :return:
+    '''
     point_lat = [[1, -3 * math.pi / 8, math.pi / 4], [1, 3 * math.pi / 8, math.pi / 4]]
     print(point_lat)
     print(sph2descartes(point_lat))

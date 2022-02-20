@@ -62,7 +62,80 @@ def draw_PCA(embryo_name, embryo_time_tree, print_num=4):
     # =================================================================================================
 
 
-def draw_PCA_combined(print_num=2):
+def draw_2Dmatrix_PCA_combined(print_num=2):
+    # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
+
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    norm_2dmatrix_pca_csv_path = data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    df_pd_values_dict = {}
+    # ----------------read SHcPCA result first--------------------------------
+    for embryo_name in embryo_names:
+        path_SHcPCA_csv = os.path.join(norm_2dmatrix_pca_csv_path,
+                                       'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
+        df_pd_values_dict[embryo_name] = read_csv_to_df(path_SHcPCA_csv)
+    # ----------------------------------------------------------------------------
+
+    cell_combine_tree, begin_frame = data_struct.get_combined_lineage_tree()
+
+    # frame = time / 1.39 +begin_frame
+    for i in range(print_num):
+        column = str(i)
+        values_dict = {}
+        for node_id in cell_combine_tree.expand_tree(sorting=False):
+            for time_int in cell_combine_tree.get_node(node_id).data.get_time():
+                # if time_int > 0:
+                tp_value_list = []
+                for embryo_name in df_pd_values_dict.keys():
+                    frame_int = int(time_int / 1.39 + begin_frame[embryo_name])
+                    frame_and_cell_index = f'{frame_int:03}' + '::' + node_id
+                    if frame_and_cell_index in df_pd_values_dict[embryo_name].index:
+                        # print(frame_and_cell_index,df_pd_values_dict[embryo_name].loc[frame_and_cell_index][column])
+                        tp_value_list.append(df_pd_values_dict[embryo_name].at[frame_and_cell_index, column])
+
+                # we have already got all values at this time from all(17) embryos, we just need to draw its average
+                tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+                if len(tp_value_list) == 0:  # need to do interpolation
+                    print(tp_and_cell_index, tp_value_list)
+                else:
+                    values_dict[tp_and_cell_index] = np.average(tp_value_list)
+
+        # do interpolation for the lost cell value!
+        for node_id in cell_combine_tree.expand_tree(sorting=False):
+            for time_int in cell_combine_tree.get_node(node_id).data.get_time():
+                tp_value_list = []
+                tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+
+                if tp_and_cell_index not in values_dict.keys():  # need to do interpolation
+                    print(tp_and_cell_index, tp_value_list)
+                    if cell_combine_tree.get_node(node_id).is_leaf() and time_int == \
+                            cell_combine_tree.get_node(node_id).data.get_time()[-1]:
+                        pass
+                    else:
+                        for i in range(10):
+                            complement_pre_tp_and_cell_index = f'{(time_int - i):03}' + '::' + node_id
+                            complement_post_tp_and_cell_index = f'{(time_int + i):03}' + '::' + node_id
+                            if complement_pre_tp_and_cell_index in values_dict.keys():
+                                values_dict[tp_and_cell_index] = values_dict[complement_pre_tp_and_cell_index]
+                                break
+                            elif complement_post_tp_and_cell_index in values_dict.keys():
+                                values_dict[tp_and_cell_index] = values_dict[complement_post_tp_and_cell_index]
+                                break
+
+        # https: // www.webucator.com / article / python - color - constants - module /
+        # colors2 = ['red4', 'red3', 'red2', 'red1', 'orangered1', 'orange', 'darkolivegreen2','darkolivegreen1','darkolivegreen2', 'lightblue1',lightblue', 'dodgerblue1',
+        #           'dodgerblue2', 'dodgerblue3', 'dodgerblue4']
+        colors2 = np.array(
+            [(139, 0, 0), (205, 0, 0), (238, 0, 0), (255, 0, 0), (255, 69, 0), (255, 128, 0),
+             (188, 238, 104), (202, 255, 112), (188, 238, 104),
+             (89, 210, 255), (63, 180, 255), (30, 144, 255), (28, 134, 238), (24, 116, 205), (16, 78, 139)]) / 255
+
+        # cmap_list = ListedColormap(colors)
+        cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
+        draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
+                            embryo_name='combine_tree',
+                            plot_title='average 2D Matrix\'s ' + column + 'th principle component', color_map=cmap1)
+
+def draw_shc_PCA_combined(print_num=2):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
     pca_num = 12
 
@@ -168,5 +241,6 @@ def draw_tree_test():
 
 if __name__ == "__main__":
     # draw_PCA_combined(print_num=12)
-    draw_tree_test()
+    draw_2Dmatrix_PCA_combined(print_num=12)
+    # draw_tree_test()
     # data_struct.get_combined_lineage_tree()
