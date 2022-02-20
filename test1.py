@@ -871,7 +871,7 @@ def Map_2D_eigen_matrix():
     print(matrix_2D_PCA.explained_variance_ratio_)
     print(matrix_2D_PCA.singular_values_)
     df_PCA_matrices = pd.DataFrame(data=matrix_2D_PCA.components_, columns=range(53 * 105))
-    df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(matrix_2D_PCA.explained_variance_))
+    df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(matrix_2D_PCA.explained_variance_ratio_))
     df_PCA_matrices.loc['mean'] = [0] + list(matrix_2D_PCA.mean_)
     df_PCA_matrices.to_csv(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/2D_matrix_norm_PCA.csv'))
 
@@ -904,28 +904,28 @@ def display_Map_2D_eigenmatrix():
         print(np.array(df_pca.loc[str(i)]).reshape((53, 105)))
         grid_tmp = pysh.SHGrid.from_array(np.array(df_pca.loc[str(i)]).reshape((53, 105)))
         print(grid_tmp)
-        x,y=int(i / 3), i % 3
-        if x in [0,1,2] and y==0:
-            grid_tmp.plot(ax=axes[x,y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
+        x, y = int(i / 3), i % 3
+        if x in [0, 1, 2] and y == 0:
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
                           xlabel=r'',
                           ylabel=r'Latitude (degree \textdegree)', axes_labelsize=12,
                           tick_interval=[60, 60], colorbar='right')
-        elif x ==3 and y==0:
+        elif x == 3 and y == 0:
             grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
                           xlabel=r'Longitude (degree \textdegree)',
                           ylabel=r'Latitude (degree \textdegree)', axes_labelsize=12,
                           tick_interval=[60, 60], colorbar='right')
-        elif x ==3 and y ==1:
+        elif x == 3 and y == 1:
             grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
                           xlabel=r'Longitude (degree \textdegree)',
                           ylabel=r'', axes_labelsize=12,
                           tick_interval=[60, 60], colorbar='right')
-        elif x in [0,1,2] and y==2:
+        elif x in [0, 1, 2] and y == 2:
             grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
                           xlabel='',
                           ylabel='',
                           tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
-        elif x==3 and y==2:
+        elif x == 3 and y == 2:
             grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
                           xlabel=r'Longitude (degree \textdegree)',
                           ylabel='', axes_labelsize=12,
@@ -939,9 +939,142 @@ def display_Map_2D_eigenmatrix():
         #               xlabel=r'Longitude (degree \textdegree)',
         #               ylabel=r'Latitude (degree \textdegree)', axes_labelsize=12,
         #               tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
-    plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.svg',format='svg')
-    plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.pdf',format='pdf')
+    plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.svg',
+                format='svg')
+    plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.pdf',
+                format='pdf')
 
+def SPHARM_eigenshape():
+    df_norm_shape = read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
+
+    component_number = 24
+
+    print('finish calculation all embryo cell 2d norm matrix--------------')
+
+    spharm_PCA = PCA(n_components=component_number)
+    transform_np = spharm_PCA.fit_transform(df_norm_shape.values)
+    print(spharm_PCA.mean_)
+    print(spharm_PCA.explained_variance_)
+    print(spharm_PCA.explained_variance_ratio_)
+    print(spharm_PCA.singular_values_)
+
+    df_PCA_matrices = pd.DataFrame(data=spharm_PCA.components_, columns=range(26**2))
+    df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(spharm_PCA.explained_variance_ratio_))
+    df_PCA_matrices.loc['mean'] = [0] + list(spharm_PCA.mean_)
+    df_PCA_matrices.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_SHc_PCA_csv/2D_matrix_norm_PCA.csv'))
+
+    head_ptr = 0
+    # USE MY ZK CALCULATION METHOD, I HAVE TEST IT , IT IS THE SAME AS PCA.TRANSFORM()
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    for embryo_name in embryo_names:
+        embryo_individual_path = os.path.join(config.data_path,
+                                              'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25_norm.csv'.format(
+                                                  embryo_name))
+        embryo_index = read_csv_to_df(embryo_individual_path).index
+
+        embryo_saving_individual_path = os.path.join(config.data_path,
+                                                     'my_data_csv/norm_SHc_PCA_csv/Sample{}LabelUnified_SHc_PCA.csv'.format(
+                                                         embryo_name))
+        df_saving_individual = pd.DataFrame(index=embryo_index, columns=range(component_number),
+                                            data=transform_np[head_ptr:head_ptr + len(embryo_index), :])
+        df_saving_individual.to_csv(embryo_saving_individual_path)
+
+        head_ptr = head_ptr + len(embryo_index)
+
+def construct_average_2Dmatrix_pca_lifespan():
+    pca_num = 96
+
+    # cell_average_dict={}
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    for embryo_name in embryo_names:
+        cell_list_dict = {}
+        path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
+                                       'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
+        df_values_dict = read_csv_to_df(path_SHcPCA_csv)
+        for idx in df_values_dict.index:
+            cell_name = idx.split('::')[1]
+            if cell_name in cell_list_dict.keys():
+                cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
+            else:
+                # print(df_values_dict.loc[idx])
+                cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
+        df_average_shcpca = pd.DataFrame(columns=range(pca_num))
+        for cell_name in cell_list_dict.keys():
+            # print(cell_list_dict[cell_name])
+            # print(np.array(cell_list_dict[cell_name]))
+            # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
+            df_average_shcpca.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+        print(embryo_name, df_average_shcpca)
+        df_average_shcpca.to_csv(os.path.join(norm_shcpca_csv_path,
+                                              'lifespan_avg_Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv'))
+    # ====================calculate average of 17 embryos==============================
+    embryo_list_dict = {}
+    for embryo_name in embryo_names:
+        df_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
+                                                'lifespan_avg_Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv'))
+        for cell_name in df_shcpca.index:
+            # cell_name = idx.split('::')[1]
+            if cell_name in embryo_list_dict.keys():
+                embryo_list_dict[cell_name].append(list(df_shcpca.loc[cell_name]))
+            else:
+                # print(df_values_dict.loc[idx])
+                embryo_list_dict[cell_name] = [list(df_shcpca.loc[cell_name])]
+    df_average_shcpca = pd.DataFrame(columns=range(pca_num))
+    for cell_name in embryo_list_dict.keys():
+        # print(cell_list_dict[cell_name])
+        # print(np.array(cell_list_dict[cell_name]))
+        # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
+        df_average_shcpca.loc[cell_name] = np.mean(np.array(embryo_list_dict[cell_name]), axis=0)
+    print('avg:', df_average_shcpca)
+    df_average_shcpca.to_csv(os.path.join(norm_shcpca_csv_path,'lifespan_avg' + '_2Dmatrix_PCA.csv'))
+
+
+def draw_2Dmatrix_pca_linear_relationship():
+    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+
+    df_avg_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path,'lifespan_avg' + '_2Dmatrix_PCA.csv'))
+
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+
+    figure_tmp, axes = plt.subplots(1, 2, figsize=(20, 10))
+
+    column1 = str(0)
+    column2 = str(2)
+    start = -250
+    stop = 250
+    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+    for embryo_name in embryo_names:
+        x1, x2 = [], []
+        y1, y2 = [], []
+        embryo_num = int(embryo_name)
+        color_num = embryo_num % 7
+        df_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
+                                                'lifespan_avg_Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv'))
+        for cell_name in df_shcpca.index:
+            x1.append(df_avg_shcpca.at[cell_name, column1])
+            y1.append(df_shcpca.at[cell_name, column1])
+            x2.append(df_avg_shcpca.at[cell_name, column2])
+            y2.append(df_shcpca.at[cell_name, column2])
+        c = color_list[color_num]
+        axes[0].scatter(x=x1, y=y1, c=c)
+        axes[1].scatter(x=x2, y=y2, c=c)
+        # plt.show()
+
+    axes[0].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
+    axes[0].set_xlim((start, stop))
+    axes[0].set_ylim((start, stop))
+    axes[0].set_xlabel("Average weight of first eigenmatrix", fontsize=18)
+    axes[0].set_ylabel("Weight of first eigenmatrix in samples", fontsize=18)
+    axes[1].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
+    axes[1].set_xlim((start, stop))
+    axes[1].set_ylim((start, stop))
+    axes[1].set_xlabel("Average weight of third eigenmatrix", fontsize=18)
+    axes[1].set_ylabel("Weight of third eigenmatrix in samples", fontsize=18)
+
+    figure_tmp.suptitle("Eigenmatrix weight reproducibility", fontsize=20)
+    plt.show()
 
 
 def construct_average_shc_pca_lifespan():
@@ -996,7 +1129,7 @@ def construct_average_shc_pca_lifespan():
                                           'lifespan_avg' + '_SHcPCA' + str(pca_num) + '_norm.csv'))
 
 
-def draw_shcpca_lineage_relationship():
+def draw_shcpca_linear_relationship():
     norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
 
     pca_num = 12
@@ -1047,4 +1180,4 @@ def draw_shcpca_lineage_relationship():
 
 
 if __name__ == "__main__":
-    display_Map_2D_eigenmatrix()
+    SPHARM_eigenshape()
