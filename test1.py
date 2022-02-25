@@ -73,8 +73,6 @@ def calculate_SPHARM_embryo_for_cells():
     # -------------------------------------------------------------------------------------------------------
 
 
-
-
 # do PCA and transform it to 1/10 reduction dimension!!!! 24 or 48
 # no matter zk or PCA ,there is no need to store it!!
 # PCA calculation is very quickly, even reading 5000MB only takes 3 mins,
@@ -116,6 +114,7 @@ def test_2021_6_21_3():
 def test_2021_6_30_3():
     combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv=config.dir_my_data_SH_time_domain_csv,
                                  is_norm=False)
+
 
 #
 # # draw three methods contraction, figure plot
@@ -189,6 +188,7 @@ def test_2021_7_1_2():
 
     PCA_f.calculate_PCA_zk_norm(embryo_path=config.dir_segemented_tmp1,
                                 PCA_matrices_saving_path=PCA_matrices_saving_path, k=12)
+
 
 #
 # # draw three methods contraction, error estimate # TIME CONSUMING AND
@@ -798,9 +798,12 @@ def display_SPAHRM_PCA_24_eigen_shape():
         o3d.visualization.draw_geometries([m_pcd])
 
 
-# why combine them to pandas? why combine to one? why do you do that?
-# the combined csv file is too large, can't read. memory error.
 def Map2D_matrix_csv():
+    '''
+    # why combine them to pandas? why combine to one? why do you do that?
+    # the combined csv file is too large, can't read. memory error.
+    :return:
+    '''
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     for embryo_name in embryo_names:
         embryo_individual_path = os.path.join(config.data_path,
@@ -929,6 +932,7 @@ def display_Map_2D_eigenmatrix():
     plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.pdf',
                 format='pdf')
 
+
 def SPHARM_eigenshape():
     df_norm_shape = read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
 
@@ -943,10 +947,10 @@ def SPHARM_eigenshape():
     print(spharm_PCA.explained_variance_ratio_)
     print(spharm_PCA.singular_values_)
 
-    df_PCA_matrices = pd.DataFrame(data=spharm_PCA.components_, columns=range(26**2))
+    df_PCA_matrices = pd.DataFrame(data=spharm_PCA.components_, columns=range(26 ** 2))
     df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(spharm_PCA.explained_variance_ratio_))
     df_PCA_matrices.loc['mean'] = [0] + list(spharm_PCA.mean_)
-    df_PCA_matrices.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_SHc_PCA_csv/2D_matrix_norm_PCA.csv'))
+    df_PCA_matrices.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_SHc_PCA_csv/SPHARM_norm_PCA.csv'))
 
     head_ptr = 0
     # USE MY ZK CALCULATION METHOD, I HAVE TEST IT , IT IS THE SAME AS PCA.TRANSFORM()
@@ -965,6 +969,7 @@ def SPHARM_eigenshape():
         df_saving_individual.to_csv(embryo_saving_individual_path)
 
         head_ptr = head_ptr + len(embryo_index)
+
 
 def construct_average_2Dmatrix_pca_lifespan():
     pca_num = 96
@@ -1012,13 +1017,13 @@ def construct_average_2Dmatrix_pca_lifespan():
         # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
         df_average_shcpca.loc[cell_name] = np.mean(np.array(embryo_list_dict[cell_name]), axis=0)
     print('avg:', df_average_shcpca)
-    df_average_shcpca.to_csv(os.path.join(norm_shcpca_csv_path,'lifespan_avg' + '_2Dmatrix_PCA.csv'))
+    df_average_shcpca.to_csv(os.path.join(norm_shcpca_csv_path, 'lifespan_avg' + '_2Dmatrix_PCA.csv'))
 
 
 def draw_2Dmatrix_pca_linear_relationship():
     norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
 
-    df_avg_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path,'lifespan_avg' + '_2Dmatrix_PCA.csv'))
+    df_avg_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path, 'lifespan_avg' + '_2Dmatrix_PCA.csv'))
 
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
 
@@ -1103,6 +1108,7 @@ def construct_average_shc_pca_lifespan():
             else:
                 # print(df_values_dict.loc[idx])
                 embryo_list_dict[cell_name] = [list(df_shcpca.loc[cell_name])]
+
     df_average_shcpca = pd.DataFrame(columns=range(pca_num))
     for cell_name in embryo_list_dict.keys():
         # print(cell_list_dict[cell_name])
@@ -1164,5 +1170,75 @@ def draw_shcpca_linear_relationship():
     plt.show()
 
 
+from pickle import load
+from treelib import Tree
+
+
+def recognition_of_hyp_cells():
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    df_cell_fate = pd.read_excel(os.path.join(config.data_path, 'CellFate.xls'))
+    cell_fate_dict = {}
+    for idx in df_cell_fate.index:
+        cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+
+    # print(cell_fate_dict)
+    # detection using weight of first 2dmatrix pca component
+    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
+
+    tree_dict = {}
+    begin_frame = {}
+    for embryo_name in embryo_names:
+        cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
+        with open(cell_tree_file_path, 'rb') as f:
+            # print(f)
+            tree_dict[embryo_name] = Tree(load(f))
+        begin_frame[embryo_name] = max(tree_dict[embryo_name].get_node('ABa').data.get_time()[-1],
+                                       tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
+
+    for embryo_name in embryo_names:
+        print(embryo_name, '====================================================')
+        pca_num = 12
+
+        cell_list_dict = {}
+        cell_frame_list_dict = {}
+        path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
+                                       'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
+        df_values_dict = read_csv_to_df(path_SHcPCA_csv)
+        for idx in df_values_dict.index:
+            cell_name = idx.split('::')[1]
+            if cell_name in cell_list_dict.keys():
+                cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
+                cell_frame_list_dict[cell_name].append(idx.split('::')[0])
+            else:
+                # print(df_values_dict.loc[idx])
+                cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
+                cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
+        df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
+        for cell_name in cell_list_dict.keys():
+            df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+        # print('avg:')
+        # print(df_avg_lifespan)
+        filtered_cells = df_avg_lifespan.index[abs(df_avg_lifespan[0]) >= 1]
+
+        all_fixed_cell=[]
+        for cell_name in filtered_cells:
+
+            if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
+                embryo_name]) * 1.39) > 150 and len(cell_frame_list_dict[cell_name]) > 10:
+                # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
+                all_fixed_cell.append(cell_fate_dict[cell_name])
+                print(cell_name, cell_fate_dict[cell_name])
+        print(np.unique(all_fixed_cell,return_counts=True))
+
+    # average detection (pattern confirmed)
+    cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
+    with open(cell_tree_file_path, 'rb') as f:
+        # print(f)
+        tree_dict[embryo_name] = Tree(load(f))
+    begin_frame[embryo_name] = max(tree_dict[embryo_name].get_node('ABa').data.get_time()[-1],
+                                   tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
+
+
 if __name__ == "__main__":
-    SPHARM_eigenshape()
+    recognition_of_hyp_cells()

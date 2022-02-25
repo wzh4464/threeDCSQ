@@ -12,6 +12,7 @@ import sys
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 # import user package
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
@@ -26,7 +27,12 @@ from utils.general_func import read_csv_to_df
 data_path = r'D:/cell_shape_quantification/DATA/'
 
 
-def draw_PCA(embryo_name, embryo_time_tree, print_num=4):
+def draw_spharm_pca_lifespan(embryo_name, embryo_time_tree, print_num=4):
+    # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
+    pca_num = 12
+
+
+def draw_spharm_pca(embryo_name, embryo_time_tree, print_num=4):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
     pca_num = 12
 
@@ -58,7 +64,8 @@ def draw_PCA(embryo_name, embryo_time_tree, print_num=4):
         draw_life_span_tree(embryo_time_tree, values_dict=pd.Series(index=df_SHcPCA_target.index,
                                                                     data=df_SHcPCA_target[str(i_PCA)]).to_dict(),
                             embryo_name=embryo_name,
-                            plot_title=embryo_name+'\'s SPHARM' + str(i_PCA) + 'th principle component', color_map=cmap1)
+                            plot_title=embryo_name + '\'s SPHARM' + str(i_PCA) + 'th principle component',
+                            color_map=cmap1, is_frame=True, time_resolution=1.39)
     # =================================================================================================
 
 
@@ -210,6 +217,74 @@ def draw_shc_PCA_combined(print_num=2):
                             plot_title='average SPHARM\'s ' + column + 'th principle component', color_map=cmap1)
 
 
+def draw_shc_PCA_combined_lifespan(print_num=2):
+    # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
+    pca_num = 12
+    norm_shcpca_csv_path = data_path + r'my_data_csv/norm_SH_PCA_csv'
+    # ----------------read SHcPCA result first--------------------------------
+    path_SHcPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
+                                            'lifespan_avg_SHcPCA' + str(pca_num) + '_norm.csv')
+    df_pd_spharmpca_lifespan = read_csv_to_df(path_SHcPCA_lifespan_csv)
+
+    # ----------------------------------------------------------------------------
+
+    cell_combine_tree, _ = data_struct.get_combined_lineage_tree()
+
+    # frame = time / 1.39 +begin_frame
+    for i in range(print_num):
+        column = str(i)
+        values_dict = {}
+        for node_id in cell_combine_tree.expand_tree(sorting=False):
+            for time_int in cell_combine_tree.get_node(node_id).data.get_time():
+                tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+                values_dict[tp_and_cell_index] = df_pd_spharmpca_lifespan.at[node_id, column]
+
+        colors2 = np.array(
+            [(139, 0, 0), (205, 0, 0), (238, 0, 0), (255, 0, 0), (255, 69, 0), (255, 128, 0),
+             (188, 238, 104), (202, 255, 112), (188, 238, 104),
+             (89, 210, 255), (63, 180, 255), (30, 144, 255), (28, 134, 238), (24, 116, 205), (16, 78, 139)]) / 255
+
+        cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
+        draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
+                            embryo_name='combine_tree',
+                            plot_title='lifespan average SPHARM\'s ' + column + 'th principle component',
+                            color_map=cmap1)
+
+
+def draw_2dmatrix_PCA_combined_lifespan(print_num=2):
+    # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
+    pca_num = 12
+    norm_shcpca_csv_path = data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    # ----------------read SHcPCA result first--------------------------------
+    path_SHcPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
+                                            'lifespan_avg_2Dmatrix_PCA.csv')
+    df_pd_spharmpca_lifespan = read_csv_to_df(path_SHcPCA_lifespan_csv)
+
+    # ----------------------------------------------------------------------------
+
+    cell_combine_tree, begin_frame = data_struct.get_combined_lineage_tree()
+
+    # frame = time / 1.39 +begin_frame
+    for i in range(print_num):
+        column = str(i)
+        values_dict = {}
+        for node_id in cell_combine_tree.expand_tree(sorting=False):
+            for time_int in cell_combine_tree.get_node(node_id).data.get_time():
+                tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+                values_dict[tp_and_cell_index] = df_pd_spharmpca_lifespan.at[node_id, column]
+
+        colors2 = np.array(
+            [(139, 0, 0), (205, 0, 0), (238, 0, 0), (255, 0, 0), (255, 69, 0), (255, 128, 0),
+             (188, 238, 104), (202, 255, 112), (188, 238, 104),
+             (89, 210, 255), (63, 180, 255), (30, 144, 255), (28, 134, 238), (24, 116, 205), (16, 78, 139)]) / 255
+
+        cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
+        draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
+                            embryo_name='combine_tree',
+                            plot_title='lifespan average 2Dmatrix\'s ' + column + 'th principle component',
+                            color_map=cmap1)
+
+
 def draw_tree_test():
     for embryo_index in np.arange(start=4, stop=21, step=1):
         # if embryo_index == 7:
@@ -222,7 +297,7 @@ def draw_tree_test():
         print(embryo_name)
 
         # --------------read the tree with node and time list in data -----------------
-        tmp_path = data_path+r'lineage_tree/LifeSpan/Sample{}_cell_life_tree'.format(embryo_num)
+        tmp_path = data_path + r'lineage_tree/LifeSpan/Sample{}_cell_life_tree'.format(embryo_num)
         with open(tmp_path, 'rb') as f:
             # print(f)
             cell_life_tree = Tree(pkl.load(f))
@@ -232,15 +307,38 @@ def draw_tree_test():
 
         # ----------------------------------------------------------------------------
 
-        draw_PCA(embryo_name, cell_life_tree, print_num=12)
+        draw_spharm_pca(embryo_name, cell_life_tree, print_num=12)
         # draw_SHCPCA_KMEANS(embryo_name, embryo_time_tree, id_root_tmp)
         #
         # draw_euclidean_tree(embryo_name, embryo_time_tree, id_root_tmp)
         # draw_norm_spectrum_Kmeans(embryo_name, embryo_time_tree, id_root_tmp)
 
 
+def draw_cell_fate_lineage_tree():
+    cell_fate_map = {'Unspecified': 0, 'Other': 1, 'Death': 2, 'Neuron': 3, 'Intestin': 4, 'Muscle': 5, 'Pharynx': 6,
+                     'Skin': 7, 'Germ Cell': 8}
+    cell_combine_tree, begin_frame = data_struct.get_combined_lineage_tree()
+    df_cell_fate = pd.read_excel(os.path.join(data_path, 'CellFate.xls'))
+    cell_fate_dict = {}
+    for idx in df_cell_fate.index:
+        cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+    values_dict = {}
+    for node_id in cell_combine_tree.expand_tree(sorting=False):
+        for time_int in cell_combine_tree.get_node(node_id).data.get_time():
+            tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+            values_dict[tp_and_cell_index] = cell_fate_map[cell_fate_dict[node_id]]
+
+    # cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
+    draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
+                        embryo_name='combine_tree',
+                        plot_title='lifespan cell fate',
+                        color_map='tab10',is_abs=False)
+
+
+
 if __name__ == "__main__":
+    draw_cell_fate_lineage_tree()
     # draw_PCA_combined(print_num=12)
-    draw_2Dmatrix_PCA_combined(print_num=12)
+    # draw_2dmatrix_PCA_combined_lifespan(print_num=2)
     # draw_tree_test()
     # data_struct.get_combined_lineage_tree()
