@@ -32,7 +32,7 @@ import numpy.linalg as la
 import seaborn as sns
 
 # import user defined library
-
+import lineage_stat
 import transformation.SH_represention as sh_represent
 import transformation.PCA as PCA_f
 import experiment.geometry as geo_f
@@ -1185,59 +1185,88 @@ def recognition_of_hyp_cells():
     # detection using weight of first 2dmatrix pca component
     life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
     norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
-
-    tree_dict = {}
-    begin_frame = {}
-    for embryo_name in embryo_names:
-        cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
-        with open(cell_tree_file_path, 'rb') as f:
-            # print(f)
-            tree_dict[embryo_name] = Tree(load(f))
-        begin_frame[embryo_name] = max(tree_dict[embryo_name].get_node('ABa').data.get_time()[-1],
-                                       tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
-
-    for embryo_name in embryo_names:
-        print(embryo_name, '====================================================')
-        pca_num = 12
-
-        cell_list_dict = {}
-        cell_frame_list_dict = {}
-        path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
-                                       'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
-        df_values_dict = read_csv_to_df(path_SHcPCA_csv)
-        for idx in df_values_dict.index:
-            cell_name = idx.split('::')[1]
-            if cell_name in cell_list_dict.keys():
-                cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
-                cell_frame_list_dict[cell_name].append(idx.split('::')[0])
-            else:
-                # print(df_values_dict.loc[idx])
-                cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
-                cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
-        df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
-        for cell_name in cell_list_dict.keys():
-            df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
-        # print('avg:')
-        # print(df_avg_lifespan)
-        filtered_cells = df_avg_lifespan.index[abs(df_avg_lifespan[0]) >= 1]
-
-        all_fixed_cell=[]
-        for cell_name in filtered_cells:
-
-            if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
-                embryo_name]) * 1.39) > 150 and len(cell_frame_list_dict[cell_name]) > 10:
-                # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
-                all_fixed_cell.append(cell_fate_dict[cell_name])
-                print(cell_name, cell_fate_dict[cell_name])
-        print(np.unique(all_fixed_cell,return_counts=True))
+    time_limit_minutes_start = 100  # 50 or 100 or 150 start time bigger than this
+    time_limit_minutes_end = 170  # 100 or 150 or 200 the end time smaller than this
+    weight_threshold=0.8
+    # precision = true positive (true skin)/true positive + false positive
+    # tree_dict = {}
+    # begin_frame = {}
+    # for embryo_name in embryo_names:
+    #     cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
+    #     with open(cell_tree_file_path, 'rb') as f:
+    #         # print(f)
+    #         tree_dict[embryo_name] = Tree(load(f))
+    #     begin_frame[embryo_name] = max(tree_dict[embryo_name].get_node('ABa').data.get_time()[-1],
+    #                                    tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
+    #
+    # for embryo_name in embryo_names:
+    #     print(embryo_name, '====================================================')
+    #     pca_num = 12
+    #
+    #     cell_list_dict = {}
+    #     cell_frame_list_dict = {}
+    #     path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
+    #                                    'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
+    #     df_values_dict = read_csv_to_df(path_SHcPCA_csv)
+    #     for idx in df_values_dict.index:
+    #         cell_name = idx.split('::')[1]
+    #         if cell_name in cell_list_dict.keys():
+    #             cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
+    #             cell_frame_list_dict[cell_name].append(idx.split('::')[0])
+    #         else:
+    #             # print(df_values_dict.loc[idx])
+    #             cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
+    #             cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
+    #     df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
+    #     for cell_name in cell_list_dict.keys():
+    #         df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+    #     # print('avg:')
+    #     # print(df_avg_lifespan)
+    #     filtered_cells = df_avg_lifespan.index[abs(df_avg_lifespan[0]) >= 1]
+    #
+    #     all_fixed_cell=[]
+    #     for cell_name in filtered_cells:
+    #
+    #         if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
+    #             embryo_name]) * 1.39) > 150 and len(cell_frame_list_dict[cell_name]) > 10:
+    #             # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
+    #             all_fixed_cell.append(cell_fate_dict[cell_name])
+    #             # print(cell_name, cell_fate_dict[cell_name])
+    #     print(np.unique(all_fixed_cell,return_counts=True))
 
     # average detection (pattern confirmed)
-    cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
-    with open(cell_tree_file_path, 'rb') as f:
-        # print(f)
-        tree_dict[embryo_name] = Tree(load(f))
-    begin_frame[embryo_name] = max(tree_dict[embryo_name].get_node('ABa').data.get_time()[-1],
-                                   tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
+    from lineage_stat.data_structure import get_combined_lineage_tree
+    cell_combine_tree, _ = get_combined_lineage_tree()
+    pca_num = 12
+    # ----------------read SHcPCA result first--------------------------------
+    path_SHcPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
+                                            'lifespan_avg_SHcPCA' + str(pca_num) + '_norm.csv')
+    df_pd_spharmpca_lifespan = read_csv_to_df(path_SHcPCA_lifespan_csv)
+    column = str(0)
+    average_fixed_cell_name=[]
+    average_fixed_cell = []
+
+    all_skin = []
+    for cell_name in cell_combine_tree.expand_tree(sorting=False):
+        if cell_name in df_pd_spharmpca_lifespan.index:
+            if cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start and \
+                    cell_combine_tree.get_node(cell_name).data.get_time()[-1] < time_limit_minutes_end:
+                if cell_fate_dict[cell_name] == 'Skin':
+                    #print(cell_name, cell_fate_dict[cell_name])
+                    all_skin.append([cell_name, cell_fate_dict[cell_name]])
+
+                if abs(df_pd_spharmpca_lifespan.at[cell_name, column]) > weight_threshold:
+                    average_fixed_cell_name.append(cell_name)
+                    average_fixed_cell.append(cell_fate_dict[cell_name])
+                    # print(cell_name, cell_fate_dict[cell_name])
+    recognition_numpy_stata = np.unique(average_fixed_cell, return_counts=True)
+    print(recognition_numpy_stata)
+    print(len(np.where(average_fixed_cell == 'Skin')))
+    print(average_fixed_cell_name)
+    print(average_fixed_cell)
+    print(len(all_skin))
+
+    # https: // en.wikipedia.org / wiki / Precision_and_recall
 
 
 if __name__ == "__main__":

@@ -86,7 +86,7 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
     saving_path = os.path.join(data_path + r'lineage_tree/tree_plot', embryo_name)
     if not os.path.exists(saving_path):
         os.mkdir(saving_path)
-    saving_path = os.path.join(saving_path, plot_title + '.svg')
+    saving_path = os.path.join(saving_path, plot_title + '.pdf')
     print(saving_path)
 
     plt.colorbar()
@@ -101,8 +101,8 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
     plt.text(-8700, -150, '150', fontsize=20)
     plt.text(-8700, -200, '200', fontsize=20)
 
-    # plt.show()
-    plt.savefig(saving_path, format='svg')
+    #plt.show()
+    plt.savefig(saving_path, format='pdf')
 
 #
 #
