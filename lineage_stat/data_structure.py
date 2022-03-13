@@ -6,8 +6,7 @@ from treelib import Tree, Node
 import numpy as np
 
 from utils.cell_func import get_cell_name_affine_table
-
-data_path = r'D:/cell_shape_quantification/DATA/'
+from config import data_path
 
 
 def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=data_path + r'lineage_tree/LifeSpan'):
@@ -40,8 +39,8 @@ def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=da
         for embryo_key in tree_dict.keys():
             # go through all embryo to get average start time and end time
             if not tree_dict[embryo_key].get_node(node_id):
-                print(embryo_key, 'do not exist', node_id)
-
+                # print(embryo_key, 'do not exist', node_id)
+                pass
             else:
                 if len(tree_dict[embryo_key].get_node(node_id).data.get_time()) != 0:
                     # minus the begin frame (AB2 end time)
@@ -50,7 +49,8 @@ def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=da
                     end_times.append(
                         tree_dict[embryo_key].get_node(node_id).data.get_time()[-1] - begin_frame[embryo_key])
         if len(start_times) == 0 or len(end_times) == 0:
-            print(node_id)
+            pass
+            # print(node_id)
         else:
             cell_tree_final.get_node(node_id).data.set_time([np.average(start_times), np.average(end_times)])
         # print(node_id, 'start hitting cell number', len(start_times), np.average(start_times),
