@@ -1,5 +1,6 @@
 # CellShapeAnalysis
 
+
 the code is built in hierarchical structure, one sub-dict is a package, the higher packages can use functions in lower packages.
 
 ## project dictionary file tree
@@ -31,6 +32,19 @@ root/: work dictionary environment
 ```
 ## Files and Function usages
 
+### Curvature Of cell
+
+#### Gaussian curvature using libigl
+
+https://libigl.github.io/libigl-python-bindings/tut-chapter1/
+
+
+**Principal curvatures**： the biggest and smallest radius of the points. 
+
+https://zh.wikipedia.org/wiki/%E4%B8%BB%E6%9B%B2%E7%8E%87
+https://zh.wikipedia.org/wiki/%E9%AB%98%E6%96%AF%E6%9B%B2%E7%8E%87
+
+
 ### Lineage tree draw
 * generate the tree files with command first go to lineage_stat folder
 ```bash
@@ -40,13 +54,13 @@ root/: work dictionary environment
 2. code in file **generate_life_span.py** would add cells' frames to the trees base on CD files.
 3.  the CShaper embryo info, so i use embryo 06 to build basic tree in funcion **draw_PCA_combined**. 
 
-
 * draw the average tree
     1. first, function **draw_PCA_combined** would construct a average lineage tree for all embryos.
     2. second, the function **get_combined_lineage_tree** would go through this lineage tree and get the frame cells' values depend on time/frame resolutions.
-    3.  
+    3. third, at the drawing step, we would calculate all average value first and give cells values at different tp.
+    4. fourth, we go through the tree again and do interpolation for the lost cells. 
 
-
+* the legend frontzise is set at function **draw_life_span_tree**. 
 ## environment 
 Please update conda by running
 
@@ -54,8 +68,54 @@ Please update conda by running
 
 
 *  My environment setting
+```
+# environment location: C:\Users\zelinli6\miniconda3\envs\CellShapeAnalysis
 
-    * environment location: C:\Users\zelinli6\miniconda3\envs\CellShapeAnalysis
+$ conda activate CellShapeAnalysis
+```
 
-    * conda activate CellShapeAnalysis
+# 01paper
+## TODO List
+
+### 01paper
+- [x] FIGURE01 workflow figure 
+    - [x] replace array with matrix in figure: 2D Spherical matrix, SPHARM coefficient matrix
+
+- [x] FIGURE02 the figure help reader understand 2D Spherical matrix.
+
+- [x] FIGURE03 confirm point distance unit, use correct distance, volume and surface in 2DMAP feature array.
+  - [x] calculate 2DMap PCA.
+  - [] draw 2DMap PCA and SPAHRM PCA in histogram.
+  - [ ] combine five feature schematic diagram.
+
+- [x] FIGURE04 average lineage tree.
+
+- [x] FIGURE05 shape reproducibility. (linear relation)
+
+- [x] FIGURE06 skin cell recognize.
+
+- [x] FIGURE07 cluster result (internal error and external error)
+
+### points surface display
+
+o3d configuration:
+{
+	"class_name" : "ViewTrajectory",
+	"interval" : 29,
+	"is_loop" : false,
+	"trajectory" : 
+	[
+		{
+			"boundingbox_max" : [ 58.949796990685456, 73.062096966802002, 17.53928827322666 ],
+			"boundingbox_min" : [ -58.050203009314544, -64.937903033197998, -32.46071172677334 ],
+			"field_of_view" : 60.0,
+			"front" : [ -0.022170625825107981, 0.031107593735803508, -0.9992701241218469 ],
+			"lookat" : [ 0.44979699068545642, 4.0620969668020024, -7.46071172677334 ],
+			"up" : [ 0.039903629142300223, 0.99874686470810126, 0.030205969890268435 ],
+			"zoom" : 0.69999999999999996
+		}
+	],
+	"version_major" : 1,
+	"version_minor" : 0
+}
 

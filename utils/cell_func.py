@@ -19,8 +19,10 @@ import os
 
 import utils.general_func as general_f
 
+data_path = r'D:/cell_shape_quantification/DATA/'
 
-def get_cell_name_affine_table(path=r'./DATA/name_dictionary_no_name.csv'):
+
+def get_cell_name_affine_table(path=data_path + r'name_dictionary_no_name.csv'):
     """
 
     :return: a set of NO. to name LIST and name to NO. DICTIONARY:
@@ -38,25 +40,19 @@ def get_cell_name_affine_table(path=r'./DATA/name_dictionary_no_name.csv'):
     return number_cell, cell_number
 
 
-def nii_get_cell_surface(this_image, save_name=None):
-    img_arr = this_image.get_data()
-    # ---------------- erosion ----------------
-    struct_element = ndimage.generate_binary_structure(3, -1)
+def nii_get_cell_surface(img_arr, cell_key):
 
     # with the original image data
-    img_arr_erosion = ndimage.grey_erosion(img_arr, footprint=struct_element)
+    img_arr_dilation = ndimage.binary_dilation(img_arr == cell_key)
+    # print(np.unique(img_arr,return_counts=True))
     # img_df_erosion = pd.DataFrame(img_arr_erosion[100:150, 150:200, 100])
-    # print(img_df_erosion)
+    # print(img_df_erosion) me
 
-    surface_data_result = img_arr - img_arr_erosion
+    surface_data_result = np.logical_xor(img_arr_dilation, (img_arr == cell_key))
+    # be careful!
+    surface_loc = np.array(np.where(surface_data_result)).T
 
-    membrane_img = nib.Nifti2Image(surface_data_result.astype(np.int16), np.diag([1, 1, 1, 1]))
-    # OrthoSlicer3D(membrane_img.dataobj).show()
-
-    if save_name is not None:
-        # nib.save(membrane_img, os.path.join(config.dir_my_data, 'membrane' + save_name))
-        membrane_img.to_filename(os.path.join(config.dir_my_data, 'membrane' + save_name))
-    return membrane_img
+    return surface_loc, np.mean(surface_loc, axis=0)
 
 
 # np.set_printoptions(threshold=100000)

@@ -3,7 +3,8 @@ import open3d as o3d
 import json
 from random import uniform
 
-from skimage.measure import marching_cubes_lewiner, mesh_surface_area
+from pyshtools import SHGrid
+from skimage.measure import marching_cubes, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import make_pipeline, Pipeline
@@ -36,13 +37,13 @@ from matplotlib import cm
 import matplotlib.patches
 
 from datetime import datetime
-from multiprocessing import Process
 
+import seaborn as sns
 # import user defined library
 
 from transformation.PCA import calculate_PCA_zk_norm
-from transformation.SH_represention import get_nib_embryo_membrane_dict, get_SH_coeffient_from_surface_points
-from utils.cell_func import get_cell_name_affine_table
+from transformation.SH_represention import get_nib_embryo_membrane_dict, do_sampling_with_interval
+from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
 from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
@@ -51,7 +52,7 @@ from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 from utils.shape_preprocess import get_contact_area, export_dia_cell_points_json, export_dia_cell_surface_points_json
 
 """
-Sample06,ABalaapa,078
+Sample05,ABalaapa,078
 """
 
 
@@ -65,7 +66,7 @@ def show_cell_SPCSMs_info():
 
     print(embryo_name, cell_name, tp)
 
-    embryo_path_csv = os.path.join(r'.\DATA\my_data_csv\SH_time_domain_csv',
+    embryo_path_csv = os.path.join(config.data_path + r'my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
@@ -364,6 +365,7 @@ def SPCSMs_SVM():
     # ==================================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
+# really stupid, figures for paper you just plot one by one then combine via vision or ppt any way
 def figure_for_science():
     # Sample06,Capp,079
     # Sample06,ABalaapa,078
@@ -375,20 +377,19 @@ def figure_for_science():
     # cell_name = str(input())
     # tp = str(input())
 
-    embryo_path_csv = os.path.join(r'D:\cell_shape_quantification\DATA\my_data_csv\SH_time_domain_csv',
+    embryo_path_csv = os.path.join(r'D:\cell_shape_quantification\DATA', r'my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
+    print(embryo_path_csv)
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
     plt.rcParams['text.usetex'] = True
-    # params = {'text.usetex': True,
-    #           }
-    # plt.rcParams.update(params)
+
     fig_SPCSMs_info = plt.figure()
 
     axes_tmp1 = fig_SPCSMs_info.add_subplot(2, 2, 1, projection='3d')
     instance_tmp1 = pysh.SHCoeffs.from_array(
-        collapse_flatten_clim(embryo_csv.loc[tp1 + '::' + cell_name1])).expand(lmax=100)
-    instance_tmp1_expanded = instance_tmp1.data
+        collapse_flatten_clim(embryo_csv.loc[tp1 + '::' + cell_name1]))
+    instance_tmp1_expanded = instance_tmp1.expand(lmax=100).data
 
     Y2d = np.arange(-90, 90, 180 / 203)
     X2d = np.arange(0, 360, 360 / 405)
@@ -399,12 +400,14 @@ def figure_for_science():
     axes_tmp1.set_zlabel(r'\textit{z}')  # 坐标轴
     axes_tmp1.set_ylabel(r'\textit{y}')
     axes_tmp1.set_xlabel(r'\textit{x}')
-    axes_tmp1.colorbar()
+    # axes_tmp1.colorbar()
 
     axes_tmp2 = fig_SPCSMs_info.add_subplot(2, 2, 2)
-    instance_tmp1.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                       xlabel=r'\textit{x}',
-                       ylabel=r'\textit{y}', axes_labelsize=12, tick_interval=[60, 60])
+    grid_2 = instance_tmp1.expand(lmax=100)
+    grid_2.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
+                xlabel=r'\textit{x}',
+                ylabel=r'\textit{y}', axes_labelsize=12, tick_interval=[60, 60], colorbar='right',
+                cb_label=r'\textit{z} value / 0.015625 $\mu M$')
     set_size(5, 5, ax=axes_tmp2)
 
     # embryo_path_name = embryo_name + 'LabelUnified'
@@ -448,17 +451,20 @@ def figure_for_science():
     y_lon = np.sqrt(225 - np.power(x_lon, 2))
     # print(y_lon)
     axes_tmp3.scatter3D(x_lon, y_lon, np.zeros(1000), s=3, color='blue')
-    axes_tmp3.text(19, 19, 0, 'longitude', (-1, 1, 0), ha='center')
+    axes_tmp3.text(19, 19, 0, r'\textit{longitude}', (-1, 1, 0), ha='center')
 
     # latitude circle
     y_lat = np.arange(0, 15, 15 / 1000)
     z_lat = np.sqrt(225 - np.power(y_lat, 2))
     axes_tmp3.scatter3D(np.zeros(1000), y_lat, z_lat, s=3, color='black')
-    axes_tmp3.text(0, 18, 18, 'latitude', (-1, 1, 0), ha='center')
+    axes_tmp3.text(0, 18, 18, r'\textit{latitude}', (-1, 1, 0), ha='center')
 
     axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, r'\textit{x}', (-1, 1, 0), ha='center').set_fontstyle('italic')
     axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, r'\textit{y}', (-1, 1, 0), ha='center').set_fontstyle('italic')
     axes_tmp3.text(-0.1 * sn, 0, sn + 10, r'\textit{z}', (-1, 1, 0), ha='center').set_fontstyle('italic')
+    axes_tmp3.set_zlabel(r'\textit{z}')  # 坐标轴
+    axes_tmp3.set_ylabel(r'\textit{y}')
+    axes_tmp3.set_xlabel(r'\textit{x}')
 
     # axes_tmp3.annotate('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold', style='italic')
 
@@ -466,20 +472,16 @@ def figure_for_science():
     grid_tmp = instance_tmp.expand(lmax=100)
     # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
     grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                  xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
+                  xlabel=r'Longitude \textit{x}-\textit{y} plane (degree \textdegree)',
                   ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)', axes_labelsize=12,
-                  tick_interval=[60, 60])
+                  tick_interval=[60, 60], colorbar='right', cb_label=r'distance from centroid / 0.015625 $\mu M$')
 
-    fig_SPCSMs_info.text(0, 0.7, '3D Surface Mapping', fontsize=12)
-    fig_SPCSMs_info.text(0, 0.25, '3D Object Mapping', fontsize=12)
-    # Sample06,Dpaap,158
-    # Sample06,ABalaapa,078
-
-    # axes_tmp1.add_patch(
-    #     matplotlib.patches.Rectangle((200., -4.), 50., 6., transform=axes_tmp1.transData, alpha=0.3, color="g"))
+    fig_SPCSMs_info.text(0.1, 0.7, '3D Surface ', fontsize=12)
+    fig_SPCSMs_info.text(0.1, 0.25, '3D Closed Surface', fontsize=12)
+    # Sample06,Dpaap,158   Sample06,ABalaapa,078
 
     arrow = matplotlib.patches.FancyArrowPatch(
-        (0.4, 0.7), (0.6, 0.7), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
+        (0.4, 0.7), (0.5, 0.7), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
         fc="g", connectionstyle="arc3,rad=0.2", arrowstyle='simple', alpha=0.3,
         mutation_scale=40.
     )
@@ -487,7 +489,7 @@ def figure_for_science():
     fig_SPCSMs_info.patches.append(arrow)
 
     arrow = matplotlib.patches.FancyArrowPatch(
-        (0.4, 0.3), (0.6, 0.3), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
+        (0.4, 0.3), (0.5, 0.3), transform=fig_SPCSMs_info.transFigure,  # Place arrow in figure coord system
         fc="g", connectionstyle="arc3,rad=0.2", arrowstyle='simple', alpha=0.3,
         mutation_scale=40.
     )
@@ -495,6 +497,10 @@ def figure_for_science():
     fig_SPCSMs_info.patches.append(arrow)
 
     plt.show()
+    # saving_path = os.path.join(
+    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+    #     embryo_name + cell_name + tp + 'spherical_matrix.svg')
+    # plt.savefig(saving_path, format='svg')
 
 
 def calculate_cell_contact_points():
@@ -616,15 +622,14 @@ def display_contact_points():
         contact_mask = np.zeros((x_tmp * 2, y_tmp * 2, z_tmp * 2))
         for [x_tmp, y_tmp, z_tmp] in draw_points_list:
             contact_mask[x_tmp, y_tmp, z_tmp] = True
-        verts, faces, _, _ = marching_cubes_lewiner(contact_mask)
+        verts, faces, _, _ = marching_cubes(contact_mask)
         contact_mesh = o3d.geometry.TriangleMesh(o3d.cpu.pybind.utility.Vector3dVector(verts),
                                                  o3d.cpu.pybind.utility.Vector3iVector(faces))
 
-        print(idx,'  matching cubes method surface area:',mesh_surface_area(verts, faces) / 2)
+        print(idx, '  matching cubes method surface area:', mesh_surface_area(verts, faces) / 2)
 
         contact_mesh.compute_vertex_normals()
         o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
-
 
         # a = idx.split('_')
         # a.remove(str(this_cell_keys))
@@ -662,7 +667,7 @@ def display_contact_alpha_surface():
         cell_points_building_as.append([x, y, z])
     cell_points_building_as = np.array(cell_points_building_as)
     print(cell_points_building_as)
-    m_mesh = generate_alpha_shape(cell_points_building_as,displaying=True)
+    m_mesh = generate_alpha_shape(cell_points_building_as, displaying=True)
     # ---------------------------finished generating alpha shape -------------------------------
 
     with open(os.path.join(r'./DATA/cell_dia_surface', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
@@ -686,9 +691,162 @@ def calculate_SH_PCA_coordinate():
         PCA_matrices_saving_path)
 
 
+def plot_voxel_and_reconstructed_surface():
+    # Sample05,ABpl,015
+    """
+    plot original surface and reconstructed surface through SPHARM
+    """
+
+    print('waiting type you input: sample name and time points for embryogenesis')
+    embryo_name, cell_name, tp = str(input()).split(',')
+
+    num_cell_name, cell_num = get_cell_name_affine_table()
+    this_cell_keys = cell_num[cell_name]
+
+    """
+    the following plotted figure need configure then capture to .png
+    
+    camera position and rotation: paste action in figure window
+    
+    {
+	"class_name" : "ViewTrajectory",
+	"interval" : 29,
+	"is_loop" : false,
+	"trajectory" : 
+	[
+		{
+			"boundingbox_max" : [ 58.949796990685456, 73.062096966802002, 17.53928827322666 ],
+			"boundingbox_min" : [ -58.050203009314544, -64.937903033197998, -32.46071172677334 ],
+			"field_of_view" : 60.0,
+			"front" : [ -0.022170625825107981, 0.031107593735803508, -0.9992701241218469 ],
+			"lookat" : [ 0.44979699068545642, 4.0620969668020024, -7.46071172677334 ],
+			"up" : [ 0.039903629142300223, 0.99874686470810126, 0.030205969890268435 ],
+			"zoom" : 0.69999999999999996
+		}
+	],
+	"version_major" : 1,
+	"version_minor" : 0
+    }
+    
+    choose: shift+2
+    press 3-5 time + to make points grow bigger
+    remember: L to open shining and shadow
+    
+    then press P , the capture figure .png would save to where the python command you run 
+    
+    """
+    # ===========plot original dialation surface for particular shape====================================
+    # embryo_img = load_nitf2_img(
+    #     os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+    #                  embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
+    # cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
+    # # print((cell_surface_points - center).shape)
+    # print(np.max((cell_surface_points-center),axis=0))
+    # m_pcd = o3d.geometry.PointCloud()
+    # m_pcd.points = o3d.utility.Vector3dVector(cell_surface_points - center)
+    # m_pcd.estimate_normals()
+    # o3d.visualization.draw_geometries([m_pcd])
+    # =========================================================================================
+
+    # ==============plot reconstruction surface============================================
+    # the path need to change to non-norm path
+    # SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    # df_SHcPCA = read_csv_to_df(SHc_path)
+    # sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
+    # m_pcd = o3d.geometry.PointCloud()
+    # resctruct_xyz = do_reconstruction_for_SH(200, sh_instance)
+    # m_pcd.points = o3d.utility.Vector3dVector(resctruct_xyz)
+    # m_pcd.estimate_normals()
+    # o3d.visualization.draw_geometries([m_pcd])
+    # ==================================================================================
+
+
+def plot_and_save_5_type_figures():
+    # Sample05,ABpl,014
+
+    print('waiting type you input: sample name and time points for embryogenesis')
+    embryo_name, cell_name, tp = str(input()).split(',')
+
+    num_cell_name, cell_num = get_cell_name_affine_table()
+    this_cell_keys = cell_num[cell_name]
+
+    embryo_img = load_nitf2_img(
+        os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+                     embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
+    cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
+
+    # ====================plot 2. 2D mapping parameterization============================
+    # plt.rcParams['text.usetex'] = True
+    #
+    # fig_SPCSMs_info = plt.figure()
+    #
+    # grid_data, _ = do_sampling_with_interval(24, cell_surface_points - center, average_num=3)
+    #
+    # axes_tmp4 = fig_SPCSMs_info.add_subplot(111)
+    # grid_tmp = SHGrid.from_array(grid_data)
+    # # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
+    # grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='3D Surface Spherical Mapping',
+    #               xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
+    #               ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)', axes_labelsize=12,
+    #               tick_interval=[60, 60], colorbar='right', cb_label='Distance')
+    # # plt.show()
+    #
+    # saving_path = os.path.join(
+    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+    #     embryo_name + cell_name + tp + '2DMap.svg')
+    # plt.savefig(saving_path, format='svg')
+    # =================================================================================================
+
+    # ============== plot 3.  SPHARM surface ARRAY============================================
+    # plt.rcParams['text.usetex'] = True
+    #
+    # fig_SPCSMs_info = plt.figure()
+    # axes_tmp = fig_SPCSMs_info.add_subplot(111)
+    #
+    # # the path need to change to non-norm path
+    # SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    # df_SHcPCA = read_csv_to_df(SHc_path)
+    # sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
+    # sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array',ax=axes_tmp,degree_label=r'SPAHRM degree \textit{l}',
+    #                     order_label=r'SPAHRM order \textit{m}',  cmap='RdBu',cb_label='Component value Colorbar',cb_triangles='both')
+    # saving_path = os.path.join(
+    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+    #     embryo_name + cell_name + tp + 'SPHARM.svg')
+    # # plt.show()
+    # plt.savefig(saving_path, format='svg')
+    # ==================================================================================
+
+    # ==============4. plot SPHARM spectrum vector============================================
+
+    plt.rcParams['text.usetex'] = True
+
+
+    # the path need to change to non-norm path
+    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    df_SHcPCA = read_csv_to_df(SHc_path)
+    sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
+    print(sh_instance.spectrum())
+    fig, ax = plt.subplots()
+    # s_list = [7870, 81937, 17529598, 6225227]
+    l_list = np.arange(1,26)
+    ax.bar(l_list, np.log(sh_instance.spectrum()[1:]))
+
+    plt.title('Numbers of Four eventtypes')
+    plt.xlabel('Eventtype')
+    plt.ylabel('Number')
+    plt.show()
+    # saving_path = os.path.join(
+    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+    #     embryo_name + cell_name + tp + 'SPHARM.svg')
+    # plt.savefig(saving_path, format='svg')
+    # ==================================================================================
+    # Sample05,ABpl,014
+
+
+
 if __name__ == "__main__":
     print('test2 run')
-    display_contact_alpha_surface()
+    plot_and_save_5_type_figures()
     # figure_for_science()
     # display_contact_points()
     # show_cell_SPCSMs_info()

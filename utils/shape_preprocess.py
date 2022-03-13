@@ -6,7 +6,7 @@
 
 from scipy import ndimage
 import numpy as np
-from skimage.measure import marching_cubes_lewiner, mesh_surface_area
+from skimage.measure import marching_cubes, mesh_surface_area
 
 
 # import user defined library
@@ -78,7 +78,7 @@ def get_contact_area(volume):
         contact_mask = np.logical_and(contact_mask, boundary_mask)
         if contact_mask.sum() > 4:
 
-            verts, faces, _, _ = marching_cubes_lewiner(contact_mask)
+            verts, faces, _, _ = marching_cubes(contact_mask)
             area = mesh_surface_area(verts, faces) / 2
             contact_area.append(area)
             cell_conatact_pair_renew.append((label1, label2))

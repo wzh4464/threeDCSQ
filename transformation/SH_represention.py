@@ -3,11 +3,13 @@ import os
 import config
 
 import numpy as np
+import pandas as pd
 import pyshtools as pysh
 
 import utils.general_func as general_f
 import utils.cell_func as cell_f
 import utils.spherical_func as sph_f
+from utils.sh_cooperation import get_flatten_ldegree_morder, flatten_clim
 
 
 def do_sampling_with_lat_lon(points_surface, lat_lon, average_num=5, is_return_xyz=False):
@@ -24,7 +26,7 @@ def do_sampling_with_lat_lon(points_surface, lat_lon, average_num=5, is_return_x
 
     list_return = []
     for item in lat_lon:
-        R = sph_f.calculate_R_with_lat_lon(points_surface, item[0], item[1], average_num)
+        R = sph_f.spherical_R_with_lat_lon(points_surface, item[0], item[1], average_num)
         list_return.append([R, item[0], item[1]])
     list_return = np.array(list_return)
     if is_return_xyz:
@@ -51,7 +53,7 @@ def do_sampling_with_interval(N, points_surface, average_num, is_return_xyz=Fals
     spherical_matrix = []
     for i in range(N):
         for j in range(2 * N):
-            griddata[i][j] = sph_f.calculate_R_with_lat_lon(points_surface,
+            griddata[i][j] = sph_f.spherical_R_with_lat_lon(points_surface,
                                                             radian_interval * i, radian_interval * j,
                                                             average_num)
             # print("\r Loading  ", end='row   ' + str(i) + " and column  " + str(j) + " of all  " + str(N ** 2 * 2))
@@ -128,8 +130,8 @@ def get_nib_embryo_membrane_dict(embryo_path, file_name):
     return dict_img_membrane, dict_center_points
 
 
-def get_SH_coeffient_from_surface_points(embryo_path, file_name, sample_N, lmax,
-                                         surface_average_num=3):
+def get_SH_coefficient_of_embryo(embryo_path, file_name, sample_N, lmax,
+                                 surface_average_num=3):
     """
 
     :param sample_N: how many samples we need
@@ -138,44 +140,45 @@ def get_SH_coeffient_from_surface_points(embryo_path, file_name, sample_N, lmax,
     :param surface_average_num: how many points to get average num to calculate R=f(phi,theta)
     :return:
     """
-    dict_img_membrane_calculate, center_points = get_nib_embryo_membrane_dict(embryo_path=embryo_path,
-                                                                              file_name=file_name)
+    embryo_array=general_f.load_nitf2_img(os.path.join(embryo_path, file_name)).get_fdata().astype(int)
+    cell_keys=np.unique(embryo_array)
 
-    cell_name_affine_table, _ = cell_f.get_cell_name_affine_table()
+    number_cell_affine_table, _ = cell_f.get_cell_name_affine_table()
     # THE DEGREE OF SH. we can specify it or less than N/2-1, or 10 -- 2*(10/2-1)+1=9 coefficients
     # lmax = int(sample_N / 2 - 1)
 
-    this_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
-    print('placing SH file in====>', this_embryo_dir)
-    if not os.path.exists(this_embryo_dir):
-        os.makedirs(this_embryo_dir)
+    # this_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
+    # print('placing SH file in====>', this_embryo_dir)
+    # if not os.path.exists(this_embryo_dir):
+    #     os.makedirs(this_embryo_dir)
+    print(os.path.basename(file_name))
 
-    cilm = {}
+    folder_tmp = os.path.join(config.data_path, 'my_data_csv/SPHARM', os.path.basename(embryo_path))
+    if not os.path.exists(folder_tmp):
+        os.mkdir(folder_tmp)
+
+
+    column_indices=get_flatten_ldegree_morder(lmax)
+    pd_embryo=pd.DataFrame(columns=column_indices)
 
     # --------------------------calculate all and save as csv --------------------------
-    for dict_key in dict_img_membrane_calculate.keys():
-        # get center point
-        # dict_img_membrane_calculate[dict_key] =
-        points_membrane_local = np.array(dict_img_membrane_calculate[dict_key]) - center_points[dict_key]
-
-        save_file_name = os.path.join(this_embryo_dir, cell_name_affine_table[dict_key])
-
-        if not os.path.exists(save_file_name):
-            # do sampling to fit [ Driscoll and Healy's (1994) sampling theorem. ]
-            # ---https://www.sciencedirect.com/science/article/pii/S0196885884710086?via%3Dihub
+    for dict_key in cell_keys:
+        if dict_key:
+            cell_surface,center= cell_f.nii_get_cell_surface(embryo_array, dict_key)
+            # get center point
+            points_membrane_local = cell_surface - center
             griddata, _ = do_sampling_with_interval(sample_N, points_membrane_local, surface_average_num)
 
             # do fourier transform and convolution on SPHERE
-            print('---------dealing with cell ' + str(dict_key) + '-----' + cell_name_affine_table[
+            print('---------dealing with cell ' + str(dict_key) + '-----' + number_cell_affine_table[
                 dict_key] + '   ---coefficient --------------------')
             # calculate coefficients from points
-            cilm[dict_key] = pysh.shtools.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
+            cilm = flatten_clim(pysh.shtools.SHExpandDH(griddata, sampling=2, lmax_calc=lmax))
             # build sh tools coefficient class instance
-            sh_coefficient_instance = pysh.SHCoeffs.from_array(cilm[dict_key])
+            sh_coefficient = pysh.SHCoeffs.from_array(cilm)
+            print(cilm)
+            # pd_embryo.iloc[]
 
-            sh_coefficient_instance.to_file(filename=save_file_name)
-        else:
-            continue
 
 
 def sample_and_SHc_with_surface(surface_points, sample_N, lmax, surface_average_num=5):

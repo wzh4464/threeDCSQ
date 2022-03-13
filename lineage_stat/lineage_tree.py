@@ -23,7 +23,9 @@ import tqdm
 
 data_path = r'D:/cell_shape_quantification/DATA/'
 
-def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot_title='', color_map='seismic'):
+
+def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot_title='', color_map='seismic',
+                        is_frame=False, time_resolution=1,is_abs=True):
     """
 
     :param cell_tree:
@@ -34,7 +36,7 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
     drawing_points_array = []
     # ABpl may appear 1 min later than ABal,we would set time 0 as ABa begin to split!
     # draw ABa, ABp, EMS, P1 only
-    embryo_ABal_start_time = cell_tree.get_node('ABal').data.get_time()[0]
+    begin_frame = max(cell_tree.get_node('ABa').data.get_time()[-1], cell_tree.get_node('ABp').data.get_time()[-1])
     for node_id in cell_tree.expand_tree(sorting=False):
         this_cell_node = cell_tree.get_node(node_id)
         for queue_index, time_int in enumerate(this_cell_node.data.get_time()):
@@ -42,55 +44,65 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
             # print(values_dict)
             # print(this_cell_node.data.get_position_x(), time_int, values_dict[tp_and_cell_index])
             if tp_and_cell_index in values_dict.keys():
-                drawing_points_array.append(
-                    [this_cell_node.data.get_position_x(), -time_int, values_dict[tp_and_cell_index]])
+                if is_frame:
+                    drawing_points_array.append(
+                        [this_cell_node.data.get_position_x(), -(time_int - begin_frame) * time_resolution,
+                         values_dict[tp_and_cell_index]])
+                else:
+                    drawing_points_array.append(
+                        [this_cell_node.data.get_position_x(), -time_int, values_dict[tp_and_cell_index]])
+
                 if queue_index == 0:
                     mother_position_x = cell_tree.parent(node_id).data.get_position_x()
                     for x in np.arange(min(mother_position_x, this_cell_node.data.get_position_x()),
                                        max(mother_position_x, this_cell_node.data.get_position_x())):
-                        drawing_points_array.append(
-                            [x, -time_int, values_dict[tp_and_cell_index]])
+                        if is_frame:
+                            drawing_points_array.append(
+                                [x, -(time_int - begin_frame) * time_resolution, values_dict[tp_and_cell_index]])
+                        else:
+                            drawing_points_array.append([x, -time_int, values_dict[tp_and_cell_index]])
 
     np_drawing_points_array = np.array(drawing_points_array)
 
     # make yellow to becom the colorbar center
-    edge_value = np.nanmax(np.abs(np_drawing_points_array[:, 2]))
-    # print(np.average(np.abs(np_drawing_points_array[:, 2])))
-    # print(np.nanmax(np.abs(np_drawing_points_array[:, 2])))
-    print('edge value', edge_value)
-    drawing_points_array.append([0, 0, edge_value])
-    drawing_points_array.append([0, 0, -edge_value])
+    if is_abs:
+        edge_value = np.nanmax(np.abs(np_drawing_points_array[:, 2]))
+        # print(np.average(np.abs(np_drawing_points_array[:, 2])))
+        # print(np.nanmax(np.abs(np_drawing_points_array[:, 2])))
+        print('edge value', edge_value)
+        drawing_points_array.append([0, 0, edge_value])
+        drawing_points_array.append([0, 0, -edge_value])
     np_drawing_points_array = np.array(drawing_points_array)
 
     my_dpi = 100
-    fig=plt.figure(figsize=(10000 / my_dpi, 1000 / my_dpi), dpi=my_dpi)
+    fig = plt.figure(figsize=(10000 / my_dpi, 1000 / my_dpi), dpi=my_dpi)
     plt.scatter(x=np_drawing_points_array[:, 0], y=np_drawing_points_array[:, 1], marker='s', s=6,
                 c=np_drawing_points_array[:, 2], cmap=color_map)
     # fig.colorbar(sc,ax=ax,)
     plt.axis('off')
     # plt.colorbar(sc,aspect=100,orientation="horizontal")
-    plt.title(plot_title)
+    plt.title(plot_title, fontsize=40)
 
-    saving_path = os.path.join(data_path+r'lineage_tree/tree_plot', embryo_name)
+    saving_path = os.path.join(data_path + r'lineage_tree/tree_plot', embryo_name)
     if not os.path.exists(saving_path):
         os.mkdir(saving_path)
-    saving_path = os.path.join(saving_path, plot_title+'.svg')
+    saving_path = os.path.join(saving_path, plot_title + '.pdf')
     print(saving_path)
 
     plt.colorbar()
 
     # time axis !
     # plt.arrow(-8500,220, 0, -100, shape='full', lw=0, length_includes_head=True, head_width=5)
-    plt.arrow(-8500, 20, 0, -230, width=20,shape='full',head_length=15)
-    plt.text(-8700,0,'0',fontsize=10)
-    plt.text(-8700,-50,'50',fontsize=10)
-    plt.text(-8700,-100,'100',fontsize=10)
-    plt.text(-8700,-150,'150',fontsize=10)
-    plt.text(-8700,-200,'200',fontsize=10)
+    plt.arrow(-8500, 20, 0, -230, width=20, shape='full', head_length=15)
+    plt.text(-8600, -240, 'min', fontsize=20)
+    plt.text(-8700, 0, '0', fontsize=20)
+    plt.text(-8700, -50, '50', fontsize=20)
+    plt.text(-8700, -100, '100', fontsize=20)
+    plt.text(-8700, -150, '150', fontsize=20)
+    plt.text(-8700, -200, '200', fontsize=20)
 
-
-    # plt.show()
-    plt.savefig(saving_path,format='svg')
+    #plt.show()
+    plt.savefig(saving_path, format='pdf')
 
 #
 #

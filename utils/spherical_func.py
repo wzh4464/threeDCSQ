@@ -68,7 +68,7 @@ def average_lat_lon_sphere(radian_distance=0.05, radius=1):
 
 def calculate_R_with_average_with_my_locate_method(points_sorted_by_lat, points_sorted_by_lon, lat_phi, lon_theta,
                                                    probable_interval_num,
-                                                   average_points=5):
+                                                   average_points=3):
     """
     not work so well. a lot of problem.
     :param points_sorted_by_lat: the surface points sorted by lat direction -- pass by reference, don't worry about the redundancy.
@@ -209,24 +209,23 @@ def calculate_R_with_average_with_my_locate_method(points_sorted_by_lat, points_
     return np.average(prob_points_set[:average_points, 0])
 
 
-def calculate_R_with_lat_lon(spherical_points, lat_phi, lon_theta, average_points=5):
+def spherical_R_with_lat_lon(surface_points, lat_phi, lon_theta, average_points=3):
     '''
 
-    :param spherical_points: all surface points
+    :param surface_points: all surface points
     :param lat_phi: the co-latitude radius
     :param lon_theta: the longitude radius
     :param average_points: how many closest point to calculate
     :return:
     '''
-    distance_vector = (spherical_points[:, 1] - lat_phi) ** 2 + (spherical_points[:, 2] - lon_theta) ** 2
-    # print(distance_vector.shape)
-    # print(spherical_points[:,0].shape)
-    distance_matrix = np.vstack((spherical_points[:, 0], distance_vector)).T
-    # print(distance_matrix.shape)
-    distance_matrix = distance_matrix[distance_matrix[:, 1].argsort()]
-    # print(distance_matrix.shape)
-    # print(distance_matrix[0:average_points,0])
-    return np.mean(distance_matrix[0:average_points, 0])
+    distance_vector = (surface_points[:, 1] - lat_phi) ** 2 + (surface_points[:, 2] - lon_theta) ** 2
+
+    # print('sampling')
+    # print(surface_points)
+    # print(distance_vector)
+    closest_indices=np.argsort(distance_vector)[:3]
+    # print(surface_points[np.argsort(distance_vector)[:3],0])
+    return np.mean(surface_points[closest_indices, 0])
 
 
 def sort_by_phi_theta(points_at_spherical):
