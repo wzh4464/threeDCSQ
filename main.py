@@ -1,7 +1,7 @@
 # import pyshtools as pysh
 
 import os
-import config
+import static
 
 import numpy as np
 
@@ -15,15 +15,15 @@ def main():
 
     # ------------------------------R fibonacci representation------------------------------------------------
     for cell_index in np.arange(start=4, stop=21, step=1):
-        path_tmp = config.data_path+r'Segmentation Results\SegmentedCell/Sample' + f'{cell_index:02}' + 'LabelUnified'
+        path_tmp = static.data_path + r'Segmentation Results\SegmentedCell/Sample' + f'{cell_index:02}' + 'LabelUnified'
         img_1 = general_f.load_nitf2_img(os.path.join(path_tmp,'Sample{}_068_segCell.nii.gz'.format(f'{cell_index:02}')))
         print('Sample{}_segCell.nii.gz'.format(f'{cell_index:02}'),img_1.get_fdata().shape)
-        # print(general_f.load_nitf2_img(os.path.join(config.data_path,r'Segmentation Results\SegmentedCell\Sample04LabelUnified','Sample04_100_segCell.nii.gz')).get_fdata().shape)
-    # general_f.show_nitf2_img(os.path.join(config.dir_segemented_tmp1, 'Embryo04_068_segCell.nii.gz'))
+        # print(general_f.load_nitf2_img(os.path.join(static.data_path,r'Segmentation Results\SegmentedCell\Sample04LabelUnified','Sample04_100_segCell.nii.gz')).get_fdata().shape)
+    # general_f.show_nitf2_img(os.path.join(static.dir_segemented_tmp1, 'Embryo04_068_segCell.nii.gz'))
 
 
 
-    # img_2 = general_f.show_nitf2_img(os.path.join(config.dir_my_data, 'membrane' + 'Embryo04_001_segCell.nii.gz'))
+    # img_2 = general_f.show_nitf2_img(os.path.join(static.dir_my_data, 'membrane' + 'Embryo04_001_segCell.nii.gz'))
     # R_func.build_R_array_for_embryo(128)
     # ---------------------------------------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ def main():
     #                             args=(path_tmp, 'Embryo04_009_segCell.nii.gz', 'draw_contraction',))
     # p.start()
 
-    # SH_A_func.analysis_compare_SHc(embryo_path=config.dir_segemented_tmp1,
+    # SH_A_func.analysis_compare_SHc(embryo_path=static.dir_segemented_tmp1,
     #                                file_name='Embryo04_009_segCell.nii.gz', behavior='draw_contraction')
 
     # ---------------------------------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ def main():
     # path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
     # cell_f.count_volume_surface_normalization_tocsv(path_tmp)
     # # -----------------------------------------------------------------------------------------------------
-    # path_tmp = config.dir_segemented_tmp1
+    # path_tmp = static.dir_segemented_tmp1
 
     # SH_A_func.analysis_SHcPCA_All_embryo(l_degree=25)
 

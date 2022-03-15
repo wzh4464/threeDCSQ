@@ -3,9 +3,12 @@
 
 the code is built in hierarchical structure, one sub-dict is a package, the higher packages can use functions in lower packages.
 
-## project dictionary file tree
+## Project directory file tree
+
+Brief introduction on code directory.
+
 ```html
-root/: work dictionary environment
+root/: work directory environment
   |--DATA/: the transformation digital results in csv files or plotted figures, too large to upload on github
   |--analysis/: 3rd layer, the analysis code including spherical harmonic transformation, contact area, clustering and PCA
      |--SH_analyses.py: functions compare sherical harmonics reconstruction and original shapes.
@@ -32,6 +35,8 @@ root/: work dictionary environment
 ```
 ## Files and Function usages
 
+## Scientific Concepts
+
 ### Curvature Of cell
 
 #### Gaussian curvature using libigl
@@ -44,6 +49,7 @@ https://libigl.github.io/libigl-python-bindings/tut-chapter1/
 https://zh.wikipedia.org/wiki/%E4%B8%BB%E6%9B%B2%E7%8E%87
 https://zh.wikipedia.org/wiki/%E9%AB%98%E6%96%AF%E6%9B%B2%E7%8E%87
 
+## Code Implementation
 
 ### Lineage tree draw
 * generate the tree files with command first go to lineage_stat folder
@@ -61,7 +67,8 @@ https://zh.wikipedia.org/wiki/%E9%AB%98%E6%96%AF%E6%9B%B2%E7%8E%87
     4. fourth, we go through the tree again and do interpolation for the lost cells. 
 
 * the legend frontzise is set at function **draw_life_span_tree**. 
-## environment 
+
+## Python Environment 
 Please update conda by running
 
     $ conda update -n base -c defaults conda
@@ -85,8 +92,8 @@ $ conda activate CellShapeAnalysis
 
 - [x] FIGURE03 confirm point distance unit, use correct distance, volume and surface in 2DMAP feature array.
   - [x] calculate 2DMap PCA.
-  - [] draw 2DMap PCA and SPAHRM PCA in histogram.
-  - [ ] combine five feature schematic diagram.
+  - [ ] draw 2DMap PCA and SPAHRM PCA in histogram.
+  - [x] combine five feature schematic diagram.
 
 - [x] FIGURE04 average lineage tree.
 
@@ -96,7 +103,7 @@ $ conda activate CellShapeAnalysis
 
 - [x] FIGURE07 cluster result (internal error and external error)
 
-### points surface display
+### opend3d: points surface display 
 
 o3d configuration:
 {

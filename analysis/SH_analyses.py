@@ -10,7 +10,7 @@ import pyshtools as pysh
 import numpy as np
 import pandas as pd
 import multiprocessing
-import config
+from static import config
 import os
 import math
 import re
@@ -449,7 +449,7 @@ def analysis_SHc_Kmeans_One_embryo(embryo_path, used_degree, l_degree=25, cluste
     # estimator2.fit(log_abs_data)
     # result_2 = estimator2.predict(log_abs_data)
     #
-    # path_to_saving = os.path.join(config.dir_my_data_SH_time_domain_csv,
+    # path_to_saving = os.path.join(static.dir_my_data_SH_time_domain_csv,
     #                               embryo_name + '_l_' + str(l_degree) + 'KMEANS_log_abs8.csv')
     # deal_with_cluster(result_2, cell_index_time_this_embryo, cluster_cell_list, cluster_num).to_csv(path_to_saving)
     #
@@ -491,7 +491,7 @@ def analysis_SHc_Kmeans_One_embryo(embryo_path, used_degree, l_degree=25, cluste
     # estimator3.fit(log_expand_offset_array)
     # result_3 = estimator3.predict(log_expand_offset_array)
     #
-    # path_to_saving = os.path.join(config.dir_my_data_SH_time_domain_csv,
+    # path_to_saving = os.path.join(static.dir_my_data_SH_time_domain_csv,
     #                               embryo_name + '_l_' + str(l_degree) + 'KMEANS_logabs_inverse25.csv')
     # deal_with_cluster(result_3, cell_index_time_this_embryo, cluster_cell_list, cluster_num).to_csv(path_to_saving)
     #

@@ -2,11 +2,11 @@ import os
 from pickle import load
 
 import pandas as pd
-from treelib import Tree, Node
+from treelib import Tree
 import numpy as np
 
 from utils.cell_func import get_cell_name_affine_table
-from config import data_path
+from static.config import data_path
 
 
 def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=data_path + r'lineage_tree/LifeSpan'):

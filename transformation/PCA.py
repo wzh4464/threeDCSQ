@@ -3,7 +3,7 @@
 
 # import dependency library
 import os
-import config
+from static import config
 
 import numpy as np
 import pandas as pd
@@ -78,10 +78,12 @@ def read_PCA_file(PCA_file_path):
     return pca_means, pca_explained, PCA_df
 
 
+
 def calculate_PCA_zk_norm(embryo_path, PCA_matrices_saving_path, k=12):
     """
     # this method is totally wrong OH my god!!!!!!!!!!!! 2021-10-30 by zelin
         # I really don't know why don't you just go to run the tutorial !!!!!
+         # this function is implemented by sklearn , just in the PCA class.....
     :param embryo_path:
     :param PCA_matrices_saving_path:
     :param k:

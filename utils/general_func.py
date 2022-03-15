@@ -223,6 +223,13 @@ def read_csv_to_df(csv_path):
 
 
 def combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv, l_degree=25, is_norm=True):
+    """
+    combine 17 embryo spherical harmonic feature vector to one, just for ease of reading
+    :param dir_my_data_SH_time_domain_csv:
+    :param l_degree:
+    :param is_norm:
+    :return:
+    """
     embryo_name_tmp = 'Sample{}LabelUnified'.format(f'{4:02}')
     if is_norm:
         path_saving_csv_normalized_tmp = os.path.join(dir_my_data_SH_time_domain_csv,
