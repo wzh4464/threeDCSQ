@@ -212,18 +212,20 @@ def transfer_2d_to_spectrum():
 
 
 def cluster_with_spectrum():
-    # Neuron, Pharynx, Intestine, Skin, Muscle, Germcell, death, unspecifed
-    cluster_num = 6
-    estimator = KMeans(n_clusters=cluster_num, max_iter=10000)
     path_original = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv',
                                  'SHc_norm_Spectrum.csv')
     concat_df_Spectrum = read_csv_to_df(path_original)
+
+    # Neuron, Pharynx, Intestine, Skin, Muscle, Germcell, death, unspecifed
+    cluster_num = 9
+    estimator = KMeans(n_clusters=cluster_num, max_iter=10000)
+
     result_origin = estimator.fit_predict(np.power(concat_df_Spectrum.values, 1 / 2))
     print(estimator.cluster_centers_)
     df_kmeans_clustering = pd.DataFrame(index=concat_df_Spectrum.index, columns=['cluster_num'])
     df_kmeans_clustering['cluster_num'] = result_origin
     df_kmeans_clustering.to_csv(
-        os.path.join(static.dir_my_data_SH_clustering_csv,
+        os.path.join(static.data_path,
                      'normsqrt_spectrum_cluster_k{}.csv'.format(cluster_num)))
 
 
@@ -254,7 +256,7 @@ def build_label_supervised_learning():
     # print(dfs.loc[dfs['Name'] == 'ABalaaaalpa\'']['Fate'])
 
 
-def SPCSMs_SVM():
+def SPCSMs_SVM_by_tp():
     print('reading dsf')
     t0 = time()
     cshaper_X = read_csv_to_df(
@@ -311,7 +313,7 @@ def SPCSMs_SVM():
     # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
     # dataset): unsupervised feature extraction / dimensionality reduction
     n_components = 24
-    print("Extracting the top %d eigenfaces from %d cells"
+    print("Extracting the top %d eigenshape from %d cells"
           % (n_components, X_train.shape[0]))
     t0 = time()
     pca = PCA(n_components=n_components, svd_solver='randomized',
