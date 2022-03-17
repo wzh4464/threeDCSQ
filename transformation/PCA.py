@@ -3,7 +3,7 @@
 
 # import dependency library
 import os
-from utils import config
+from static import config
 
 import numpy as np
 import pandas as pd
@@ -82,6 +82,7 @@ def calculate_PCA_zk_norm(embryo_path, PCA_matrices_saving_path, k=12):
     """
     # this method is totally wrong OH my god!!!!!!!!!!!! 2021-10-30 by zelin
         # I really don't know why don't you just go to run the tutorial !!!!!
+         # this function is implemented by sklearn , just in the PCA class.....
     :param embryo_path:
     :param PCA_matrices_saving_path:
     :param k:

@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # import dependency library
+
+from pyshtools import SHCoeffs
+
 import open3d as o3d
 
 import numpy as np
@@ -11,7 +14,8 @@ from time import time
 
 from pyshtools import SHCoeffs
 
-from utils import config
+import config
+from typing import Optional, Any, Union, Tuple
 
 from multiprocessing import Process
 from sklearn.cluster import KMeans, AgglomerativeClustering
@@ -31,7 +35,8 @@ import transformation.SH_represention as sh_represent
 import transformation.PCA as PCA_f
 import experiment.geometry as geo_f
 
-from analysis.SH_analyses import generate_3D_matrix_from_SHc
+from analysis.SH_analyses import analysis_SHc_Kmeans_One_embryo, get_points_with_SHc, generate_3D_matrix_from_SHc
+from static import config
 from utils.draw_func import draw_3D_points
 from utils.general_func import read_csv_to_df, \
     combine_all_embryo_SHc_in_df, sph2descartes, descartes2spherical, sph2descartes2, descartes2spherical2
@@ -43,9 +48,10 @@ from dict import cell_fate_map
 from utils.machine_learning import cluster_acc
 
 
+
 def compare_fibonacci_sample_and_average_sample():
     """
-
+    simply compare two sampling method figures
     :return:
     """
     spherical_fibonacci = fibonacci_sphere(500)
@@ -59,6 +65,11 @@ def compare_fibonacci_sample_and_average_sample():
 
 
 def calculate_SPHARM_embryo_for_cells():
+    """
+    **time cost**
+    :return:
+    """
+
     # ------------------------------calculate SHC for each cell ----------------------------------------------
     path_tmp = config.data_path + r'SegmentCellUnified04-20/Sample20LabelUnified'
     for file_name in os.listdir(path_tmp):
@@ -69,134 +80,24 @@ def calculate_SPHARM_embryo_for_cells():
     # -------------------------------------------------------------------------------------------------------
 
 
-# do PCA and transform it to 1/10 reduction dimension!!!! 24 or 48
-# no matter zk or PCA ,there is no need to store it!!
-# PCA calculation is very quickly, even reading 5000MB only takes 3 mins,
-# I don't know why you're waste some much time to store and read your own definition csv!! they're all useless!!
-# 48
-def test_2021_6_21_3():
-    used_degree = 25
-
-    PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm_PCA.csv')
-    if not os.path.exists(PCA_matrices_saving_path):
-        path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
-        df_SHc_norm = read_csv_to_df(path_saving_csv_normalized)
-        print('finish read all embryo cell df_sh_norm_coefficients--------------')
-
-        sh_PCA = PCA()
-        sh_PCA.fit(df_SHc_norm.values[:, :(used_degree + 1) ** 2])
-        sh_PCA_mean = sh_PCA.mean_
-        print('PCA COMPONENTS: ', sh_PCA.n_components_)
-        print('PCA EXPLAINED VARIANCE: ', sh_PCA.explained_variance_ratio_)
-
-        df_PCA_matrices = pd.DataFrame(data=sh_PCA.components_,
-                                       columns=get_flatten_ldegree_morder(used_degree))
-        df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(sh_PCA.explained_variance_ratio_))
-        df_PCA_matrices.loc['mean'] = [0] + list(sh_PCA_mean)
-        df_PCA_matrices.to_csv(PCA_matrices_saving_path)
-
-        # PCA_f.draw_PCA(PCA_matrices_saving_path)
-    else:
-        print('PCA exist')
-    PCA_f.draw_PCA(PCA_matrices_saving_path)
-
-    # means, variation, n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
-    # print(means)
-    # print(variation)
-    # print(n_components)
-    # RECOSTRUCT THE SHcPCA, draw tree fuck
-
-
-def test_2021_6_30_3():
-    combine_all_embryo_SHc_in_df(dir_my_data_SH_time_domain_csv=config.dir_my_data_SH_time_domain_csv,
-                                 is_norm=False)
-
-
-#
-# # draw three methods contraction, figure plot
-# def test_2021_7_1_1():
-#     embryo_path = config.dir_segemented_tmp1
-#     k = 48  # 16+1 square
-#     degree = 12
-#
-#     embryo_name = os.path.basename(embryo_path)
-#
-#     # the whole PCA for embryo is the same one ,read before loop avoiding redundant reading
-#     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm_PCA.csv')
-#     pca_means, variation, df_n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
-#     # the path need to change to non-norm path
-#     SHcPCA_path = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}_norm.csv'.format(k))
-#     df_SHcPCA = read_csv_to_df(SHcPCA_path)
-#     # seg_files_path=[]
-#     No_cell, _ = get_cell_name_affine_table()
-#     # ------------------------draw original, sample, SHc, SHcPCA reconstruction result--------------------
-#     # for file_name in reversed(os.listdir(embryo_path)):
-#     for file_name in os.listdir(embryo_path):
-#
-#         if os.path.isfile(os.path.join(embryo_path, file_name)):
-#             path_embryo = os.path.join(embryo_path, file_name)
-#             print(path_embryo)
-#             tp = file_name.split('_')[1]
-#             # seg_files_path.append(file_name)
-#             dict_cell_membrane, dict_center_points = sh_represent.get_nib_embryo_membrane_dict(embryo_path, file_name)
-#             # print(dict_cell_membrane)
-#             # print(dict_center_points)
-#             for keys_tmp in dict_cell_membrane.keys():
-#                 cell_name = No_cell[keys_tmp]
-#                 idx_SHcPCA: str = tp + '::' + cell_name
-#
-#                 local_surface_points = dict_cell_membrane[keys_tmp] - dict_center_points[keys_tmp]
-#                 fig = plt.figure()
-#
-#                 # original cell plot
-#                 ax1 = fig.add_subplot(2, 2, 1, projection='3d')
-#                 draw_3D_points(local_surface_points, fig_name='original' + idx_SHcPCA, ax=ax1)
-#
-#             sh_show_N = 20
-#             # just for show 20 x 20 x 2 sample
-#             ax2 = fig.add_subplot(2, 2, 2, projection='3d')
-#             _, sample_surface = sh_represent.do_sampling_with_interval(sh_show_N, local_surface_points, 3,
-#                                                                        is_return_xyz=True)
-#             draw_3D_points(sample_surface, fig_name='Sample' + idx_SHcPCA, ax=ax2)
-#
-#         # SHc cell plot
-#         SHc_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
-#         cell_SH_path = os.path.join(SHc_embryo_dir, cell_name)
-#         sh_instance = pysh.SHCoeffs.from_file(cell_SH_path, lmax=degree)
-#         reconstruction_xyz = do_reconstruction_for_SH(sh_show_N, sh_instance)
-#         ax3 = fig.add_subplot(2, 2, 3, projection='3d')
-#         draw_3D_points(reconstruction_xyz, fig_name='SHc' + idx_SHcPCA, ax=ax3)
-#
-#     # SHcPCA plot
-#
-#     zk = df_SHcPCA.loc[idx_SHcPCA]
-#     # x_hat is a sh coefficients instance
-#     x_hat = df_n_components.values[:k].T.dot(zk) + pca_means
-#     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(x_hat))
-#     reconstruction_xyz = do_reconstruction_for_SH(sh_show_N, sh_instance)
-#     ax4 = fig.add_subplot(2, 2, 4, projection='3d')
-#     draw_3D_points(reconstruction_xyz, fig_name='SHcPCA' + idx_SHcPCA, ax=ax4)
-#     plt.show()
-#
-
 def test_2021_7_1_2():
     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_PCA.csv')
 
     PCA_f.calculate_PCA_zk_norm(embryo_path=config.dir_segemented_tmp1,
                                 PCA_matrices_saving_path=PCA_matrices_saving_path, k=12)
 
-
+#
 #
 # # draw three methods contraction, error estimate # TIME CONSUMING AND
 # def test_2021_7_2_1():
 #     # draw three methods contraction
-#     embryo_path = config.dir_segemented_tmp1
+#     embryo_path = static.dir_segemented_tmp1
 #
 #     # degree = 16
 #
 #     embryo_name = os.path.basename(embryo_path)
 #     # the whole PCA for embryo is the same one ,read before loop avoiding redundant reading
-#     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_PCA.csv')
+#     PCA_matrices_saving_path = os.path.join(static.dir_my_data_SH_time_domain_csv, 'SHc_PCA.csv')
 #     pca_means, variation, df_n_components = PCA_f.read_PCA_file(PCA_matrices_saving_path)
 #     # the path need to change to non-norm path
 #
@@ -227,7 +128,7 @@ def test_2021_7_1_2():
 #                 # outline extraction number
 #                 N: int = int(math.sqrt((l_degree + 1) ** 2 / 2) + 1)
 #                 k: int = (l_degree + 1) ** 2  # 16+1 square
-#                 SHcPCA_path = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}.csv'.format(k))
+#                 SHcPCA_path = os.path.join(static.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}.csv'.format(k))
 #                 if not os.path.exists(SHcPCA_path):
 #                     PCA_f.calculate_PCA_zk(embryo_path, PCA_matrices_saving_path, k)
 #                 df_SHcPCA = read_csv_to_df(SHcPCA_path)
@@ -289,29 +190,8 @@ def test_2021_7_1_2():
 #
 #                     df_err.loc[idx] = [err_sample, 0, err_SHc, err_SHcPCA]
 #
-#     df_err.to_csv(os.path.join(config.dir_my_data_err_est_dir, embryo_name + 'test2.csv'))
+#     df_err.to_csv(os.path.join(static.dir_my_data_err_est_dir, embryo_name + 'test2.csv'))
 #
-
-def test_2021_7_6_1():
-    '''
-    test sph2des and des2sph ; calculate zk
-    :return:
-    '''
-    point_lat = [[1, -3 * math.pi / 8, math.pi / 4], [1, 3 * math.pi / 8, math.pi / 4]]
-    print(point_lat)
-    print(sph2descartes(point_lat))
-    print(descartes2spherical(sph2descartes(point_lat)))
-
-    point_lat = [[1, math.pi / 8, math.pi / 4], [1, 7 * math.pi / 8, math.pi / 4]]
-    print(point_lat)
-
-    print(sph2descartes2(point_lat))
-    print(descartes2spherical2(sph2descartes2(point_lat)))
-
-    PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_PCA.csv')
-
-    PCA_f.calculate_PCA_zk(embryo_path=config.dir_segemented_tmp1, PCA_matrices_saving_path=PCA_matrices_saving_path)
-
 
 def test_2021_7_8():
     PCA_matrices_saving_path = os.path.join(config.dir_my_regular_shape_path, 'SHc_PCA.csv')
@@ -459,12 +339,12 @@ def test_2021_7_15():
 #
 # # draw outline spharm spcsm performance
 # def test_2021_7_15_1():
-#     embryo_path = config.dir_segemented_tmp1
+#     embryo_path = static.dir_segemented_tmp1
 #
 #     # degree = 16
 #
 #     embryo_name = os.path.basename(embryo_path)
-#     df_err = read_csv_to_df(os.path.join(config.dir_my_data_err_est_dir, embryo_name + 'test1.csv'))
+#     df_err = read_csv_to_df(os.path.join(static.dir_my_data_err_est_dir, embryo_name + 'test1.csv'))
 #
 #     name_list = []
 #     degree_list = []
@@ -544,7 +424,7 @@ def l_2_distance_from_shc_and_spcsm():
                 columns=['shc_d1', 'shc_d2', 'shc_dinf', 'spcsm_d1', 'spcsm_d2', 'spcsm_dinf', 'shcpca_d1', 'shcpca_d2',
                          'shcpca_dinf'])
 
-        # shc_norm_path = os.path.join(os.getcwd(),config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
+        # shc_norm_path = os.path.join(os.getcwd(),static.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
         shc_norm_path = os.path.join(config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
 
         print(shc_norm_path)
@@ -578,11 +458,11 @@ def l_2_distance_from_shc_and_spcsm():
 # def test_2021_8_2():
 #     # index would be {list_index}::{theta}::{phi}
 #
-#     # df_regular_polyhedron_sh_path = os.path.join(config.dir_my_regular_shape_path, '5_regular_random_degree_sh.csv')
+#     # df_regular_polyhedron_sh_path = os.path.join(static.dir_my_regular_shape_path, '5_regular_random_degree_sh.csv')
 #     # df_regular_polyhedron_sh =     read_csv_to_df(df_regular_polyhedron_sh_path)
 #     #
 #     # used_degree = 16
-#     # PCA_matrices_saving_path = os.path.join(config.dir_my_regular_shape_path, 'SHc_PCA.csv')
+#     # PCA_matrices_saving_path = os.path.join(static.dir_my_regular_shape_path, 'SHc_PCA.csv')
 #     #
 #     # sh_PCA_mean, _, sh_PCA = PCA_f.read_PCA_file(PCA_matrices_saving_path)
 #     # print(sh_PCA.values.shape)
@@ -615,7 +495,7 @@ def l_2_distance_from_shc_and_spcsm():
 #         embryo_num = f'{cell_index:02}'
 #         embryo_name = 'Sample{}LabelUnified'.format(embryo_num)
 #
-#         spcsm_path_norm = os.path.join(config.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}_norm.csv'.format(k))
+#         spcsm_path_norm = os.path.join(static.dir_my_data_SH_PCA_csv, embryo_name + '_SHcPCA{}_norm.csv'.format(k))
 #         df_spcsm_norm = read_csv_to_df(spcsm_path_norm)
 #
 #         concat_df_SHcPCA = pd.concat([df_SHcPCA, df_spcsm_norm])
@@ -634,7 +514,7 @@ def l_2_distance_from_shc_and_spcsm():
 #         print(tmp_map)
 #
 #         df_kmeans_clustering.to_csv(
-#             os.path.join(config.dir_my_data_SH_clustering_csv,
+#             os.path.join(static.dir_my_data_SH_clustering_csv,
 #                          embryo_name + '5_regular_spcsm_cluster_k{}.csv'.format(cluster_num)))
 
 #
@@ -642,7 +522,7 @@ def l_2_distance_from_shc_and_spcsm():
 # def test_2021_8_2_2():
 #     # index would be {list_index}::{theta}::{phi}
 #
-#     df_regular_polyhedron_sh_path = os.path.join(config.dir_my_regular_shape_path, '5_regular_random_degree_sh.csv')
+#     df_regular_polyhedron_sh_path = os.path.join(static.dir_my_regular_shape_path, '5_regular_random_degree_sh.csv')
 #     df_regular_polyhedron_sh = read_csv_to_df(df_regular_polyhedron_sh_path)
 #
 #     used_degree = 16
@@ -655,7 +535,7 @@ def l_2_distance_from_shc_and_spcsm():
 #         embryo_num = f'{cell_index:02}'
 #         embryo_name = 'Sample{}LabelUnified'.format(embryo_num)
 #
-#         shc_path_norm = os.path.join(config.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
+#         shc_path_norm = os.path.join(static.dir_my_data_SH_time_domain_csv, embryo_name + '_l_25_norm.csv')
 #         df_shc_norm = read_csv_to_df(shc_path_norm)
 #
 #         concat_df_SHcPCA = pd.concat([df_regular_polyhedron_sh, df_shc_norm])
@@ -674,7 +554,7 @@ def l_2_distance_from_shc_and_spcsm():
 #         print(tmp_map)
 #
 #         df_kmeans_clustering.to_csv(
-#             os.path.join(config.dir_my_data_SH_clustering_csv,
+#             os.path.join(static.dir_my_data_SH_clustering_csv,
 #                          embryo_name + '5_regular_shc_cluster_k{}.csv'.format(cluster_num)))
 
 
@@ -776,7 +656,7 @@ def l_2_distance_from_shc_and_spcsm():
 
 
 def display_SPAHRM_PCA_24_eigen_shape():
-    # df_norm_shape = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
+    # df_norm_shape = os.path.join(static.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
 
     PCA_matrices_saving_path = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm_PCA.csv')
 
@@ -808,7 +688,7 @@ def Map2D_matrix_csv():
         df_shc_norm_embryo = read_csv_to_df(embryo_individual_path)
 
         path_norm_2D_map = os.path.join(config.data_path,
-                                        'my_data_csv/SH_time_domain_csv/2D_matrix_Sample{}LabelUnified_norm.csv'.format(
+                                        'my_data_csv/SH_time_domain_csv/2D_matrix_Sample{}_norm.csv'.format(
                                             embryo_name))
         print('finish reading', embryo_name)
         list_cells = []
@@ -820,6 +700,7 @@ def Map2D_matrix_csv():
                                       data=np.array(list_cells))
         print(df_norm_2D_map)
         df_norm_2D_map.to_csv(path_norm_2D_map)
+        print('finished saving dataframe to csv')
 
 
 def Map_2D_eigen_matrix():

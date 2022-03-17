@@ -6,7 +6,7 @@
 
 import numpy as np
 import pandas as pd
-from utils import config
+from static import config
 
 from scipy import ndimage
 from collections import Counter

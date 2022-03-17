@@ -8,7 +8,7 @@ from sklearn.kernel_approximation import Nystroem
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from utils import config
+import static
 import numpy as np
 import os
 import pandas as pd
@@ -19,7 +19,7 @@ from time import time
 
 import pyshtools as pysh
 import matplotlib.pyplot as plt
-import dict as dict
+from static import dict as dict
 
 from tqdm import tqdm
 
@@ -62,7 +62,7 @@ def show_cell_SPCSMs_info():
 
     print(embryo_name, cell_name, tp)
 
-    embryo_path_csv = os.path.join(config.data_path + r'my_data_csv\SH_time_domain_csv',
+    embryo_path_csv = os.path.join(static.data_path + r'my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
@@ -223,7 +223,7 @@ def cluster_with_spectrum():
     df_kmeans_clustering = pd.DataFrame(index=concat_df_Spectrum.index, columns=['cluster_num'])
     df_kmeans_clustering['cluster_num'] = result_origin
     df_kmeans_clustering.to_csv(
-        os.path.join(config.dir_my_data_SH_clustering_csv,
+        os.path.join(static.dir_my_data_SH_clustering_csv,
                      'normsqrt_spectrum_cluster_k{}.csv'.format(cluster_num)))
 
 
@@ -234,7 +234,7 @@ def build_label_supervised_learning():
                                  'SHc_norm_Spectrum.csv')
     concat_df_Spectrum = read_csv_to_df(path_original)
 
-    dfs = pd.read_excel(config.cell_fate_path, sheet_name=None)['CellFate']
+    dfs = pd.read_excel(static.cell_fate_path, sheet_name=None)['CellFate']
     fate_dict = {}
     for idx in dfs.index:
         # print(row)
@@ -633,7 +633,7 @@ def display_contact_points():
         # ax = fig_contact_info.add_subplot(3, 3, item_count, projection='3d')
         # draw_3D_points(np.array(draw_points_list), fig_name=cell_name + '_' + num_cell_name[contact_cell_num], ax=ax)
 
-        # dfs = pd.read_excel(config.cell_fate_path, sheet_name=None)['CellFate']
+        # dfs = pd.read_excel(static.cell_fate_path, sheet_name=None)['CellFate']
         # fate_cell = dfs[dfs['Name'] == cell_name + '\'']['Fate'].values[0].split('\'')[0]
 
         item_count += 1
@@ -678,7 +678,7 @@ def display_contact_alpha_surface():
 def calculate_SH_PCA_coordinate():
     PCA_matrices_saving_path = os.path.join(r'.\DATA\my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
 
-    path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
+    path_saving_csv_normalized = os.path.join(static.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
     df_SHc_norm = read_csv_to_df(path_saving_csv_normalized)
     print('finish read all embryo cell df_sh_norm_coefficients--------------')
 
@@ -733,7 +733,7 @@ def plot_voxel_and_reconstructed_surface():
     """
     # ===========plot original dialation surface for particular shape====================================
     # embryo_img = load_nitf2_img(
-    #     os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+    #     os.path.join(static.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
     #                  embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
     # cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
     # # print((cell_surface_points - center).shape)
@@ -746,7 +746,7 @@ def plot_voxel_and_reconstructed_surface():
 
     # ==============plot reconstruction surface============================================
     # the path need to change to non-norm path
-    # SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    # SHc_path = os.path.join(static.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     # df_SHcPCA = read_csv_to_df(SHc_path)
     # sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     # m_pcd = o3d.geometry.PointCloud()
@@ -767,7 +767,7 @@ def plot_and_save_5_type_figures():
     this_cell_keys = cell_num[cell_name]
 
     embryo_img = load_nitf2_img(
-        os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+        os.path.join(static.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
                      embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
     cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
 
@@ -800,7 +800,7 @@ def plot_and_save_5_type_figures():
     # axes_tmp = fig_SPCSMs_info.add_subplot(111)
     #
     # # the path need to change to non-norm path
-    # SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    # SHc_path = os.path.join(static.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     # df_SHcPCA = read_csv_to_df(SHc_path)
     # sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     # sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array',ax=axes_tmp,degree_label=r'SPAHRM degree \textit{l}',
@@ -818,7 +818,7 @@ def plot_and_save_5_type_figures():
 
 
     # the path need to change to non-norm path
-    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    SHc_path = os.path.join(static.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     print(sh_instance.spectrum())

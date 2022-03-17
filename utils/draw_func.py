@@ -6,7 +6,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import os
-from utils import config
+from static import config
 import random
 import pyshtools as pysh
 
