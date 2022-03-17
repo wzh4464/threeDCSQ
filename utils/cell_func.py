@@ -4,10 +4,9 @@
 
 # import dependency library
 
-import nibabel as nib
 import numpy as np
 import pandas as pd
-import config
+from utils import config
 
 from scipy import ndimage
 from collections import Counter

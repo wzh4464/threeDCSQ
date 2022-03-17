@@ -3,7 +3,7 @@
 
 # import dependency library
 import os
-import config
+from utils import config
 
 import numpy as np
 import pandas as pd

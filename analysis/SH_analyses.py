@@ -10,7 +10,7 @@ import pyshtools as pysh
 import numpy as np
 import pandas as pd
 import multiprocessing
-import config
+from utils import config
 import os
 import math
 import re

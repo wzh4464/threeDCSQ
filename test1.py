@@ -11,14 +11,12 @@ from time import time
 
 from pyshtools import SHCoeffs
 
-import config
-from typing import Optional, Any, Union, Tuple
+from utils import config
 
 from multiprocessing import Process
-from sklearn.cluster import KMeans, DBSCAN
+from sklearn.cluster import KMeans, AgglomerativeClustering
 from sklearn.decomposition import PCA
 
-import multiprocessing
 import pyshtools as pysh
 
 import matplotlib.pyplot as plt
@@ -26,25 +24,23 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 import math
-import random
 import numpy.linalg as la
 
-import seaborn as sns
-
 # import user defined library
-import lineage_stat
 import transformation.SH_represention as sh_represent
 import transformation.PCA as PCA_f
 import experiment.geometry as geo_f
 
-from analysis.SH_analyses import analysis_SHc_Kmeans_One_embryo, get_points_with_SHc, generate_3D_matrix_from_SHc
-from utils.cell_func import nii_count_volume_surface, get_cell_name_affine_table
+from analysis.SH_analyses import generate_3D_matrix_from_SHc
 from utils.draw_func import draw_3D_points
-from utils.general_func import rotate_points_lon, rotate_points_lat, load_nitf2_img, read_csv_to_df, \
+from utils.general_func import read_csv_to_df, \
     combine_all_embryo_SHc_in_df, sph2descartes, descartes2spherical, sph2descartes2, descartes2spherical2
-from utils.sh_cooperation import do_reconstruction_for_SH, flatten_clim, get_flatten_ldegree_morder, \
+from utils.sh_cooperation import do_reconstruction_for_SH, get_flatten_ldegree_morder, \
     collapse_flatten_clim
 from utils.spherical_func import fibonacci_sphere, average_lat_lon_sphere
+from dict import cell_fate_map
+
+from utils.machine_learning import cluster_acc
 
 
 def compare_fibonacci_sample_and_average_sample():
@@ -1181,13 +1177,14 @@ def recognition_of_hyp_cells():
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
 
+    df_saving_skin_recognition=pd.DataFrame(columns=np.arange(start=0.5,stop=2,step=0.1))
     # print(cell_fate_dict)
     # detection using weight of first 2dmatrix pca component
     life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
     norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
     time_limit_minutes_start = 150  # 50 or 100 or 150 start time bigger than this
     time_limit_minutes_end = 250  # 100 or 150 or 200 the end time smaller than this
-    weight_threshold = 1.5
+    weight_threshold_static = 1
     # -----------precision = true positive (true skin)/true positive + false positive-----------
     tree_dict = {}
     begin_frame = {}
@@ -1224,53 +1221,82 @@ def recognition_of_hyp_cells():
         df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
         for cell_name in cell_list_dict.keys():
             df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
-        # print('avg:')
-        # print(df_avg_lifespan)
-        filtered_cells = df_avg_lifespan.index[abs(df_avg_lifespan[column]) >= weight_threshold]
 
-        all_fixed_cell = []
-        for cell_name in filtered_cells:
 
-            if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
-                embryo_name]) * 1.39) > time_limit_minutes_start and \
-                    ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[-1] - begin_frame[
-                        embryo_name]) * 1.39) < time_limit_minutes_end:
-                if len(cell_frame_list_dict[cell_name]) > 10:
-                    # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
-                    all_fixed_cell.append(cell_fate_dict[cell_name])
-                    # print(cell_name, cell_fate_dict[cell_name])
-        print(np.unique(all_fixed_cell, return_counts=True))
+        for weight_threshold in np.arange(start=0.5,stop=1.6,step=0.1):
+            all_fixed_cell = []
+            positive_count = 0
+            for cell_name in df_avg_lifespan.index:
+                if len(cell_frame_list_dict[cell_name]) > 10 and tree_dict[embryo_name].get_node(cell_name).is_leaf():
+
+                    if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
+                        embryo_name]) * 1.39) > time_limit_minutes_start and \
+                            ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[-1] - begin_frame[
+                                embryo_name]) * 1.39) < time_limit_minutes_end:
+                            if cell_fate_dict[cell_name] == 'Skin':
+                                positive_count+=1
+                            if df_avg_lifespan.at[cell_name,column] >= weight_threshold:
+                                # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
+                                all_fixed_cell.append(cell_fate_dict[cell_name])
+                                # print(cell_name, cell_fate_dict[cell_name])
+            print('-->>weight_threshold  ',weight_threshold)
+            # print(np.unique(all_fixed_cell, return_counts=True))
+            # print(all_fixed_cell)
+            # print(all_fixed_cell.count('Skin'))
+            if len(all_fixed_cell)!=0:
+
+                precision=all_fixed_cell.count('Skin')/len(all_fixed_cell)
+                recall=all_fixed_cell.count('Skin')/positive_count
+                print('precision  ',precision)
+                print('recall   ',recall)
+                if precision != 0 or recall != 0:
+                    print('f1 score  ', 2*precision*recall/(precision+recall))
+            else:
+                print('no one cell is recognized')
 
     # average detection (pattern confirmed)
     from lineage_stat.data_structure import get_combined_lineage_tree
     cell_combine_tree, _ = get_combined_lineage_tree()
     pca_num = 12
-    # ----------------read SHcPCA result first--------------------------------
+    # ----------------read embryos' average SHcPCA result first--------------------------------
     path_SHcPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
                                             'lifespan_avg_SHcPCA' + str(pca_num) + '_norm.csv')
     df_pd_spharmpca_lifespan = read_csv_to_df(path_SHcPCA_lifespan_csv)
-    average_fixed_cell_name = []
-    average_fixed_cell = []
 
-    all_skin = []
-    for cell_name in cell_combine_tree.expand_tree(sorting=False):
-        if cell_name in df_pd_spharmpca_lifespan.index:
-            if cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start and \
-                    cell_combine_tree.get_node(cell_name).data.get_time()[-1] < time_limit_minutes_end:
-                if cell_fate_dict[cell_name] == 'Skin':
-                    # print(cell_name, cell_fate_dict[cell_name])
-                    all_skin.append([cell_name, cell_fate_dict[cell_name]])
+    for weight_threshold in np.arange(start=0.5, stop=1.6, step=0.1):
+        average_fixed_cell_name = []
+        average_fixed_cell = []
 
-                if abs(df_pd_spharmpca_lifespan.at[cell_name, str(column)]) > weight_threshold:
-                    average_fixed_cell_name.append(cell_name)
-                    average_fixed_cell.append(cell_fate_dict[cell_name])
-                    # print(cell_name, cell_fate_dict[cell_name])
-    recognition_numpy_stata = np.unique(average_fixed_cell, return_counts=True)
-    print(recognition_numpy_stata)
-    print(len(np.where(average_fixed_cell == 'Skin')))
-    print(average_fixed_cell_name)
-    print(average_fixed_cell)
-    print(len(all_skin))
+        all_skin = []
+        positive_count=0
+        for cell_name in cell_combine_tree.expand_tree(sorting=False):
+            if cell_name in df_pd_spharmpca_lifespan.index:
+                if cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start and \
+                        cell_combine_tree.get_node(cell_name).data.get_time()[-1] < time_limit_minutes_end and \
+                            cell_combine_tree.get_node(cell_name).is_leaf():
+                    if cell_fate_dict[cell_name] == 'Skin':
+                        # print(cell_name, cell_fate_dict[cell_name])
+                        all_skin.append([cell_name, cell_fate_dict[cell_name]])
+                        positive_count+=1
+
+                    if abs(df_pd_spharmpca_lifespan.at[cell_name, str(column)]) > weight_threshold:
+                        average_fixed_cell_name.append(cell_name)
+                        average_fixed_cell.append(cell_fate_dict[cell_name])
+                        # print(cell_name, cell_fate_dict[cell_name])
+        print('-->>weight_threshold  ', weight_threshold)
+        # print(np.unique(all_fixed_cell, return_counts=True))
+        # print(all_fixed_cell)
+        # print(all_fixed_cell.count('Skin'))
+        if len(average_fixed_cell) != 0:
+
+            precision = average_fixed_cell.count('Skin') / len(average_fixed_cell)
+            recall = average_fixed_cell.count('Skin') / positive_count
+            print('precision  ', precision)
+            print('recall   ', recall)
+            if precision != 0 or recall != 0:
+                print('f1 score  ', 2 * precision * recall / (precision + recall))
+        else:
+            print('no one cell is recognized')
 
     # https: // en.wikipedia.org / wiki / Precision_and_recall
 
@@ -1285,67 +1311,115 @@ def cluster_with_lifespan_shape_features():
     # --------------------------------------cluster each cell--------------------------------------------
     norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
     life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
-    time_limit_minutes_start = 100
+    cluster_num_predict = 8  # no germ line
+    time_limit_minutes_start = 150
     pca_num = 12
-    for embryo_name in embryo_names:
+    # for embryo_name in embryo_names:
+    #
+    #     cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
+    #     with open(cell_tree_file_path, 'rb') as f:
+    #         # print(f)
+    #         tree_this_embryo = Tree(load(f))
+    #     begin_frame = max(tree_this_embryo.get_node('ABa').data.get_time()[-1],
+    #                       tree_this_embryo.get_node('ABp').data.get_time()[-1])
+    #
+    #     cell_list_dict = {}
+    #     cell_frame_list_dict = {}
+    #     path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
+    #                                    'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
+    #     df_values_dict = read_csv_to_df(path_SHcPCA_csv)
+    #     print('-----', embryo_name, '-----')
+    #     for idx in df_values_dict.index:
+    #         cell_name = idx.split('::')[1]
+    #         if cell_name in cell_list_dict.keys():
+    #             cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
+    #             cell_frame_list_dict[cell_name].append(idx.split('::')[0])
+    #         else:
+    #             # print(df_values_dict.loc[idx])
+    #             cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
+    #             cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
+    #     # ------------------build lifespan cell features vector for each embryo------------------
+    #     df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
+    #     y_fate = []
+    #     for cell_name in cell_list_dict.keys():
+    #         if cell_name in cell_fate_dict.keys() and \
+    #                 ((tree_this_embryo.get_node(cell_name).data.get_time()[
+    #                       0] - begin_frame) * 1.39) > time_limit_minutes_start:
+    #             df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+    #             y_fate.append(cell_fate_dict[cell_name])
+    #     # -------------start cluster----------------------------
+    #
+    #     y_kmeans_estimation = KMeans(n_clusters=9, tol=1e-4).fit_predict(df_avg_lifespan.values)
+    #     print('Kmeans', np.unique(y_kmeans_estimation, return_counts=True))
+    #
+    #     # 'cityblock': < function
+    #     # sklearn.metrics.pairwise.manhattan_distances >,
+    #     # 'euclidean': < function
+    #     # sklearn.metrics.pairwise.euclidean_distances >,
+    #     # 'l1': < function
+    #     # sklearn.metrics.pairwise.manhattan_distances >,
+    #     # 'l2': < function
+    #     # sklearn.metrics.pairwise.euclidean_distances >,
+    #     # 'manhattan': < function
+    #     # sklearn.metrics.pairwise.manhattan_distances >}
+    #     distance_form_cluster = 0.01
+    #     for distance_form_cluster in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3]:
+    #         min_sample_num = 10
+    #         y_dbscan_estimation = DBSCAN(eps=distance_form_cluster, min_samples=min_sample_num,
+    #                                      metric='euclidean').fit_predict(df_avg_lifespan.values)
+    #         print('DBSCAN EUCLIDEAN', np.unique(y_dbscan_estimation, return_counts=True))
+    #         y_dbscan_estimation = DBSCAN(eps=distance_form_cluster, min_samples=min_sample_num,
+    #                                      metric='cityblock').fit_predict(df_avg_lifespan.values)
+    #         print('DBSCAN MANHATTAN', np.unique(y_dbscan_estimation, return_counts=True))
+    #     print('Real distribution', np.unique(y_fate, return_counts=True))
 
-        cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
-        with open(cell_tree_file_path, 'rb') as f:
-            # print(f)
-            tree_this_embryo = Tree(load(f))
-        begin_frame = max(tree_this_embryo.get_node('ABa').data.get_time()[-1],
-                          tree_this_embryo.get_node('ABp').data.get_time()[-1])
+    # https://www.one-tab.com/page/_LiQCjfpRbu-6TA_AayJdg
+    path_SHcPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
+                                            'lifespan_avg_SHcPCA' + str(pca_num) + '_norm.csv')
+    df_pd_spharmpca_lifespan = read_csv_to_df(path_SHcPCA_lifespan_csv)
+    from lineage_stat.data_structure import get_combined_lineage_tree
+    cell_combine_tree, _ = get_combined_lineage_tree()
 
-        cell_list_dict = {}
-        cell_frame_list_dict = {}
-        path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
-                                       'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
-        df_values_dict = read_csv_to_df(path_SHcPCA_csv)
-        print('-----', embryo_name, '-----')
-        for idx in df_values_dict.index:
-            cell_name = idx.split('::')[1]
-            if cell_name in cell_list_dict.keys():
-                cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
-                cell_frame_list_dict[cell_name].append(idx.split('::')[0])
-            else:
-                # print(df_values_dict.loc[idx])
-                cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
-                cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
-        # ------------------build lifespan cell features vector for each embryo------------------
-        df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
-        y_fate = []
-        for cell_name in cell_list_dict.keys():
-            if cell_name in cell_fate_dict.keys() and tree_this_embryo.get_node(cell_name).data.get_time()[
-                0] > time_limit_minutes_start:
-                df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
-                y_fate.append(cell_fate_dict[cell_name])
-        # -------------start cluster----------------------------
+    y_fate = []
+    cluster_arr = []
+    for cell_name in cell_combine_tree.expand_tree(sorting=False):
+        if cell_name in cell_fate_dict.keys() and \
+                cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
+            cluster_arr.append(df_pd_spharmpca_lifespan.loc[cell_name])
+            y_fate.append(cell_fate_map[cell_fate_dict[cell_name]])
 
-        y_kmeans_estimation = KMeans(n_clusters=9, tol=1e-6).fit_predict(df_avg_lifespan.values)
-        print('Kmeans', np.unique(y_kmeans_estimation, return_counts=True))
+    # -------------start cluster----------------------------
+    y_fate = np.array(y_fate)
+    cluster_arr = np.array(cluster_arr)
+    y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-6).fit_predict(cluster_arr)
+    print('Kmeans', np.unique(y_kmeans_estimation, return_counts=True))
+    print(cluster_acc(y_fate, y_kmeans_estimation, cluster_num_predict))
 
-        # 'cityblock': < function
-        # sklearn.metrics.pairwise.manhattan_distances >,
-        # 'euclidean': < function
-        # sklearn.metrics.pairwise.euclidean_distances >,
-        # 'l1': < function
-        # sklearn.metrics.pairwise.manhattan_distances >,
-        # 'l2': < function
-        # sklearn.metrics.pairwise.euclidean_distances >,
-        # 'manhattan': < function
-        # sklearn.metrics.pairwise.manhattan_distances >}
-        distance_form_cluster = 0.01
-        for distance_form_cluster in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.1,1.2,1.3]:
+    randomlist = np.random.randint(low=0, high=cluster_num_predict + 1, size=len(y_fate))
+    print(cluster_acc(y_fate, randomlist, cluster_num_predict))
 
-            min_sample_num = 10
-            y_dbscan_estimation = DBSCAN(eps=distance_form_cluster, min_samples=min_sample_num,
-                                         metric='euclidean').fit_predict(df_avg_lifespan.values)
-            print('DBSCAN EUCLIDEAN', np.unique(y_dbscan_estimation,return_counts=True))
-            y_dbscan_estimation = DBSCAN(eps=distance_form_cluster, min_samples=min_sample_num,
-                                         metric='cityblock').fit_predict(df_avg_lifespan.values)
-            print('DBSCAN MANHATTAN', np.unique(y_dbscan_estimation,return_counts=True))
-        print('Real distribution', np.unique(y_fate, return_counts=True))
+    # for distance_form_cluster in [0.23, 0.24]:
+    #     min_sample_num = 10
+    #     y_dbscan_estimation = DBSCAN(eps=distance_form_cluster, min_samples=min_sample_num,
+    #                                  metric='euclidean').fit_predict(cluster_arr)
+    #     print('DBSCAN EUCLIDEAN', np.unique(y_dbscan_estimation, return_counts=True))
+    #     y_dbscan_estimation = DBSCAN(eps=distance_form_cluster, min_samples=min_sample_num,
+    #                                  metric='cityblock').fit_predict(cluster_arr)
+    #     print('DBSCAN MANHATTAN', np.unique(y_dbscan_estimation, return_counts=True))
 
-    #https://www.one-tab.com/page/_LiQCjfpRbu-6TA_AayJdg
+    y_fea_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
+    print('ward')
+    print(cluster_acc(y_fate, y_fea_agglo, cluster_num_predict))
+    y_fea_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
+    print('average')
+    print(cluster_acc(y_fate, y_fea_agglo, cluster_num_predict))
+    y_fea_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
+    print('maximum')
+    print(cluster_acc(y_fate, y_fea_agglo, cluster_num_predict))
+    # y_fea_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
+    # print('single', cluster_acc(y_fate, y_fea_agglo, cluster_num_predict), np.unique(y_fea_agglo, return_counts=True))
+    print('Real distribution', np.unique(y_fate, return_counts=True))
+
+
 if __name__ == "__main__":
     cluster_with_lifespan_shape_features()

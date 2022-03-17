@@ -19,12 +19,12 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 import lineage_stat.data_structure as data_struct
 from lineage_stat.lineage_tree import draw_life_span_tree
 from utils.general_func import read_csv_to_df
+from utils.config import data_path
 
 # ---------------------------------------------------------------------------------
 # ##for all, how to combine 20 embryos to one lineage tree pic? a big problem!#####
 # ---------------------------------------------------------------------------------
 
-data_path = r'D:/cell_shape_quantification/DATA/'
 
 
 def draw_spharm_pca_lifespan(embryo_name, embryo_time_tree, print_num=4):
@@ -337,7 +337,7 @@ def draw_cell_fate_lineage_tree():
 
 
 if __name__ == "__main__":
-    draw_cell_fate_lineage_tree()
+    draw_2dmatrix_PCA_combined_lifespan()
     # draw_PCA_combined(print_num=12)
     # draw_2dmatrix_PCA_combined_lifespan(print_num=2)
     # draw_tree_test()

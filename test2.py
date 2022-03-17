@@ -3,14 +3,12 @@ import open3d as o3d
 import json
 from random import uniform
 
-from pyshtools import SHGrid
 from skimage.measure import marching_cubes, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
-from sklearn.linear_model import SGDClassifier
-from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-import config
+from utils import config
 import numpy as np
 import os
 import pandas as pd
@@ -32,17 +30,15 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import PCA
-from sklearn.svm import SVC, LinearSVC
+from sklearn.svm import LinearSVC
 from matplotlib import cm
 import matplotlib.patches
 
 from datetime import datetime
 
-import seaborn as sns
 # import user defined library
 
-from transformation.PCA import calculate_PCA_zk_norm
-from transformation.SH_represention import get_nib_embryo_membrane_dict, do_sampling_with_interval
+from transformation.SH_represention import get_nib_embryo_membrane_dict
 from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img

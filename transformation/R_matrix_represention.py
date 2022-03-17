@@ -2,7 +2,7 @@ import utils.general_func as general_f
 import utils.cell_func as cell_f
 import utils.draw_func as draw_f
 import utils.spherical_func as spherical_f
-import config
+from utils import config
 import os
 import numpy as np
 import time

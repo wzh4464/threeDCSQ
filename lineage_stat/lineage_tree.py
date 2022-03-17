@@ -21,8 +21,7 @@ import tqdm
 
 # import user defined library
 
-data_path = r'D:/cell_shape_quantification/DATA/'
-
+from utils.config import data_path
 
 def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot_title='', color_map='seismic',
                         is_frame=False, time_resolution=1,is_abs=True):
