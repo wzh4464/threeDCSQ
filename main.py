@@ -7,8 +7,6 @@ import numpy as np
 
 import utils.general_func as general_f
 
-from utils.cell_func import nii_get_cell_surface
-
 
 def main():
     print("start cell shape analysis")

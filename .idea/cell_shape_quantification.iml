@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/DATA" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9 (CellShapeAnalysis)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.7 (monitor)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">

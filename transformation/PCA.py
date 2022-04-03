@@ -3,6 +3,9 @@
 
 # import dependency library
 import os
+
+from sklearn.decomposition import PCA
+
 from static import config
 
 import numpy as np
@@ -67,16 +70,25 @@ def draw_PCA(sh_PCA_path):
 
         # component_index += 1
 
+def save_PCA_file(PCA_file_path,PCA_instance,feature_columns):
+    df_PCA_matrices = pd.DataFrame(data=PCA_instance.components_, columns=feature_columns)
+    df_PCA_matrices.insert(loc=0, column='explained_variation_ratio', value=list(PCA_instance.explained_variance_ratio_))
+    df_PCA_matrices.loc['mean'] = [0] + list(PCA_instance.mean_)
+    df_PCA_matrices.to_csv(PCA_file_path)
 
 def read_PCA_file(PCA_file_path):
     PCA_df = general_f.read_csv_to_df(PCA_file_path)
     pca_means = PCA_df.loc['mean'][1:]
     PCA_df.drop(index='mean', inplace=True)
-    pca_explained = PCA_df['explained_variation']
-    PCA_df.drop(columns='explained_variation', inplace=True)
+    pca_explained = PCA_df['explained_variation_ratio']
+    PCA_df.drop(columns='explained_variation_ratio', inplace=True)
 
-    return pca_means, pca_explained, PCA_df
+    PCA_instance=PCA(n_components=len(PCA_df.index))
+    PCA_instance.mean_=np.array(pca_means).flatten()
+    PCA_instance.explained_variance_ratio_=np.array(pca_explained).flatten()
+    PCA_instance.components_=PCA_df.values
 
+    return PCA_instance
 
 
 def calculate_PCA_zk_norm(embryo_path, PCA_matrices_saving_path, k=12):

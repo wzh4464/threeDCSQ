@@ -11,7 +11,15 @@ from skimage.measure import marching_cubes, mesh_surface_area
 
 # import user defined library
 
+
+
 def export_dia_cell_surface_points_json(volume):
+    """
+    json format
+    dictionary {key:cell_number,value: list[surface point string: x_y_z]}
+    :param volume:
+    :return:
+    """
     surface_dict = {}
     cell_number = np.unique(volume)
     # cell_number.remove(0)
@@ -24,11 +32,18 @@ def export_dia_cell_surface_points_json(volume):
                 surface_points_list.append(
                     str(point_position_x[i]) + '_' + str(point_position_y[i]) + '_' + str(point_position_z[i]))
             surface_dict[str(cell_idx)] = surface_points_list
-            print(cell_idx, 'surface points', len(point_position_x))
+            print(str(cell_idx), 'surface points', len(point_position_x))
     return surface_dict
 
 
 def export_dia_cell_points_json(volume):
+    """
+    FOR THE alpha shape!!
+    json format
+    dictionary {key:cell_number,value: list[surface point string: x_y_z]}
+    :param volume:
+    :return:
+    """
     cell_dict = {}
     cell_number = np.unique(volume)
     # cell_number.remove(0)
@@ -49,6 +64,10 @@ def get_contact_area(volume):
     '''
     Get the contact volume surface of the segmentation. The segmentation results should be watershed segmentation results
     with a ***watershed line***.
+
+    json format:
+    dictionary {key:cell1_number_cell2_number,value: list[contact surface point string: x_y_z]}
+
     :param volume: segmentation result
     :return boundary_elements_uni: pairs of SegCell which contacts with each other
     :return contact_area: the contact surface area corresponding to that in the the boundary_elements.
@@ -90,5 +109,6 @@ def get_contact_area(volume):
                 contact_points_list.append(
                     str(point_position_x[i]) + '_' + str(point_position_y[i]) + '_' + str(point_position_z[i]))
             str_key = str(label1) + '_' + str(label2)
+            print(str_key)
             contact_points_dict[str_key] = contact_points_list
     return cell_conatact_pair_renew, contact_area, contact_points_dict
