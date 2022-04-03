@@ -9,19 +9,14 @@ This py file defines all structures and generate lineage tree that will be used 
 # import dependency library
 import os
 
-import matplotlib
 import matplotlib.pyplot as plt
 
-from treelib import Tree, Node
+from treelib import Tree
 import numpy as np
-import glob
-from pickle import load
-
-import tqdm
 
 # import user defined library
 
-from utils.config import data_path
+from static.config import data_path
 
 def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot_title='', color_map='seismic',
                         is_frame=False, time_resolution=1,is_abs=True):

@@ -1,4 +1,6 @@
 # import dependency library
+from pickle import load
+
 import open3d as o3d
 import json
 from random import uniform
@@ -7,6 +9,7 @@ from skimage.measure import marching_cubes, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from treelib import Tree
 
 import static
 import numpy as np
@@ -36,6 +39,8 @@ import matplotlib.patches
 
 from datetime import datetime
 
+import igraph as iGraph
+
 # import user defined library
 
 from transformation.SH_represention import get_nib_embryo_membrane_dict
@@ -46,6 +51,9 @@ from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
 from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 
 from utils.shape_preprocess import get_contact_area, export_dia_cell_points_json, export_dia_cell_surface_points_json
+
+import transformation.PCA as PCA_f
+import static.config as config
 
 """
 Sample05,ABalaapa,078
@@ -325,7 +333,7 @@ def SPCSMs_SVM():
     print("done in %0.3fs" % (time() - t0))
     # Train a SVM classification model
 
-    print("Fitting the classifier to the training set")
+    print("-----Fitting the classifier to the training set------")
     print('going through pipeline searching best classifier')
     t0 = time()
 
@@ -500,79 +508,87 @@ def figure_for_science():
 
 
 def calculate_cell_contact_points():
-    # Sample06,Dpaap,158
-    # Sample06,ABalaapa,078
-    # print('waiting type you input1')
-    # embryo_name1, cell_name1, tp1 = str(input()).split(',')
-    #
-    # print('waiting type you input2')
-    # embryo_name2, cell_name2, tp2 = str(input()).split(',')
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
 
-    number_cell, cell_number = get_cell_name_affine_table()
+    for embryo_name in embryo_names:
+        # ------------------------calculate surface points using dialation for each cell --------------------
+        path_tmp = config.data_path + r'Segmentation Results\SegmentedCell/Sample' + embryo_name + 'LabelUnified'
+        for file_name in os.listdir(path_tmp):
+            if os.path.isfile(os.path.join(path_tmp, file_name)):
+                t0 = time()
 
-    # ------------------------------calculate contact points for each cell ----------------------------------------------
-    path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
-    for file_name in os.listdir(path_tmp):
-        if os.path.isfile(os.path.join(path_tmp, file_name)):
-            t0 = time()
+                print(path_tmp, file_name)
 
-            print(path_tmp, file_name)
+                this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
 
-            this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
+                img_arr = this_img.get_fdata().astype(int)
 
-            img_arr = this_img.get_data()
+                _, _, contact_points_dict = get_contact_area(img_arr)
 
-            _, _, contact_points_dict = get_contact_area(img_arr)
+                contact_saving_path = os.path.join(config.data_path + r'cshaper_contact_data', 'Sample' + embryo_name)
+                if not os.path.exists(contact_saving_path):
+                    os.mkdir(contact_saving_path)
 
-            contact_saving_path = r'./DATA/cshaper_contact_data'
-            with open(os.path.join(contact_saving_path, file_name.split('.')[0] + '.json'), 'w') as fp:
-                json.dump(contact_points_dict, fp)
+                with open(os.path.join(contact_saving_path, file_name.split('.')[0] + '.json'), 'w') as fp:
+                    json.dump(contact_points_dict, fp)
 
-            # load()
-            # you can find out the method about loading json in python
-            print("done in %0.3fs" % (time() - t0))
+                # load()
+                # you can find out the method about loading json in python
+                print("done in %0.3fs" % (time() - t0))
 
-            # print(contact_points_dict)
+                # print(contact_points_dict)
 
-    # -------------------------------------------------------------------------------------------------------
+        # -------------------------------------------------------------------------------------------------------
 
 
 def calculate_cell_points():
-    # ------------------------calculate surface points using dialation for each cell --------------------
-    path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
-    for file_name in os.listdir(path_tmp):
-        if os.path.isfile(os.path.join(path_tmp, file_name)):
-            t0 = time()
-            print(path_tmp, file_name)
-            this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
-            img_arr = this_img.get_data()
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
 
-            cell_points = export_dia_cell_points_json(img_arr)
-            dia_cell_saving = r'./DATA/cell_dia_points'
+    for embryo_name in embryo_names:
+        # ------------------------calculate surface points using dialation for each cell --------------------
+        path_tmp = config.data_path+r'Segmentation Results\SegmentedCell/Sample'+embryo_name+'LabelUnified'
+        for file_name in os.listdir(path_tmp):
+            if os.path.isfile(os.path.join(path_tmp, file_name)):
+                t0 = time()
+                print(path_tmp, file_name)
+                this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
+                img_arr = this_img.get_fdata().astype(int)
 
-            with open(os.path.join(dia_cell_saving, file_name.split('.')[0] + '.json'), 'w') as fp:
-                json.dump(cell_points, fp)
+                cell_points = export_dia_cell_points_json(img_arr)
 
-            print("done in %0.3fs" % (time() - t0))
+                dia_cell_saving = os.path.join(config.data_path + r'cell_dia_points', 'Sample' + embryo_name)
+                if not os.path.exists(dia_cell_saving):
+                    os.mkdir(dia_cell_saving)
+
+                with open(os.path.join(dia_cell_saving, file_name.split('.')[0] + '.json'), 'w') as fp:
+                    json.dump(cell_points, fp)
+
+                print("done in %0.3fs" % (time() - t0))
 
 
 def calculate_cell_surface_points():
-    # ------------------------calculate surface points using dialation for each cell --------------------
-    path_tmp = r'./DATA/SegmentCellUnified04-20/Sample20LabelUnified'
-    for file_name in os.listdir(path_tmp):
-        if os.path.isfile(os.path.join(path_tmp, file_name)):
-            t0 = time()
-            print(path_tmp, file_name)
-            this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
-            img_arr = this_img.get_data()
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
 
-            cell_points = export_dia_cell_surface_points_json(img_arr)
-            dia_surface_saving = r'./DATA/cell_dia_surface'
+    for embryo_name in embryo_names:
+        # ------------------------calculate surface points using dialation for each cell --------------------
+        path_tmp = config.data_path+r'Segmentation Results\SegmentedCell/Sample'+embryo_name+'LabelUnified'
+        for file_name in os.listdir(path_tmp):
+            if os.path.isfile(os.path.join(path_tmp, file_name)):
+                t0 = time()
+                print(path_tmp, file_name)
+                this_img = load_nitf2_img(os.path.join(path_tmp, file_name))
+                img_arr = this_img.get_fdata().astype(int)
 
-            with open(os.path.join(dia_surface_saving, file_name.split('.')[0] + '.json'), 'w') as fp:
-                json.dump(cell_points, fp)
+                cell_points = export_dia_cell_surface_points_json(img_arr)
 
-            print("done in %0.3fs" % (time() - t0))
+                dia_surface_saving = os.path.join(config.data_path+r'cell_dia_surface','Sample'+embryo_name)
+                if not os.path.exists(dia_surface_saving):
+                    os.mkdir(dia_surface_saving)
+
+                with open(os.path.join(dia_surface_saving, file_name.split('.')[0] + '.json'), 'w') as fp:
+                    json.dump(cell_points, fp)
+
+                print("done in %0.3fs" % (time() - t0))
 
 
 def display_contact_points():
@@ -645,7 +661,7 @@ def display_contact_alpha_surface():
     # Sample20,ABalaapa,078
     # Sample20,ABa,005
     # Sample20,MSp,035
-    print('waiting type you input: sample name and time points for embryogenesis')
+    print('waiting type you input: sample name and time points for embryogenesis analysis')
     embryo_name, cell_name, tp = str(input()).split(',')
 
     num_cell_name, cell_num = get_cell_name_affine_table()
@@ -816,7 +832,6 @@ def plot_and_save_5_type_figures():
 
     plt.rcParams['text.usetex'] = True
 
-
     # the path need to change to non-norm path
     SHc_path = os.path.join(static.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
@@ -824,7 +839,7 @@ def plot_and_save_5_type_figures():
     print(sh_instance.spectrum())
     fig, ax = plt.subplots()
     # s_list = [7870, 81937, 17529598, 6225227]
-    l_list = np.arange(1,26)
+    l_list = np.arange(1, 26)
     ax.bar(l_list, np.log(sh_instance.spectrum()[1:]))
 
     plt.title('Numbers of Four eventtypes')
@@ -839,10 +854,101 @@ def plot_and_save_5_type_figures():
     # Sample05,ABpl,014
 
 
+def cluster_with_SPHARMPCA_neighborhood():
+    # # --------------------cell fate----------------------------------------------
+    # df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    # this_cell_fate_dict = {}
+    # for idx in df_cell_fate.index:
+    #     this_cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+    # print(len(this_cell_fate_dict))
+    #
+    # # -----get original 2D spherical matrix transformation features----------
+    # pca_2dmatrix = PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', '2D_matrix_PCA.csv'))
+    #
+    # -----get original SPHARM pca transformation features-----
+    pca_spharm = PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', 'SPHARM_PCA.csv'))
+
+    # --------------------lifespan clustering and SVM-------------------------------------------
+    embryo_names = [str(i).zfill(2) for i in range(6, 7)]
+    spharm_path = config.data_path + r'my_data_csv/SH_time_domain_csv'
+    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    cluster_num_predict = 8  # no germ line
+    time_limit_minutes_start = 150
+
+    # --------------------SINGLE CELL IN EACH TIME POINTS: SPAHRM PCA and its neighborhood CLUSTERING----------------
+    name_cellname,cellname_number=get_cell_name_affine_table()
+    for embryo_name in embryo_names:
+        cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
+        with open(cell_tree_file_path, 'rb') as f:
+            tree_this_embryo = Tree(load(f))
+        begin_frame = max(tree_this_embryo.get_node('ABa').data.get_time()[-1],
+                          tree_this_embryo.get_node('ABp').data.get_time()[-1])
+
+        path_SHc_csv = os.path.join(spharm_path, 'Sample' + embryo_name + 'LabelUnified_l_25.csv')
+        df_SPAHRM = read_csv_to_df(path_SHc_csv)
+
+        spharm_pca_arr = pca_spharm.transform(df_SPAHRM.values)
+        print('-----', embryo_name, '-----')
+
+        cell_list_dict_feature_values = {}
+        cell_frame_list_dict = {}
+
+        # start frame!
+        current_frame = '001'
+        last_fame = '001'
+        # with open(os.path.join(config.data_path, r'cell_dia_surface',
+        #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
+        #     surface_data = json.load(fp)
+        with open(os.path.join(config.data_path, r'cshaper_contact_data\Sample'+embryo_name,
+                               'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
+            surface_contact_data = json.load(fp)
+        this_graph=iGraph.Graph(directed=True)
+        this_graph.add_vertex('INITIAL')
+        for index, value in enumerate(df_SPAHRM.index):  # segmented successfully
+            cell_name, current_frame = value.split('::')[1], value.split('::')[0]
+            cell_number=str(cellname_number[cell_name])
+            # --------------------next embryo-------------------------------------------
+            if current_frame != last_fame:  # frame by frame to read the contact file
+                # is time to save the graph
+                this_graph.delete_vertices('INITIAL')
+                print(embryo_name,last_fame)
+                this_graph.write_graphml(os.path.join(config.data_path,'Graph_embryo/Sample'+embryo_name,'Sample'+embryo_name+'_'+last_fame+'.graphml'))
+                this_graph = iGraph.Graph(directed=True)
+                this_graph.add_vertex('INITIAL')
+                # with open(os.path.join(config.data_path, r'cell_dia_surface',
+                #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
+                #     surface_data = json.load(fp)
+                with open(os.path.join(config.data_path, r'cshaper_contact_data\Sample'+embryo_name,
+                                       'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
+                    surface_contact_data = json.load(fp)
+            last_fame = current_frame
+            # --------------------------------------------------------------------------
+            if not cell_name in this_graph.vs['name']:
+                # print('========',cell_name)
+                this_graph.add_vertex(cell_name)
+
+            if int(current_frame) in tree_this_embryo.get_node(cell_name).data.get_time():  # reasonable in cell lineage
+                # build a contact pair dictionary/csv
+                for item in surface_contact_data.keys():
+                    contact_cell_number=item.split('_')
+                    if cell_number in contact_cell_number:
+                        # print('adding edges')
+                        contact_cell_number.remove(cell_number)
+                        tmp_contact_name=name_cellname[int(contact_cell_number[0])]
+                        # print(tmp_contact_name)
+                        if not tmp_contact_name in this_graph.vs['name']:
+                            # print('========', tmp_contact_name)
+                            this_graph.add_vertex(tmp_contact_name)
+                        this_graph.add_edge(tmp_contact_name,cell_name,weight=len(surface_contact_data[item]))
+                        # print(tmp)
+                # print(surface_data)
+        this_graph.delete_vertices('INITIAL')
+        print(this_graph)
+        this_graph.write_graphml(
+            os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name, 'Sample' + embryo_name + '_' + last_fame + '.graphml'))
+        # the way to read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # iGraph.Graph.Read_GraphML('------')
 
 if __name__ == "__main__":
     print('test2 run')
-    plot_and_save_5_type_figures()
-    # figure_for_science()
-    # display_contact_points()
-    # show_cell_SPCSMs_info()
+    cluster_with_SPHARMPCA_neighborhood()

@@ -1,15 +1,13 @@
 # import dependency package
-import glob
 import pickle as pkl
 import pandas as pd
 
-from treelib import Node, Tree
+from treelib import Tree
 
 import os
 import numpy as np
-import re
 import sys
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap
 
 # import user package
 
@@ -19,7 +17,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 import lineage_stat.data_structure as data_struct
 from lineage_stat.lineage_tree import draw_life_span_tree
 from utils.general_func import read_csv_to_df
-from utils.config import data_path
+from static.config import data_path
 
 # ---------------------------------------------------------------------------------
 # ##for all, how to combine 20 embryos to one lineage tree pic? a big problem!#####

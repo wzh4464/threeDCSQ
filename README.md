@@ -29,7 +29,7 @@ root/: work directory environment
      |--general_func.py: Cartesian coordinate system and spherical coordinate system conversion
      |--sh_cooperation.py: SPHARM array to vector, vector to array
      |--shape_model.py: research on cell-cell contact
-     |--shape_preprocess.py: cell surface extraction, erosion or dialation operation
+     |--shape_preprocess.py: cell CONTACT INFORMATION including points coordinates, cell surface extraction, erosion or dialation operation
      |--spherical_func.py: sample for spherical harmonics transformation
   |--
 ```

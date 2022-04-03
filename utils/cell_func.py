@@ -18,10 +18,9 @@ import os
 
 import utils.general_func as general_f
 
-data_path = r'D:/cell_shape_quantification/DATA/'
 
 
-def get_cell_name_affine_table(path=data_path + r'name_dictionary_no_name.csv'):
+def get_cell_name_affine_table(path=config.data_path + r'name_dictionary_no_name.csv'):
     """
 
     :return: a set of NO. to name LIST and name to NO. DICTIONARY:

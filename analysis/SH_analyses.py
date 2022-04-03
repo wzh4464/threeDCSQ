@@ -19,6 +19,9 @@ from tqdm import tqdm
 
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+
+from utils.sh_cooperation import get_flatten_ldegree_morder, collapse_flatten_clim, do_reconstruction_for_SH, \
+    flatten_clim
 from utils.spherical_func import normalize_SHc
 
 cluster_AB_list = ['ABa', 'ABp', 'ABal', 'ABar', 'ABpl', 'ABpr', 'ABala', 'ABalp', 'ABara', 'ABarp', 'ABpla', 'ABplp',
