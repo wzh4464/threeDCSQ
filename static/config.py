@@ -1,4 +1,4 @@
-data_path = r'/Users/apple/OneDrive - City University of Hong Kong/Desktop/DATA/'
+data_path = r'D:\cell_shape_quantification\DATA/'
 
 dir_segemented_tmp1 = data_path + r'Embryo04LabelUnified'
 
@@ -10,9 +10,9 @@ dir_my_data_SH_PCA_csv = data_path + r'my_data_csv/SH_PCA_csv'
 
 dir_my_data_all_embryo = data_path + r'SegmentCellUnified04-20'
 
-dir_my_data_SH_time_domain_csv = r'./DATA/my_data_csv/SH_time_domain_csv'
+dir_my_data_SH_time_domain_csv = data_path + r'my_data_csv/SH_time_domain_csv'
 
-dir_my_data_volume_surface = r'./DATA/my_data_csv/volume_and_surface'
+dir_my_data_volume_surface = data_path + r'my_data_csv/volume_and_surface'
 
 dir_my_data_SH_clustering_csv = r'./DATA/my_data_csv/SH_clustering'
 

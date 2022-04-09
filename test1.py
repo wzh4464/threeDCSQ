@@ -680,7 +680,7 @@ def display_SPAHRM_PCA_24_eigen_shape():
         o3d.visualization.draw_geometries([m_pcd])
 
 
-def Map2D_matrix_csv():
+def Map2D_grid_csv():
     '''
     # why combine them to pandas? why combine to one? why do you do that?
     # the combined csv file is too large, can't read. memory error.
@@ -709,7 +709,7 @@ def Map2D_matrix_csv():
         print('finished saving dataframe to csv')
 
 
-def Map_2D_eigen_matrix():
+def Map_2D_eigengrid():
     df_norm_shape = read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
     data_list = []
     data_array = None
@@ -765,55 +765,56 @@ def Map_2D_eigen_matrix():
         head_ptr = head_ptr + len(embryo_index)
 
 
-def display_Map_2D_eigenmatrix():
-    pca_mean, variance, df_pca = PCA_f.read_PCA_file(
-        os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/2D_matrix_norm_PCA.csv'))
+def display_Map_2D_eigengrid_01paper():
+    pca_instance = PCA_f.read_PCA_file(
+        os.path.join(config.data_path, 'my_data_csv/PCA_file/2D_matrix_norm_PCA.csv'))
     plt.rcParams['text.usetex'] = True
-    figure, axes = plt.subplots(nrows=4, ncols=3, figsize=(16, 10))
+    figure, axes = plt.subplots(nrows=2, ncols=3, figsize=(16, 10))
 
-    for i in range(12):
-        print(np.array(df_pca.loc[str(i)]).reshape((53, 105)))
-        grid_tmp = pysh.SHGrid.from_array(np.array(df_pca.loc[str(i)]).reshape((53, 105)))
+    for i in range(6):
+        print(pca_instance.components_[i].reshape((53, 105)))
+        grid_tmp = pysh.SHGrid.from_array(pca_instance.components_[i].reshape((53, 105)))
         print(grid_tmp)
         x, y = int(i / 3), i % 3
-        if x in [0, 1, 2] and y == 0:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
+        if i == 0:
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
                           xlabel=r'',
-                          ylabel=r'Latitude (degree \textdegree)', axes_labelsize=12,
+                          ylabel=r'Latitude (\textit{degree} \textdegree)', axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
-        elif x == 3 and y == 0:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
-                          xlabel=r'Longitude (degree \textdegree)',
-                          ylabel=r'Latitude (degree \textdegree)', axes_labelsize=12,
+        elif i == 3:  # from 12 figures to 6 figures
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+                          xlabel=r'Longitude (\textit{degree} \textdegree)',
+                          ylabel=r'Latitude (\textit{degree} \textdegree)', axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
-        elif x == 3 and y == 1:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
-                          xlabel=r'Longitude (degree \textdegree)',
-                          ylabel=r'', axes_labelsize=12,
+        elif i == 4:
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+                          xlabel=r'Longitude (\textit{degree} \textdegree)',
+                          ylabel=r'', axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
-        elif x in [0, 1, 2] and y == 2:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
+        elif i == 2:
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
                           xlabel='',
-                          ylabel='',
+                          ylabel='',axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
-        elif x == 3 and y == 2:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
-                          xlabel=r'Longitude (degree \textdegree)',
-                          ylabel='', axes_labelsize=12,
+        elif i == 5:  # from 12 figures to 6 figures
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+                          xlabel=r'Longitude (\textit{degree} \textdegree)',
+                          ylabel='', axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
-        else:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
+        elif i == 1:
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
                           xlabel='',
-                          ylabel='',
+                          ylabel='',axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
         # grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
         #               xlabel=r'Longitude (degree \textdegree)',
         #               ylabel=r'Latitude (degree \textdegree)', axes_labelsize=12,
         #               tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
-    plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.svg',
-                format='svg')
-    plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.pdf',
-                format='pdf')
+    plt.show()
+    # plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.svg',
+    #             format='svg')
+    # plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.pdf',
+    #             format='pdf')
 
 
 def SPHARM_eigenshape():
@@ -1637,7 +1638,7 @@ def clustering_original_and_normalized_feature_vector():
     print(len(this_cell_fate_dict))
 
     # -----get original 2D spherical matrix transformation features----------
-    pca_2dmatrix=PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', '2D_matrix_PCA.csv'))
+    pca_2dmatrix = PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', '2D_matrix_PCA.csv'))
 
     # -----get original SPHARM pca transformation features-----
     pca_spharm = PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', 'SPHARM_PCA.csv'))
@@ -1692,7 +1693,7 @@ def clustering_original_and_normalized_feature_vector():
 
                 y_fate.append(cell_fate_map[this_cell_fate_dict[cell_name]])
         # --------------------------------clustering-----------------------------------------
-        cluster_lifespan_for_embryo(df_avg_lifespan_feature_value, y_fate, 3,cluster_num_predict=cluster_num_predict)
+        cluster_lifespan_for_embryo(df_avg_lifespan_feature_value, y_fate, 3, cluster_num_predict=cluster_num_predict)
 
         dict_df_lifespan_fea_vec[embryo_name] = df_avg_lifespan_feature_value
         dict_cell_fate[embryo_name] = y_fate
@@ -1762,8 +1763,10 @@ def clustering_original_and_normalized_feature_vector():
         dict_df_lifespan_fea_vec[embryo_name] = df_avg_lifespan_feature_value
         dict_cell_fate[embryo_name] = y_fate
 
+
 if __name__ == "__main__":
     # a={1:[1,2],2:[4,5]}
     # print([a[x] for x in a.keys()])
-    clustering_original_and_normalized_feature_vector()
+    # clustering_original_and_normalized_feature_vector()
     # cluster_with_lifespan_shape_features()
+    pass
