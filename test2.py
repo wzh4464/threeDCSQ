@@ -5,6 +5,7 @@ import open3d as o3d
 import json
 from random import uniform
 
+from pyshtools import SHGrid
 from skimage.measure import marching_cubes, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
 from sklearn.pipeline import Pipeline
@@ -43,7 +44,7 @@ import igraph as iGraph
 
 # import user defined library
 
-from transformation.SH_represention import get_nib_embryo_membrane_dict
+from transformation.SH_represention import get_nib_embryo_membrane_dict, do_sampling_with_interval
 from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
@@ -70,7 +71,7 @@ def show_cell_SPCSMs_info():
 
     print(embryo_name, cell_name, tp)
 
-    embryo_path_csv = os.path.join(static.data_path + r'my_data_csv\SH_time_domain_csv',
+    embryo_path_csv = os.path.join(config.data_path + r'my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
@@ -220,18 +221,20 @@ def transfer_2d_to_spectrum():
 
 
 def cluster_with_spectrum():
-    # Neuron, Pharynx, Intestine, Skin, Muscle, Germcell, death, unspecifed
-    cluster_num = 6
-    estimator = KMeans(n_clusters=cluster_num, max_iter=10000)
     path_original = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv',
                                  'SHc_norm_Spectrum.csv')
     concat_df_Spectrum = read_csv_to_df(path_original)
+
+    # Neuron, Pharynx, Intestine, Skin, Muscle, Germcell, death, unspecifed
+    cluster_num = 9
+    estimator = KMeans(n_clusters=cluster_num, max_iter=10000)
+
     result_origin = estimator.fit_predict(np.power(concat_df_Spectrum.values, 1 / 2))
     print(estimator.cluster_centers_)
     df_kmeans_clustering = pd.DataFrame(index=concat_df_Spectrum.index, columns=['cluster_num'])
     df_kmeans_clustering['cluster_num'] = result_origin
     df_kmeans_clustering.to_csv(
-        os.path.join(static.dir_my_data_SH_clustering_csv,
+        os.path.join(config.data_path,
                      'normsqrt_spectrum_cluster_k{}.csv'.format(cluster_num)))
 
 
@@ -242,7 +245,7 @@ def build_label_supervised_learning():
                                  'SHc_norm_Spectrum.csv')
     concat_df_Spectrum = read_csv_to_df(path_original)
 
-    dfs = pd.read_excel(static.cell_fate_path, sheet_name=None)['CellFate']
+    dfs = pd.read_excel(config.cell_fate_path, sheet_name=None)['CellFate']
     fate_dict = {}
     for idx in dfs.index:
         # print(row)
@@ -262,7 +265,7 @@ def build_label_supervised_learning():
     # print(dfs.loc[dfs['Name'] == 'ABalaaaalpa\'']['Fate'])
 
 
-def SPCSMs_SVM():
+def SPCSMs_SVM_by_tp():
     print('reading dsf')
     t0 = time()
     cshaper_X = read_csv_to_df(
@@ -319,7 +322,7 @@ def SPCSMs_SVM():
     # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
     # dataset): unsupervised feature extraction / dimensionality reduction
     n_components = 24
-    print("Extracting the top %d eigenfaces from %d cells"
+    print("Extracting the top %d eigenshape from %d cells"
           % (n_components, X_train.shape[0]))
     t0 = time()
     pca = PCA(n_components=n_components, svd_solver='randomized',
@@ -370,7 +373,7 @@ def SPCSMs_SVM():
 
 
 # really stupid, figures for paper you just plot one by one then combine via vision or ppt any way
-def figure_for_science():
+def figure_for_science_01paper():
     # Sample06,Capp,079
     # Sample06,ABalaapa,078
     print('waiting type you input1')
@@ -401,16 +404,16 @@ def figure_for_science():
 
     axes_tmp1.plot_surface(X2d, Y2d, instance_tmp1_expanded, cmap=cm.coolwarm,
                            linewidth=0, antialiased=False, rstride=60, cstride=10)
-    axes_tmp1.set_zlabel(r'\textit{z}')  # 坐标轴
-    axes_tmp1.set_ylabel(r'\textit{y}')
-    axes_tmp1.set_xlabel(r'\textit{x}')
+    axes_tmp1.set_zlabel(r'\textit{z}',fontsize=18)  # 坐标轴
+    axes_tmp1.set_ylabel(r'\textit{y}',fontsize=18)
+    axes_tmp1.set_xlabel(r'\textit{x}',fontsize=18)
     # axes_tmp1.colorbar()
 
     axes_tmp2 = fig_SPCSMs_info.add_subplot(2, 2, 2)
     grid_2 = instance_tmp1.expand(lmax=100)
     grid_2.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                xlabel=r'\textit{x}',
-                ylabel=r'\textit{y}', axes_labelsize=12, tick_interval=[60, 60], colorbar='right',
+                xlabel=r'\textit{x}',tick_labelsize=14,titlesize=18,
+                ylabel=r'\textit{y}', axes_labelsize=18, tick_interval=[60, 60], colorbar='right',
                 cb_label=r'\textit{z} value / 0.015625 $\mu M$')
     set_size(5, 5, ax=axes_tmp2)
 
@@ -455,33 +458,33 @@ def figure_for_science():
     y_lon = np.sqrt(225 - np.power(x_lon, 2))
     # print(y_lon)
     axes_tmp3.scatter3D(x_lon, y_lon, np.zeros(1000), s=3, color='blue')
-    axes_tmp3.text(19, 19, 0, r'\textit{longitude}', (-1, 1, 0), ha='center')
+    axes_tmp3.text(19, 19, 0, r'\textit{longitude}', (-1, 1, 0), ha='center',fontsize=16)
 
     # latitude circle
     y_lat = np.arange(0, 15, 15 / 1000)
     z_lat = np.sqrt(225 - np.power(y_lat, 2))
     axes_tmp3.scatter3D(np.zeros(1000), y_lat, z_lat, s=3, color='black')
-    axes_tmp3.text(0, 18, 18, r'\textit{latitude}', (-1, 1, 0), ha='center')
+    axes_tmp3.text(0, 18, 18, r'\textit{latitude}', (-1, 1, 0), ha='center',fontsize=16)
 
-    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, r'\textit{x}', (-1, 1, 0), ha='center').set_fontstyle('italic')
-    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, r'\textit{y}', (-1, 1, 0), ha='center').set_fontstyle('italic')
-    axes_tmp3.text(-0.1 * sn, 0, sn + 10, r'\textit{z}', (-1, 1, 0), ha='center').set_fontstyle('italic')
-    axes_tmp3.set_zlabel(r'\textit{z}')  # 坐标轴
-    axes_tmp3.set_ylabel(r'\textit{y}')
-    axes_tmp3.set_xlabel(r'\textit{x}')
+    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, r'\textit{x}', (-1, 1, 0), ha='center',fontsize=16).set_fontstyle('italic')
+    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, r'\textit{y}', (-1, 1, 0), ha='center',fontsize=16).set_fontstyle('italic')
+    axes_tmp3.text(-0.1 * sn, 0, sn + 10, r'\textit{z}', (-1, 1, 0), ha='center',fontsize=16).set_fontstyle('italic')
+    axes_tmp3.set_zlabel(r'\textit{z}',fontsize=18)  # 坐标轴
+    axes_tmp3.set_ylabel(r'\textit{y}',fontsize=18)
+    axes_tmp3.set_xlabel(r'\textit{x}',fontsize=18)
 
     # axes_tmp3.annotate('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold', style='italic')
 
     axes_tmp4 = fig_SPCSMs_info.add_subplot(2, 2, 4)
     grid_tmp = instance_tmp.expand(lmax=100)
     # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
-    grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                  xlabel=r'Longitude \textit{x}-\textit{y} plane (degree \textdegree)',
-                  ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)', axes_labelsize=12,
+    grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Spherical Grid',titlesize=18,
+                  xlabel=r'Longitude \textit{x}-\textit{y} plane (\textit{degree} \textdegree)',
+                  ylabel=r'Latitude \textit{y}-\textit{z} plane (\textit{degree} \textdegree)', axes_labelsize=18,tick_labelsize=14,
                   tick_interval=[60, 60], colorbar='right', cb_label=r'distance from centroid / 0.015625 $\mu M$')
 
-    fig_SPCSMs_info.text(0.1, 0.7, '3D Surface ', fontsize=12)
-    fig_SPCSMs_info.text(0.1, 0.25, '3D Closed Surface', fontsize=12)
+    fig_SPCSMs_info.text(0.05, 0.7, '3D Surface ', fontsize=24)
+    fig_SPCSMs_info.text(0.05, 0.25, '3D Closed Surface', fontsize=24)
     # Sample06,Dpaap,158   Sample06,ABalaapa,078
 
     arrow = matplotlib.patches.FancyArrowPatch(
@@ -692,9 +695,9 @@ def display_contact_alpha_surface():
 
 
 def calculate_SH_PCA_coordinate():
-    PCA_matrices_saving_path = os.path.join(r'.\DATA\my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
+    PCA_matrices_saving_path = os.path.join(config.data_path,'my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
 
-    path_saving_csv_normalized = os.path.join(static.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
+    path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
     df_SHc_norm = read_csv_to_df(path_saving_csv_normalized)
     print('finish read all embryo cell df_sh_norm_coefficients--------------')
 
@@ -703,8 +706,8 @@ def calculate_SH_PCA_coordinate():
         PCA_matrices_saving_path)
 
 
-def plot_voxel_and_reconstructed_surface():
-    # Sample05,ABpl,015
+def plot_voxel_and_reconstructed_surface_01paper():
+    # Sample05,ABpl,014
     """
     plot original surface and reconstructed surface through SPHARM
     """
@@ -773,7 +776,7 @@ def plot_voxel_and_reconstructed_surface():
     # ==================================================================================
 
 
-def plot_and_save_5_type_figures():
+def plot_and_save_5_type_figures_01paper():
     # Sample05,ABpl,014
 
     print('waiting type you input: sample name and time points for embryogenesis')
@@ -783,49 +786,49 @@ def plot_and_save_5_type_figures():
     this_cell_keys = cell_num[cell_name]
 
     embryo_img = load_nitf2_img(
-        os.path.join(static.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+        os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
                      embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
     cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
 
     # ====================plot 2. 2D mapping parameterization============================
-    # plt.rcParams['text.usetex'] = True
-    #
-    # fig_SPCSMs_info = plt.figure()
-    #
-    # grid_data, _ = do_sampling_with_interval(24, cell_surface_points - center, average_num=3)
-    #
-    # axes_tmp4 = fig_SPCSMs_info.add_subplot(111)
-    # grid_tmp = SHGrid.from_array(grid_data)
-    # # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
-    # grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='3D Surface Spherical Mapping',
-    #               xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
-    #               ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)', axes_labelsize=12,
-    #               tick_interval=[60, 60], colorbar='right', cb_label='Distance')
-    # # plt.show()
-    #
-    # saving_path = os.path.join(
-    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
-    #     embryo_name + cell_name + tp + '2DMap.svg')
-    # plt.savefig(saving_path, format='svg')
+    plt.rcParams['text.usetex'] = True
+
+    fig_SPCSMs_info = plt.figure()
+
+    grid_data, _ = do_sampling_with_interval(24, cell_surface_points - center, average_num=3)
+
+    axes_tmp4 = fig_SPCSMs_info.add_subplot(111)
+    grid_tmp = SHGrid.from_array(grid_data)
+    # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
+    grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='3D Surface Spherical Grid',tick_labelsize=14, titlesize=18,axes_labelsize=18,
+                  xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
+                  ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)',
+                  tick_interval=[60, 60], colorbar='right', cb_label=r'Distance from centroid / 0.015625 $\mu M$')
+    # plt.show()
+
+    saving_path = os.path.join(
+        r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+        embryo_name + cell_name + tp + '2DMap.svg')
+    plt.savefig(saving_path, format='svg')
     # =================================================================================================
 
     # ============== plot 3.  SPHARM surface ARRAY============================================
-    # plt.rcParams['text.usetex'] = True
-    #
-    # fig_SPCSMs_info = plt.figure()
-    # axes_tmp = fig_SPCSMs_info.add_subplot(111)
-    #
-    # # the path need to change to non-norm path
-    # SHc_path = os.path.join(static.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
-    # df_SHcPCA = read_csv_to_df(SHc_path)
-    # sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
-    # sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array',ax=axes_tmp,degree_label=r'SPAHRM degree \textit{l}',
-    #                     order_label=r'SPAHRM order \textit{m}',  cmap='RdBu',cb_label='Component value Colorbar',cb_triangles='both')
-    # saving_path = os.path.join(
-    #     r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
-    #     embryo_name + cell_name + tp + 'SPHARM.svg')
-    # # plt.show()
-    # plt.savefig(saving_path, format='svg')
+    plt.rcParams['text.usetex'] = True
+
+    fig_SPCSMs_info = plt.figure()
+    axes_tmp = fig_SPCSMs_info.add_subplot(111)
+
+    # the path need to change to non-norm path
+    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    df_SHcPCA = read_csv_to_df(SHc_path)
+    sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
+    sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array',ax=axes_tmp,degree_label=r'SPAHRM degree \textit{l}',tick_labelsize=14, titlesize=18,axes_labelsize=18,
+                        order_label=r'SPAHRM order \textit{m}',  cmap='RdBu',cb_label='Component value Colorbar',cb_triangles='both')
+    saving_path = os.path.join(
+        r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
+        embryo_name + cell_name + tp + 'SPHARM.svg')
+    # plt.show()
+    plt.savefig(saving_path, format='svg')
     # ==================================================================================
 
     # ==============4. plot SPHARM spectrum vector============================================
@@ -833,7 +836,7 @@ def plot_and_save_5_type_figures():
     plt.rcParams['text.usetex'] = True
 
     # the path need to change to non-norm path
-    SHc_path = os.path.join(static.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     print(sh_instance.spectrum())
@@ -949,6 +952,9 @@ def cluster_with_SPHARMPCA_neighborhood():
         # the way to read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # iGraph.Graph.Read_GraphML('------')
 
+# def enhanced_graph_wavelet_feature(feature_vec,hop):
+
+
 if __name__ == "__main__":
     print('test2 run')
-    cluster_with_SPHARMPCA_neighborhood()
+    plot_and_save_5_type_figures_01paper()

@@ -7,7 +7,7 @@ from treelib import Tree
 import os
 import numpy as np
 import sys
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
 # import user package
 
@@ -138,7 +138,7 @@ def draw_2Dmatrix_PCA_combined(print_num=2):
         cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
         draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
                             embryo_name='combine_tree',
-                            plot_title='average 2D Matrix\'s ' + column + 'th principle component', color_map=cmap1)
+                            plot_title='Static feature - eigengrid ' + column + ' mean cell lineage tree', color_map=cmap1)
 
 def draw_shc_PCA_combined(print_num=2):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
@@ -279,7 +279,7 @@ def draw_2dmatrix_PCA_combined_lifespan(print_num=2):
         cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
         draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
                             embryo_name='combine_tree',
-                            plot_title='lifespan average 2Dmatrix\'s ' + column + 'th principle component',
+                            plot_title='Dynamic feature - eigengrid ' + column + ' mean cell lineage tree',
                             color_map=cmap1)
 
 
@@ -326,16 +326,20 @@ def draw_cell_fate_lineage_tree():
             tp_and_cell_index = f'{time_int:03}' + '::' + node_id
             values_dict[tp_and_cell_index] = cell_fate_map[cell_fate_dict[node_id]]
 
-    # cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
+    colors = np.array(
+        [(240, 230, 140), (0, 255, 255), (255, 0, 255), (0, 0, 0), (255, 0, 0), (0, 255, 0),(0,0,255),
+         (30,144,255),(188,143,143)]) / 255
+
+    cmap = ListedColormap(colors)
     draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
                         embryo_name='combine_tree',
-                        plot_title='lifespan cell fate',
-                        color_map='tab10',is_abs=False)
+                        plot_title='Cell Fate Lineage Tree',
+                        color_map=cmap,is_abs=False)
 
 
 
 if __name__ == "__main__":
-    draw_2dmatrix_PCA_combined_lifespan()
+    draw_2Dmatrix_PCA_combined()
     # draw_PCA_combined(print_num=12)
     # draw_2dmatrix_PCA_combined_lifespan(print_num=2)
     # draw_tree_test()
