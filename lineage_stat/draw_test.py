@@ -15,7 +15,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 import lineage_stat.data_structure as data_struct
-from lineage_stat.lineage_tree import draw_life_span_tree
+from lineage_stat.lineage_tree import draw_cell_lineage_tree
 from utils.general_func import read_csv_to_df
 from static.config import data_path
 
@@ -30,7 +30,14 @@ def draw_spharm_pca_lifespan(embryo_name, embryo_time_tree, print_num=4):
     pca_num = 12
 
 
-def draw_spharm_pca(embryo_name, embryo_time_tree, print_num=4):
+def draw_weight_of_eigenharmonics(embryo_name, embryo_time_tree, print_num=4):
+    """
+    draw the eigenharmonic weight vector coefficient
+    :param embryo_name:
+    :param embryo_time_tree:
+    :param print_num:
+    :return:
+    """
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
     pca_num = 12
 
@@ -59,11 +66,11 @@ def draw_spharm_pca(embryo_name, embryo_time_tree, print_num=4):
 
     for i_PCA in range(print_num):
         # print(pd.Series(index=df_SHcPCA_target.index, data=df_SHcPCA_target[str(i_PCA)]).to_dict().keys())
-        draw_life_span_tree(embryo_time_tree, values_dict=pd.Series(index=df_SHcPCA_target.index,
-                                                                    data=df_SHcPCA_target[str(i_PCA)]).to_dict(),
-                            embryo_name=embryo_name,
-                            plot_title=embryo_name + '\'s SPHARM' + str(i_PCA) + 'th principle component',
-                            color_map=cmap1, is_frame=True, time_resolution=1.39)
+        draw_cell_lineage_tree(embryo_time_tree, values_dict=pd.Series(index=df_SHcPCA_target.index,
+                                                                       data=df_SHcPCA_target[str(i_PCA)]).to_dict(),
+                               embryo_name=embryo_name,
+                               plot_title=embryo_name + '\'s SPHARM' + str(i_PCA) + 'th principle component',
+                               color_map=cmap1, is_frame=True, time_resolution=1.39)
     # =================================================================================================
 
 
@@ -136,9 +143,9 @@ def draw_2Dmatrix_PCA_combined(print_num=2):
 
         # cmap_list = ListedColormap(colors)
         cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
-        draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
-                            embryo_name='combine_tree',
-                            plot_title='Static feature - eigengrid ' + column + ' mean cell lineage tree', color_map=cmap1)
+        draw_cell_lineage_tree(cell_combine_tree, values_dict=values_dict,
+                               embryo_name='combine_tree',
+                               plot_title='Static feature - eigengrid ' + column + ' mean cell lineage tree', color_map=cmap1)
 
 def draw_shc_PCA_combined(print_num=2):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
@@ -210,9 +217,9 @@ def draw_shc_PCA_combined(print_num=2):
 
         # cmap_list = ListedColormap(colors)
         cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
-        draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
-                            embryo_name='combine_tree',
-                            plot_title='average SPHARM\'s ' + column + 'th principle component', color_map=cmap1)
+        draw_cell_lineage_tree(cell_combine_tree, values_dict=values_dict,
+                               embryo_name='combine_tree',
+                               plot_title='average SPHARM\'s ' + column + 'th principle component', color_map=cmap1)
 
 
 def draw_shc_PCA_combined_lifespan(print_num=2):
@@ -243,10 +250,10 @@ def draw_shc_PCA_combined_lifespan(print_num=2):
              (89, 210, 255), (63, 180, 255), (30, 144, 255), (28, 134, 238), (24, 116, 205), (16, 78, 139)]) / 255
 
         cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
-        draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
-                            embryo_name='combine_tree',
-                            plot_title='lifespan average SPHARM\'s ' + column + 'th principle component',
-                            color_map=cmap1)
+        draw_cell_lineage_tree(cell_combine_tree, values_dict=values_dict,
+                               embryo_name='combine_tree',
+                               plot_title='lifespan average SPHARM\'s ' + column + 'th principle component',
+                               color_map=cmap1)
 
 
 def draw_2dmatrix_PCA_combined_lifespan(print_num=2):
@@ -277,10 +284,10 @@ def draw_2dmatrix_PCA_combined_lifespan(print_num=2):
              (89, 210, 255), (63, 180, 255), (30, 144, 255), (28, 134, 238), (24, 116, 205), (16, 78, 139)]) / 255
 
         cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
-        draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
-                            embryo_name='combine_tree',
-                            plot_title='Dynamic feature - eigengrid ' + column + ' mean cell lineage tree',
-                            color_map=cmap1)
+        draw_cell_lineage_tree(cell_combine_tree, values_dict=values_dict,
+                               embryo_name='combine_tree',
+                               plot_title='Dynamic feature - eigengrid ' + column + ' mean cell lineage tree',
+                               color_map=cmap1)
 
 
 def draw_tree_test():
@@ -305,7 +312,7 @@ def draw_tree_test():
 
         # ----------------------------------------------------------------------------
 
-        draw_spharm_pca(embryo_name, cell_life_tree, print_num=12)
+        draw_weight_of_eigenharmonics(embryo_name, cell_life_tree, print_num=12)
         # draw_SHCPCA_KMEANS(embryo_name, embryo_time_tree, id_root_tmp)
         #
         # draw_euclidean_tree(embryo_name, embryo_time_tree, id_root_tmp)
@@ -331,10 +338,10 @@ def draw_cell_fate_lineage_tree():
          (30,144,255),(188,143,143)]) / 255
 
     cmap = ListedColormap(colors)
-    draw_life_span_tree(cell_combine_tree, values_dict=values_dict,
-                        embryo_name='combine_tree',
-                        plot_title='Cell Fate Lineage Tree',
-                        color_map=cmap,is_abs=False)
+    draw_cell_lineage_tree(cell_combine_tree, values_dict=values_dict,
+                           embryo_name='combine_tree',
+                           plot_title='Cell Fate Lineage Tree',
+                           color_map=cmap, is_abs=False)
 
 
 

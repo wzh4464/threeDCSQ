@@ -23,6 +23,8 @@ from time import time
 
 import pyshtools as pysh
 import matplotlib.pyplot as plt
+
+from graph_wavelet.enhanced_GWf import embryo_enhanced_graph_wavelet, get_kth_neighborhood_graph, phi_j_h_wavelet
 from static import dict as dict
 
 from tqdm import tqdm
@@ -193,31 +195,58 @@ def calculate_spectrum():
 
 
 # transfer 2d spectrum to spectrum (1-d curve adding together)
-def transfer_2d_to_spectrum():
-    path_original = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc.csv')
-    path_norm = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_norm.csv')
+def transfer_2d_to_spectrum_01paer():
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    for embryo_name in embryo_names:
+        embryo_individual_path = os.path.join(config.data_path,
+                                              'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25_norm.csv'.format(
+                                                  embryo_name))
+        df_shc_norm_embryo = read_csv_to_df(embryo_individual_path)
 
-    saving_original_csv = pd.DataFrame(columns=np.arange(start=0, stop=26, step=1))
-    df_csv = read_csv_to_df(path_original)
-    for row_idx in df_csv.index:
-        saving_original_csv.loc[row_idx] = pysh.SHCoeffs.from_array(
-            collapse_flatten_clim(df_csv.loc[row_idx])).spectrum()
-        # print(num_idx)
-        # print(saving_original_csv)
-    print(saving_original_csv)
-    saving_original_csv.to_csv(
-        os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_Spectrum.csv'))
+        saving_norm_csv = pd.DataFrame(columns=np.arange(start=0, stop=26, step=1))
+        for row_idx in df_shc_norm_embryo.index:
+            saving_norm_csv.loc[row_idx] = pysh.SHCoeffs.from_array(
+                collapse_flatten_clim(df_shc_norm_embryo.loc[row_idx])).spectrum()
+            # print(num_idx)
+            # print(saving_original_csv)
+        print(saving_norm_csv)
+        saving_norm_csv.to_csv(os.path.join(config.data_path,'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum_norm.csv'.format(embryo_name)))
 
-    saving_norm_csv = pd.DataFrame(columns=np.arange(start=0, stop=26, step=1))
-    df_csv = read_csv_to_df(path_norm)
-    for row_idx in df_csv.index:
-        saving_norm_csv.loc[row_idx] = pysh.SHCoeffs.from_array(
-            collapse_flatten_clim(df_csv.loc[row_idx])).spectrum()
-        # print(num_idx)
-        # print(saving_original_csv)
-    saving_norm_csv.to_csv(
-        os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_norm_Spectrum.csv'))
-    print(saving_norm_csv)
+        embryo_individual_path = os.path.join(config.data_path,'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25.csv'.format(embryo_name))
+        df_shc_embryo = read_csv_to_df(embryo_individual_path)
+        saving_sh_csv = pd.DataFrame(columns=np.arange(start=0, stop=26, step=1))
+        for row_idx in df_shc_embryo.index:
+            saving_sh_csv.loc[row_idx] = pysh.SHCoeffs.from_array(
+                collapse_flatten_clim(df_shc_embryo.loc[row_idx])).spectrum()
+            # print(num_idx)
+            # print(saving_original_csv)
+        print(saving_sh_csv)
+        saving_sh_csv.to_csv(os.path.join(config.data_path,'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
+
+    # path_original = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc.csv')
+    # path_norm = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_norm.csv')
+    #
+    # saving_original_csv = pd.DataFrame(columns=np.arange(start=0, stop=26, step=1))
+    # df_csv = read_csv_to_df(path_original)
+    # for row_idx in df_csv.index:
+    #     saving_original_csv.loc[row_idx] = pysh.SHCoeffs.from_array(
+    #         collapse_flatten_clim(df_csv.loc[row_idx])).spectrum()
+    #     # print(num_idx)
+    #     # print(saving_original_csv)
+    # print(saving_original_csv)
+    # saving_original_csv.to_csv(
+    #     os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_Spectrum.csv'))
+    #
+    # saving_norm_csv = pd.DataFrame(columns=np.arange(start=0, stop=26, step=1))
+    # df_csv = read_csv_to_df(path_norm)
+    # for row_idx in df_csv.index:
+    #     saving_norm_csv.loc[row_idx] = pysh.SHCoeffs.from_array(
+    #         collapse_flatten_clim(df_csv.loc[row_idx])).spectrum()
+    #     # print(num_idx)
+    #     # print(saving_original_csv)
+    # saving_norm_csv.to_csv(
+    #     os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_norm_Spectrum.csv'))
+    # print(saving_norm_csv)
 
 
 def cluster_with_spectrum():
@@ -857,7 +886,7 @@ def plot_and_save_5_type_figures_01paper():
     # Sample05,ABpl,014
 
 
-def cluster_with_SPHARMPCA_neighborhood():
+def construct_cell_graph_each_embryo():
     # # --------------------cell fate----------------------------------------------
     # df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
     # this_cell_fate_dict = {}
@@ -869,14 +898,11 @@ def cluster_with_SPHARMPCA_neighborhood():
     # pca_2dmatrix = PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', '2D_matrix_PCA.csv'))
     #
     # -----get original SPHARM pca transformation features-----
-    pca_spharm = PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', 'SPHARM_PCA.csv'))
 
     # --------------------lifespan clustering and SVM-------------------------------------------
     embryo_names = [str(i).zfill(2) for i in range(6, 7)]
     spharm_path = config.data_path + r'my_data_csv/SH_time_domain_csv'
     life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
-    cluster_num_predict = 8  # no germ line
-    time_limit_minutes_start = 150
 
     # --------------------SINGLE CELL IN EACH TIME POINTS: SPAHRM PCA and its neighborhood CLUSTERING----------------
     name_cellname,cellname_number=get_cell_name_affine_table()
@@ -890,11 +916,7 @@ def cluster_with_SPHARMPCA_neighborhood():
         path_SHc_csv = os.path.join(spharm_path, 'Sample' + embryo_name + 'LabelUnified_l_25.csv')
         df_SPAHRM = read_csv_to_df(path_SHc_csv)
 
-        spharm_pca_arr = pca_spharm.transform(df_SPAHRM.values)
         print('-----', embryo_name, '-----')
-
-        cell_list_dict_feature_values = {}
-        cell_frame_list_dict = {}
 
         # start frame!
         current_frame = '001'
@@ -952,9 +974,74 @@ def cluster_with_SPHARMPCA_neighborhood():
         # the way to read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # iGraph.Graph.Read_GraphML('------')
 
-# def enhanced_graph_wavelet_feature(feature_vec,hop):
+def enhanced_graph_wavelet_feature():
+    embryo_names = [str(i).zfill(2) for i in range(19, 21)]
+    name_cellname,cellname_number=get_cell_name_affine_table()
+
+    hop=3
+    for embryo_name in embryo_names:
+        print('embryo  ',embryo_name)
+        df_embryo_cell_fea=read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum_norm.csv'.format(embryo_name)))
+
+        df_enhanced_cell_fea=pd.DataFrame(index=df_embryo_cell_fea.index,columns=df_embryo_cell_fea.columns)
+        # start frame!
+        current_frame = '001'
+        last_fame = '001'
+        this_graph=iGraph.Graph.Read_GraphML(os.path.join(config.data_path,'Graph_embryo/Sample'+embryo_name,'Sample'+embryo_name+'_'+current_frame+'.graphml'))
+        for idx in df_embryo_cell_fea.index:  # segmented successfully
+            print(idx)
+            cell_name, current_frame = idx.split('::')[1], idx.split('::')[0]
+            if current_frame != last_fame:  # frame by frame to read the graph(cell graph base on contact) file
+                # is time to read a new graph, move to next frame
+
+                this_graph=iGraph.Graph.Read_GraphML(os.path.join(config.data_path,'Graph_embryo/Sample'+embryo_name,'Sample'+embryo_name+'_'+current_frame+'.graphml'))
+
+            last_fame = current_frame
+
+            # this_cell_kth_neigh_dict=get_kth_neighborhood_graph(this_graph.vs(cell_name),hop,this_graph)
+            # fea_arr=[]
+            # for kth in this_cell_kth_neigh_dict.keys():
+            #     for read_cell_node in this_cell_kth_neigh_dict[kth]:
+            #         fea_arr.append()
+            # print(this_cell_kth_neigh_dict)
+            star_node=this_graph.vs.find(name=cell_name)
+            cellname_node_list=[]
+            for ith in range(hop+1):
+                # print(this_graph.neighborhood_size(star_node, order=ith))
+                if ith==0:
+                    cellname_node_list.append(this_graph.neighborhood(star_node, order=ith))
+                else:
+                    previous_hop_node_num=len(this_graph.neighborhood(star_node, order=ith-1))
+                    cell_contact_kth_list=this_graph.neighborhood(star_node, order=ith)[previous_hop_node_num:]
+                    if len(cell_contact_kth_list)>0:
+                        cellname_node_list.append(cell_contact_kth_list)
+                    else:
+                        break
+            # get the node's features
+            node_fea_list=[]
+            # for ith,ith_value in enumerate(cellname_node_list):
+            for ith_value in cellname_node_list:
+                for node_id in ith_value:
+                    idx_tmp=current_frame+'::'+this_graph.vs[node_id]['name']
+                    node_fea_list.append(list(df_embryo_cell_fea.loc[idx_tmp]))
+            # print(node_fea_list)
+            # enhance the feature by cell graph and graph wavelet
+            phi_j_h_list = []
+            tmp_C_j_vk_list = []
+            for h_ in range(hop + 1):
+                phi_j_h_=phi_j_h_wavelet(hop, h_,wavelet='MexicanHat')
+                phi_j_h_list.append(phi_j_h_)
+                if h_ < len(cellname_node_list):
+                    # print(h_,len(cellname_node_list),len(cellname_node_list[h_]),cellname_node_list[h_])
+                    tmp_C_j_vk_list.append(phi_j_h_**2/len(cellname_node_list[h_]))
+            C_j_vk=(sum(tmp_C_j_vk_list))**(-1/2)
+            df_enhanced_cell_fea.loc[idx]=embryo_enhanced_graph_wavelet(node_fea_list,cellname_node_list,phi_j_h_list,C_j_vk)
+            # df_enhanced_cell_fea.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
+            #                                          'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
+        print(df_enhanced_cell_fea)
+        df_enhanced_cell_fea.to_csv(os.path.join(config.data_path,'my_data_csv/norm_Spectrum_graph_enhanced_csv','Sample'+embryo_name+'_h{}_M.csv'.format(hop)))
 
 
 if __name__ == "__main__":
     print('test2 run')
-    plot_and_save_5_type_figures_01paper()
+    enhanced_graph_wavelet_feature()

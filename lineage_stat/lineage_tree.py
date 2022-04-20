@@ -18,8 +18,8 @@ import numpy as np
 
 from static.config import data_path
 
-def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot_title='', color_map='seismic',
-                        is_frame=False, time_resolution=1,is_abs=True):
+def draw_cell_lineage_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot_title='', color_map='seismic',
+                           is_frame=False, time_resolution=1, is_abs=True):
     """
 
     :param cell_tree:
