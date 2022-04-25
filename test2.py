@@ -781,7 +781,7 @@ def plot_voxel_and_reconstructed_surface_01paper():
     """
     # ===========plot original dialation surface for particular shape====================================
     # embryo_img = load_nitf2_img(
-    #     os.path.join(static.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+    #     os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
     #                  embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
     # cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
     # # print((cell_surface_points - center).shape)
@@ -794,14 +794,14 @@ def plot_voxel_and_reconstructed_surface_01paper():
 
     # ==============plot reconstruction surface============================================
     # the path need to change to non-norm path
-    # SHc_path = os.path.join(static.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
-    # df_SHcPCA = read_csv_to_df(SHc_path)
-    # sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
-    # m_pcd = o3d.geometry.PointCloud()
-    # resctruct_xyz = do_reconstruction_for_SH(200, sh_instance)
-    # m_pcd.points = o3d.utility.Vector3dVector(resctruct_xyz)
-    # m_pcd.estimate_normals()
-    # o3d.visualization.draw_geometries([m_pcd])
+    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    df_SHcPCA = read_csv_to_df(SHc_path)
+    sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
+    m_pcd = o3d.geometry.PointCloud()
+    resctruct_xyz = do_reconstruction_for_SH(500, sh_instance)
+    m_pcd.points = o3d.utility.Vector3dVector(resctruct_xyz)
+    m_pcd.estimate_normals()
+    o3d.visualization.draw_geometries([m_pcd])
     # ==================================================================================
 
 
@@ -975,13 +975,13 @@ def construct_cell_graph_each_embryo():
         # iGraph.Graph.Read_GraphML('------')
 
 def enhanced_graph_wavelet_feature():
-    embryo_names = [str(i).zfill(2) for i in range(19, 21)]
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     name_cellname,cellname_number=get_cell_name_affine_table()
 
-    hop=3
+    hop=6
     for embryo_name in embryo_names:
         print('embryo  ',embryo_name)
-        df_embryo_cell_fea=read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum_norm.csv'.format(embryo_name)))
+        df_embryo_cell_fea=read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
 
         df_enhanced_cell_fea=pd.DataFrame(index=df_embryo_cell_fea.index,columns=df_embryo_cell_fea.columns)
         # start frame!
@@ -1039,9 +1039,10 @@ def enhanced_graph_wavelet_feature():
             # df_enhanced_cell_fea.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
             #                                          'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
         print(df_enhanced_cell_fea)
-        df_enhanced_cell_fea.to_csv(os.path.join(config.data_path,'my_data_csv/norm_Spectrum_graph_enhanced_csv','Sample'+embryo_name+'_h{}_M.csv'.format(hop)))
+        df_enhanced_cell_fea.to_csv(os.path.join(config.data_path,'my_data_csv/Spectrum_graph_enhanced_csv','Sample'+embryo_name+'_h{}_M.csv'.format(hop)))
 
 
 if __name__ == "__main__":
     print('test2 run')
-    enhanced_graph_wavelet_feature()
+    while(True):
+        plot_voxel_and_reconstructed_surface_01paper()

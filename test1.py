@@ -3056,7 +3056,7 @@ def cluster_silhouette_score_spectrum_01paper():
 # Kmean Hierarchical cluster for 3 kinds totally 9, make a table.
 #
 # do the clustering for static feature if avaliable.
-def construct_mean_tree_and_dynamic_enhanced_spectrum():
+def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
 
     df_pd_values_dict={}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
@@ -3125,9 +3125,9 @@ def construct_mean_tree_and_dynamic_enhanced_spectrum():
     # 看一下效果，如果和其他一個吊樣就把c0_0去掉
     df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_dynamic_enhanced_h3_M.csv'))
 
-def cluster_acc_and_score_enhanced_spectrum_01paper():
+def cluster_acc_and_score_enhanced_spectrum_norm():
     """
-    do clustering with norm SPAHRM PCA feature vector using the first three coefficient avoiding "dimensional curse"
+    do clustering with SPECTRUM feature vector , ACCURACY AND SILHOUETTE SCORE
     :return:
     """
     # --------------------cell fate----------------------
@@ -3209,23 +3209,23 @@ def cluster_acc_and_score_enhanced_spectrum_01paper():
         cluster_arr = np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list_static.append(cluster_acc(y_kmeans_estimation, cell_static_Y_fate, cluster_num_predict))
-        kmeans_score_list.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        kmeans_score_list_static.append(silhouette_score(cluster_arr,y_kmeans_estimation))
         print('static feature enhancedspectrum Kmeans', kmeans_acc_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
         ward_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
-        ward_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        ward_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
         print('static feature enhancedspectrum ward', ward_acc_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
         average_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
-        average_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        average_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
         print('static feature enhancedspectrum average', average_acc_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
         maximum_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
-        maximum_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        maximum_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
         print('static feature enhancedspectrum maximum', maximum_acc_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
         single_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
-        single_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        single_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
         print('static feature enhancedspectrum single', single_acc_list_static[-1])
         # -------------------------------------------------------------------------
 
@@ -3243,18 +3243,23 @@ def cluster_acc_and_score_enhanced_spectrum_01paper():
         cluster_arr = df_avg_lifespan.values
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list.append(cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
+        kmeans_score_list.append(silhouette_score(cluster_arr,y_kmeans_estimation))
         print('dynamic feature enhancedspectrum Kmeans', kmeans_acc_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
         ward_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
+        ward_score_list.append(silhouette_score(cluster_arr, y_agglo))
         print('dynamic feature enhancedspectrum ward', ward_acc_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
         average_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
+        average_score_list.append(silhouette_score(cluster_arr, y_agglo))
         print('dynamic feature enhancedspectrum average', average_acc_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
         maximum_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
+        maximum_score_list.append(silhouette_score(cluster_arr, y_agglo))
         print('dynamic feature enhancedspectrum maximum', maximum_acc_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
         single_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
+        single_score_list.append(silhouette_score(cluster_arr, y_agglo))
         print('dynamic feature enhancedspectrum single', single_acc_list[-1])
 
     print('================individual clusteirng score ==========')
@@ -3343,11 +3348,304 @@ def cluster_acc_and_score_enhanced_spectrum_01paper():
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('dynamic single', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
 
+def construct_mean_tree_and_dynamic_spectrum_no_C00():
+    spectrum_num=25
 
+    df_pd_values_dict={}
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    path_saving_dynamic_spectrum=config.data_path + r'my_data_csv/Spectrum_no_C00_csv'
+    path_spectrum = config.data_path + r'my_data_csv/SH_time_domain_csv'
+    for embryo_name in embryo_names:
+        cell_list_dict = {}
+        path_spectrum_csv = os.path.join(path_spectrum,'Sample{}_Spectrum.csv'.format(embryo_name))
+        df_pd_values_dict[embryo_name] = read_csv_to_df(path_spectrum_csv)
+        for idx in df_pd_values_dict[embryo_name].index:
+            cell_name = idx.split('::')[1]
+            if cell_name in cell_list_dict.keys():
+                cell_list_dict[cell_name].append(list(df_pd_values_dict[embryo_name].loc[idx][1:]))
+            else:
+                # print(df_values_dict.loc[idx])
+                cell_list_dict[cell_name] = [list(df_pd_values_dict[embryo_name].loc[idx][1:])]
+        df_dynamci_f = pd.DataFrame(columns=range(spectrum_num))
+        for cell_name in cell_list_dict.keys():
+            # print(cell_list_dict[cell_name])
+            # print(np.array(cell_list_dict[cell_name]))
+            # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
+            df_dynamci_f.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+        print(embryo_name, df_dynamci_f)
+        df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum,'Sample' + embryo_name + '_dynamic_spectrum_no_C00.csv'))
+
+    # ====================calculate average of 17 embryos==============================
+    cell_combine_tree, begin_frame = get_combined_lineage_tree()
+    # ------static eigenharmonic weight in mean cell lineage tree-----------------------
+    df_static_mean_tree = pd.DataFrame(columns=range(spectrum_num))
+    for node_id in cell_combine_tree.expand_tree(sorting=False):
+        for time_int in cell_combine_tree.get_node(node_id).data.get_time():
+            # if time_int > 0:
+            tp_value_list = []
+            for embryo_name in df_pd_values_dict.keys():
+                frame_int = int(time_int / 1.39 + begin_frame[embryo_name])
+                frame_and_cell_index = f'{frame_int:03}' + '::' + node_id
+                if frame_and_cell_index in df_pd_values_dict[embryo_name].index:
+                    # print(frame_and_cell_index,df_pd_values_dict[embryo_name].loc[frame_and_cell_index][column])
+                    tp_value_list.append(df_pd_values_dict[embryo_name].loc[frame_and_cell_index][1:])
+
+            # we have already got all values at this time from all(17) embryos, we just need to draw its average
+            tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+            if len(tp_value_list) == 0:  # need to do interpolation
+                print('lost cell even in mean cell lineage tree', tp_and_cell_index, tp_value_list)
+            else:
+                df_static_mean_tree.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list), axis=0)
+    print(df_static_mean_tree)
+    df_static_mean_tree.to_csv(os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_static_Spectrum_no_C00.csv'))
+
+    embryo_list_dict = {}
+    for embryo_name in embryo_names:
+        df_dynamic_spectrum = read_csv_to_df(os.path.join(path_saving_dynamic_spectrum,'Sample' + embryo_name + '_dynamic_spectrum_no_C00.csv'))
+        for cell_name in df_dynamic_spectrum.index:
+            # cell_name = idx.split('::')[1]
+            if cell_name in embryo_list_dict.keys():
+                embryo_list_dict[cell_name].append(list(df_dynamic_spectrum.loc[cell_name]))
+            else:
+                # print(df_values_dict.loc[idx])
+                embryo_list_dict[cell_name] = [list(df_dynamic_spectrum.loc[cell_name])]
+    df_dynamci_f = pd.DataFrame(columns=range(spectrum_num))
+    for cell_name in embryo_list_dict.keys():
+        # print(cell_list_dict[cell_name])
+        # print(np.array(cell_list_dict[cell_name]))
+        # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
+        df_dynamci_f.loc[cell_name] = np.mean(np.array(embryo_list_dict[cell_name]), axis=0)
+    print('avg:', df_dynamci_f)
+    # 看一下效果，如果和其他一個吊樣就把c0_0去掉
+    df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_dynamic_spectrum_no_C00.csv'))
+
+
+def cluster_acc_and_score_spectrum_no_C00():
+    """
+    do clustering with SPECTRUM feature vector , ACCURACY AND SILHOUETTE SCORE
+    :return:
+    """
+    # --------------------cell fate----------------------
+    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    cell_fate_dict = {}
+    for idx in df_cell_fate.index:
+        cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+    print(len(cell_fate_dict))
+    # -------------------end cell fate-----------------------
+
+    # -------------------cluster each cell--------------------
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    spectrum_no_c00_path=config.data_path + r'my_data_csv/SH_time_domain_csv'
+    norm_enhanced_spectrum_csv_path = config.data_path + r'my_data_csv/Spectrum_no_C00_csv'
+    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    cluster_num_predict = 8  # no germ line after 100 or 150 minutes
+    time_limit_minutes_start = 150
+    spectrum_num = 25
+
+    kmeans_score_list_static = []
+    ward_score_list_static = []
+    average_score_list_static = []
+    maximum_score_list_static = []
+    single_score_list_static = []
+
+    kmeans_score_list = []
+    ward_score_list = []
+    average_score_list = []
+    maximum_score_list = []
+    single_score_list = []
+
+    kmeans_acc_list_static = []
+    ward_acc_list_static = []
+    average_acc_list_static = []
+    maximum_acc_list_static = []
+    single_acc_list_static = []
+
+    kmeans_acc_list = []
+    ward_acc_list = []
+    average_acc_list = []
+    maximum_acc_list = []
+    single_acc_list = []
+
+    for embryo_name in embryo_names:
+
+        cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
+        with open(cell_tree_file_path, 'rb') as f:
+            # print(f)
+            tree_this_embryo = Tree(load(f))
+        begin_frame = max(tree_this_embryo.get_node('ABa').data.get_time()[-1],
+                          tree_this_embryo.get_node('ABp').data.get_time()[-1])
+
+        cell_list_dict = {}
+        cell_frame_list_dict = {}
+        cell_static_f_list=[]
+        cell_static_Y_fate=[]
+
+        path_static_fea_csv = os.path.join(spectrum_no_c00_path,'Sample' + embryo_name + '_Spectrum.csv')
+        df_values_dict = read_csv_to_df(path_static_fea_csv)
+        print('-----', embryo_name, '-----')
+        for idx in df_values_dict.index:
+            cell_name = idx.split('::')[1]
+
+            if cell_name in cell_fate_dict.keys() and \
+                    ((tree_this_embryo.get_node(cell_name).data.get_time()[
+                          0] - begin_frame) * 1.39) > time_limit_minutes_start:
+                cell_static_f_list.append(list(df_values_dict.loc[idx][1:]))
+                cell_static_Y_fate.append(cell_fate_map[cell_fate_dict[cell_name]])
+
+            if cell_name in cell_list_dict.keys():
+                cell_list_dict[cell_name].append(list(df_values_dict.loc[idx][1:]))
+                cell_frame_list_dict[cell_name].append(idx.split('::')[0])
+            else:
+                # print(df_values_dict.loc[idx])
+                cell_list_dict[cell_name] = [list(df_values_dict.loc[idx][1:])]
+                cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
+        # ------------------static cell feature cluster acc----------------------------
+        cell_static_Y_fate=np.array(cell_static_Y_fate)
+        cluster_arr = np.array(cell_static_f_list)
+        y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
+        kmeans_acc_list_static.append(cluster_acc(y_kmeans_estimation, cell_static_Y_fate, cluster_num_predict))
+        kmeans_score_list_static.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        print('static feature spectrumnoC00 Kmeans', kmeans_acc_list_static[-1])
+        y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
+        ward_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
+        ward_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
+        print('static feature spectrumnoC00 ward', ward_acc_list_static[-1])
+        y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
+        average_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
+        average_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
+        print('static feature spectrumnoC00 average', average_acc_list_static[-1])
+        y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
+        maximum_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
+        maximum_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
+        print('static feature spectrumnoC00 maximum', maximum_acc_list_static[-1])
+        y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
+        single_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
+        single_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
+        print('static feature spectrumnoC00 single', single_acc_list_static[-1])
+        # -------------------------------------------------------------------------
+
+        # ------------------build dynamic cell features vector for each embryo------------------
+        df_avg_lifespan = pd.DataFrame(columns=range(spectrum_num))
+        y_fate = []
+        for cell_name in cell_list_dict.keys():
+            if cell_name in cell_fate_dict.keys() and \
+                    ((tree_this_embryo.get_node(cell_name).data.get_time()[
+                          0] - begin_frame) * 1.39) > time_limit_minutes_start:
+                df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+                y_fate.append(cell_fate_map[cell_fate_dict[cell_name]])
+        # -------------start cluster----------------------------
+        y_fate = np.array(y_fate)
+        cluster_arr = df_avg_lifespan.values
+        y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
+        kmeans_acc_list.append(cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
+        kmeans_score_list.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        print('dynamic feature spectrumnoC00 Kmeans', kmeans_acc_list[-1])
+        y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
+        ward_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
+        ward_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature spectrumnoC00 ward', ward_acc_list[-1])
+        y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
+        average_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
+        average_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature spectrumnoC00 average', average_acc_list[-1])
+        y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
+        maximum_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
+        maximum_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature spectrumnoC00 maximum', maximum_acc_list[-1])
+        y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
+        single_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
+        single_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature spectrumnoC00 single', single_acc_list[-1])
+
+    print('================individual clusteirng score ==========')
+
+    print('static feature spectrumnoC00 Kmeans  ', sum(kmeans_score_list_static) / len(kmeans_score_list_static))
+    print('static feature spectrumnoC00 ward   ', sum(ward_score_list_static) / len(ward_score_list_static))
+    print('static feature spectrumnoC00 average   ', sum(average_score_list_static) / len(average_score_list_static))
+    print('static feature spectrumnoC00 maximum   ', sum(maximum_score_list_static) / len(maximum_score_list_static))
+    print('static feature spectrumnoC00 single   ', sum(single_score_list_static) / len(single_score_list_static))
+
+    print('dynamic feature spectrumnoC00 Kmeans  ', sum(kmeans_score_list) / len(kmeans_score_list))
+    print('dynamic feature spectrumnoC00 ward   ', sum(ward_score_list) / len(ward_score_list))
+    print('dynamic feature spectrumnoC00 average   ', sum(average_score_list) / len(average_score_list))
+    print('dynamic feature spectrumnoC00 maximum   ', sum(maximum_score_list) / len(maximum_score_list))
+    print('dynamic feature spectrumnoC00 single   ', sum(single_score_list) / len(single_score_list))
+    print('================individual acc ==========')
+
+    print('static feature spectrumnoC00 Kmeans  ', sum(kmeans_acc_list_static) / len(kmeans_acc_list_static))
+    print('static feature spectrumnoC00 ward   ', sum(ward_acc_list_static) / len(ward_acc_list_static))
+    print('static feature spectrumnoC00 average   ', sum(average_acc_list_static) / len(average_acc_list_static))
+    print('static feature spectrumnoC00 maximum   ', sum(maximum_acc_list_static) / len(maximum_acc_list_static))
+    print('static feature spectrumnoC00 single   ', sum(single_acc_list_static) / len(single_acc_list_static))
+
+    print('dynamic feature spectrumnoC00 Kmeans  ', sum(kmeans_acc_list) / len(kmeans_acc_list))
+    print('dynamic feature spectrumnoC00 ward   ', sum(ward_acc_list) / len(ward_acc_list))
+    print('dynamic feature spectrumnoC00 average   ', sum(average_acc_list) / len(average_acc_list))
+    print('dynamic feature spectrumnoC00 maximum   ', sum(maximum_acc_list) / len(maximum_acc_list))
+    print('dynamic feature spectrumnoC00 single   ', sum(single_acc_list) / len(single_acc_list))
+
+    # combined / mean cell lineage tree
+    # https://www.one-tab.com/page/_LiQCjfpRbu-6TA_AayJdg
+
+    from lineage_stat.data_structure import get_combined_lineage_tree
+    cell_combine_tree, _ = get_combined_lineage_tree()
+
+    path_mean_tree_static_csv = os.path.join(norm_enhanced_spectrum_csv_path,
+                                             'Mean_cellLineageTree_static_spectrum_no_C00.csv')
+    df_mean_tree_static_fea = read_csv_to_df(path_mean_tree_static_csv)
+    static_y_fate = []
+    cluster_arr = []
+    for idx in df_mean_tree_static_fea.index:
+        cell_name = idx.split('::')[1]
+        if cell_name in cell_fate_dict.keys() and \
+                cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
+            cluster_arr.append(df_mean_tree_static_fea.loc[idx])
+            static_y_fate.append(cell_fate_map[cell_fate_dict[cell_name]])
+
+    # -------------start cluster----------------------------
+    static_y_fate = np.array(static_y_fate)
+    cluster_arr = np.array(cluster_arr)
+    y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
+    print('static Kmeans',silhouette_score(cluster_arr, y_kmeans_estimation), cluster_acc(y_kmeans_estimation, static_y_fate, cluster_num_predict))
+    y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
+    print('static ward', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
+    print('static average', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
+    print('static maximum', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
+    print('static single', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+
+    # -------------dynamic features start cluster----------------------------
+
+    path_mean_tree_dynamic_csv = os.path.join(norm_enhanced_spectrum_csv_path,
+                                              'Mean_cellLineageTree_dynamic_spectrum_no_C00.csv')
+    df_mean_tree_dynamic_fea = read_csv_to_df(path_mean_tree_dynamic_csv)
+    cluster_arr = []
+    y_fate=[]
+    for cell_name in cell_combine_tree.expand_tree(sorting=False):
+        if cell_name in cell_fate_dict.keys() and \
+                cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
+            cluster_arr.append(df_mean_tree_dynamic_fea.loc[cell_name])
+            y_fate.append(cell_fate_map[cell_fate_dict[cell_name]])
+
+    # -------------start cluster----------------------------
+    y_fate = np.array(y_fate)
+    cluster_arr = np.array(cluster_arr)
+    y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
+    print('dynamic Kmeans', silhouette_score(cluster_arr, y_kmeans_estimation),cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
+    y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
+    print('dynamic ward', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
+    print('dynamic average', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
+    print('dynamic maximum',silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
+    print('dynamic single', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
 
 if __name__ == "__main__":
     # a={1:[1,2],2:[4,5]}
     # print([a[x] for x in a.keys()])
     # clustering_original_and_normalized_feature_vector()
     # cluster_with_lifespan_shape_features()
-    cluster_acc_and_score_enhanced_spectrum_01paper()
+    cluster_acc_and_score_spectrum_no_C00()
