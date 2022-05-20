@@ -5,14 +5,20 @@ import open3d as o3d
 import json
 from random import uniform
 
+from matplotlib.colors import ListedColormap
 from pyshtools import SHGrid
 from skimage.measure import marching_cubes, mesh_surface_area
+from sklearn.datasets import load_digits
+from sklearn.feature_selection import r_regression
 from sklearn.kernel_approximation import Nystroem
+from sklearn.manifold import TSNE
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from treelib import Tree
 
-import static
+import umap
+import umap.plot
+
 import numpy as np
 import os
 import pandas as pd
@@ -23,9 +29,7 @@ from time import time
 
 import pyshtools as pysh
 import matplotlib.pyplot as plt
-
-from graph_wavelet.enhanced_GWf import embryo_enhanced_graph_wavelet, get_kth_neighborhood_graph, phi_j_h_wavelet
-from static import dict as dict
+import seaborn as sns
 
 from tqdm import tqdm
 
@@ -35,7 +39,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, KernelPCA
 from sklearn.svm import LinearSVC
 from matplotlib import cm
 import matplotlib.patches
@@ -46,6 +50,10 @@ import igraph as iGraph
 
 # import user defined library
 
+from graph_wavelet.enhanced_GWf import embryo_enhanced_graph_wavelet, get_kth_neighborhood_graph, phi_j_h_wavelet
+from lineage_stat.data_structure import get_combined_lineage_tree
+from static import dict as dict
+from static.dict import cell_fate_map
 from transformation.SH_represention import get_nib_embryo_membrane_dict, do_sampling_with_interval
 from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
@@ -210,9 +218,13 @@ def transfer_2d_to_spectrum_01paer():
             # print(num_idx)
             # print(saving_original_csv)
         print(saving_norm_csv)
-        saving_norm_csv.to_csv(os.path.join(config.data_path,'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum_norm.csv'.format(embryo_name)))
+        saving_norm_csv.to_csv(os.path.join(config.data_path,
+                                            'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum_norm.csv'.format(
+                                                embryo_name)))
 
-        embryo_individual_path = os.path.join(config.data_path,'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25.csv'.format(embryo_name))
+        embryo_individual_path = os.path.join(config.data_path,
+                                              'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25.csv'.format(
+                                                  embryo_name))
         df_shc_embryo = read_csv_to_df(embryo_individual_path)
         saving_sh_csv = pd.DataFrame(columns=np.arange(start=0, stop=26, step=1))
         for row_idx in df_shc_embryo.index:
@@ -221,7 +233,8 @@ def transfer_2d_to_spectrum_01paer():
             # print(num_idx)
             # print(saving_original_csv)
         print(saving_sh_csv)
-        saving_sh_csv.to_csv(os.path.join(config.data_path,'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
+        saving_sh_csv.to_csv(
+            os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
 
     # path_original = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc.csv')
     # path_norm = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_norm.csv')
@@ -433,15 +446,15 @@ def figure_for_science_01paper():
 
     axes_tmp1.plot_surface(X2d, Y2d, instance_tmp1_expanded, cmap=cm.coolwarm,
                            linewidth=0, antialiased=False, rstride=60, cstride=10)
-    axes_tmp1.set_zlabel(r'\textit{z}',fontsize=18)  # 坐标轴
-    axes_tmp1.set_ylabel(r'\textit{y}',fontsize=18)
-    axes_tmp1.set_xlabel(r'\textit{x}',fontsize=18)
+    axes_tmp1.set_zlabel(r'\textit{z}', fontsize=18)  # 坐标轴
+    axes_tmp1.set_ylabel(r'\textit{y}', fontsize=18)
+    axes_tmp1.set_xlabel(r'\textit{x}', fontsize=18)
     # axes_tmp1.colorbar()
 
     axes_tmp2 = fig_SPCSMs_info.add_subplot(2, 2, 2)
     grid_2 = instance_tmp1.expand(lmax=100)
     grid_2.plot(ax=axes_tmp2, cmap='RdBu', cmap_reverse=True, title='Heat Map',
-                xlabel=r'\textit{x}',tick_labelsize=14,titlesize=18,
+                xlabel=r'\textit{x}', tick_labelsize=14, titlesize=18,
                 ylabel=r'\textit{y}', axes_labelsize=18, tick_interval=[60, 60], colorbar='right',
                 cb_label=r'\textit{z} value / 0.015625 $\mu M$')
     set_size(5, 5, ax=axes_tmp2)
@@ -487,29 +500,30 @@ def figure_for_science_01paper():
     y_lon = np.sqrt(225 - np.power(x_lon, 2))
     # print(y_lon)
     axes_tmp3.scatter3D(x_lon, y_lon, np.zeros(1000), s=3, color='blue')
-    axes_tmp3.text(19, 19, 0, r'\textit{longitude}', (-1, 1, 0), ha='center',fontsize=16)
+    axes_tmp3.text(19, 19, 0, r'\textit{longitude}', (-1, 1, 0), ha='center', fontsize=16)
 
     # latitude circle
     y_lat = np.arange(0, 15, 15 / 1000)
     z_lat = np.sqrt(225 - np.power(y_lat, 2))
     axes_tmp3.scatter3D(np.zeros(1000), y_lat, z_lat, s=3, color='black')
-    axes_tmp3.text(0, 18, 18, r'\textit{latitude}', (-1, 1, 0), ha='center',fontsize=16)
+    axes_tmp3.text(0, 18, 18, r'\textit{latitude}', (-1, 1, 0), ha='center', fontsize=16)
 
-    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, r'\textit{x}', (-1, 1, 0), ha='center',fontsize=16).set_fontstyle('italic')
-    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, r'\textit{y}', (-1, 1, 0), ha='center',fontsize=16).set_fontstyle('italic')
-    axes_tmp3.text(-0.1 * sn, 0, sn + 10, r'\textit{z}', (-1, 1, 0), ha='center',fontsize=16).set_fontstyle('italic')
-    axes_tmp3.set_zlabel(r'\textit{z}',fontsize=18)  # 坐标轴
-    axes_tmp3.set_ylabel(r'\textit{y}',fontsize=18)
-    axes_tmp3.set_xlabel(r'\textit{x}',fontsize=18)
+    axes_tmp3.text(sn / 3 * 2, 0, -.2 * sn, r'\textit{x}', (-1, 1, 0), ha='center', fontsize=16).set_fontstyle('italic')
+    axes_tmp3.text(0, sn / 3 * 2, -.2 * sn, r'\textit{y}', (-1, 1, 0), ha='center', fontsize=16).set_fontstyle('italic')
+    axes_tmp3.text(-0.1 * sn, 0, sn + 10, r'\textit{z}', (-1, 1, 0), ha='center', fontsize=16).set_fontstyle('italic')
+    axes_tmp3.set_zlabel(r'\textit{z}', fontsize=18)  # 坐标轴
+    axes_tmp3.set_ylabel(r'\textit{y}', fontsize=18)
+    axes_tmp3.set_xlabel(r'\textit{x}', fontsize=18)
 
     # axes_tmp3.annotate('XXXXXXXX', xy=(0.93, -0.01), ha='left', va='top', xycoords='axes fraction', weight='bold', style='italic')
 
     axes_tmp4 = fig_SPCSMs_info.add_subplot(2, 2, 4)
     grid_tmp = instance_tmp.expand(lmax=100)
     # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
-    grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Spherical Grid',titlesize=18,
+    grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='Spherical Grid', titlesize=18,
                   xlabel=r'Longitude \textit{x}-\textit{y} plane (\textit{degree} \textdegree)',
-                  ylabel=r'Latitude \textit{y}-\textit{z} plane (\textit{degree} \textdegree)', axes_labelsize=18,tick_labelsize=14,
+                  ylabel=r'Latitude \textit{y}-\textit{z} plane (\textit{degree} \textdegree)', axes_labelsize=18,
+                  tick_labelsize=14,
                   tick_interval=[60, 60], colorbar='right', cb_label=r'distance from centroid / 0.015625 $\mu M$')
 
     fig_SPCSMs_info.text(0.05, 0.7, '3D Surface ', fontsize=24)
@@ -578,7 +592,7 @@ def calculate_cell_points():
 
     for embryo_name in embryo_names:
         # ------------------------calculate surface points using dialation for each cell --------------------
-        path_tmp = config.data_path+r'Segmentation Results\SegmentedCell/Sample'+embryo_name+'LabelUnified'
+        path_tmp = config.data_path + r'Segmentation Results\SegmentedCell/Sample' + embryo_name + 'LabelUnified'
         for file_name in os.listdir(path_tmp):
             if os.path.isfile(os.path.join(path_tmp, file_name)):
                 t0 = time()
@@ -603,7 +617,7 @@ def calculate_cell_surface_points():
 
     for embryo_name in embryo_names:
         # ------------------------calculate surface points using dialation for each cell --------------------
-        path_tmp = config.data_path+r'Segmentation Results\SegmentedCell/Sample'+embryo_name+'LabelUnified'
+        path_tmp = config.data_path + r'Segmentation Results\SegmentedCell/Sample' + embryo_name + 'LabelUnified'
         for file_name in os.listdir(path_tmp):
             if os.path.isfile(os.path.join(path_tmp, file_name)):
                 t0 = time()
@@ -613,7 +627,7 @@ def calculate_cell_surface_points():
 
                 cell_points = export_dia_cell_surface_points_json(img_arr)
 
-                dia_surface_saving = os.path.join(config.data_path+r'cell_dia_surface','Sample'+embryo_name)
+                dia_surface_saving = os.path.join(config.data_path + r'cell_dia_surface', 'Sample' + embryo_name)
                 if not os.path.exists(dia_surface_saving):
                     os.mkdir(dia_surface_saving)
 
@@ -724,7 +738,7 @@ def display_contact_alpha_surface():
 
 
 def calculate_SH_PCA_coordinate():
-    PCA_matrices_saving_path = os.path.join(config.data_path,'my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
+    PCA_matrices_saving_path = os.path.join(config.data_path, 'my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
 
     path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
     df_SHc_norm = read_csv_to_df(path_saving_csv_normalized)
@@ -829,7 +843,8 @@ def plot_and_save_5_type_figures_01paper():
     axes_tmp4 = fig_SPCSMs_info.add_subplot(111)
     grid_tmp = SHGrid.from_array(grid_data)
     # axin=inset_axes(axes_tmp, width="50%", height="100%", loc=2)
-    grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='3D Surface Spherical Grid',tick_labelsize=14, titlesize=18,axes_labelsize=18,
+    grid_tmp.plot(ax=axes_tmp4, cmap='RdBu', cmap_reverse=True, title='3D Surface Spherical Grid', tick_labelsize=14,
+                  titlesize=18, axes_labelsize=18,
                   xlabel=r'Longitude - \textit{x}-\textit{y} plane (degree \textdegree)',
                   ylabel=r'Latitude \textit{y}-\textit{z} plane (degree \textdegree)',
                   tick_interval=[60, 60], colorbar='right', cb_label=r'Distance from centroid / 0.015625 $\mu M$')
@@ -851,8 +866,10 @@ def plot_and_save_5_type_figures_01paper():
     SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
-    sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array',ax=axes_tmp,degree_label=r'SPAHRM degree \textit{l}',tick_labelsize=14, titlesize=18,axes_labelsize=18,
-                        order_label=r'SPAHRM order \textit{m}',  cmap='RdBu',cb_label='Component value Colorbar',cb_triangles='both')
+    sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array', ax=axes_tmp, degree_label=r'SPAHRM degree \textit{l}',
+                                tick_labelsize=14, titlesize=18, axes_labelsize=18,
+                                order_label=r'SPAHRM order \textit{m}', cmap='RdBu',
+                                cb_label='Component value Colorbar', cb_triangles='both')
     saving_path = os.path.join(
         r'C:\\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Reconstruction preseant',
         embryo_name + cell_name + tp + 'SPHARM.svg')
@@ -905,7 +922,7 @@ def construct_cell_graph_each_embryo():
     life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
 
     # --------------------SINGLE CELL IN EACH TIME POINTS: SPAHRM PCA and its neighborhood CLUSTERING----------------
-    name_cellname,cellname_number=get_cell_name_affine_table()
+    name_cellname, cellname_number = get_cell_name_affine_table()
     for embryo_name in embryo_names:
         cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
         with open(cell_tree_file_path, 'rb') as f:
@@ -924,27 +941,28 @@ def construct_cell_graph_each_embryo():
         # with open(os.path.join(config.data_path, r'cell_dia_surface',
         #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
         #     surface_data = json.load(fp)
-        with open(os.path.join(config.data_path, r'cshaper_contact_data\Sample'+embryo_name,
-                               'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
+        with open(os.path.join(config.data_path, r'cshaper_contact_data\Sample' + embryo_name,
+                               'Sample' + embryo_name + '_' + current_frame + '_segCell.json'), 'rb') as fp:
             surface_contact_data = json.load(fp)
-        this_graph=iGraph.Graph(directed=True)
+        this_graph = iGraph.Graph(directed=True)
         this_graph.add_vertex('INITIAL')
         for index, value in enumerate(df_SPAHRM.index):  # segmented successfully
             cell_name, current_frame = value.split('::')[1], value.split('::')[0]
-            cell_number=str(cellname_number[cell_name])
+            cell_number = str(cellname_number[cell_name])
             # --------------------next embryo-------------------------------------------
             if current_frame != last_fame:  # frame by frame to read the contact file
                 # is time to save the graph
                 this_graph.delete_vertices('INITIAL')
-                print(embryo_name,last_fame)
-                this_graph.write_graphml(os.path.join(config.data_path,'Graph_embryo/Sample'+embryo_name,'Sample'+embryo_name+'_'+last_fame+'.graphml'))
+                print(embryo_name, last_fame)
+                this_graph.write_graphml(os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name,
+                                                      'Sample' + embryo_name + '_' + last_fame + '.graphml'))
                 this_graph = iGraph.Graph(directed=True)
                 this_graph.add_vertex('INITIAL')
                 # with open(os.path.join(config.data_path, r'cell_dia_surface',
                 #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
                 #     surface_data = json.load(fp)
-                with open(os.path.join(config.data_path, r'cshaper_contact_data\Sample'+embryo_name,
-                                       'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
+                with open(os.path.join(config.data_path, r'cshaper_contact_data\Sample' + embryo_name,
+                                       'Sample' + embryo_name + '_' + current_frame + '_segCell.json'), 'rb') as fp:
                     surface_contact_data = json.load(fp)
             last_fame = current_frame
             # --------------------------------------------------------------------------
@@ -955,46 +973,53 @@ def construct_cell_graph_each_embryo():
             if int(current_frame) in tree_this_embryo.get_node(cell_name).data.get_time():  # reasonable in cell lineage
                 # build a contact pair dictionary/csv
                 for item in surface_contact_data.keys():
-                    contact_cell_number=item.split('_')
+                    contact_cell_number = item.split('_')
                     if cell_number in contact_cell_number:
                         # print('adding edges')
                         contact_cell_number.remove(cell_number)
-                        tmp_contact_name=name_cellname[int(contact_cell_number[0])]
+                        tmp_contact_name = name_cellname[int(contact_cell_number[0])]
                         # print(tmp_contact_name)
                         if not tmp_contact_name in this_graph.vs['name']:
                             # print('========', tmp_contact_name)
                             this_graph.add_vertex(tmp_contact_name)
-                        this_graph.add_edge(tmp_contact_name,cell_name,weight=len(surface_contact_data[item]))
+                        this_graph.add_edge(tmp_contact_name, cell_name, weight=len(surface_contact_data[item]))
                         # print(tmp)
                 # print(surface_data)
         this_graph.delete_vertices('INITIAL')
         print(this_graph)
         this_graph.write_graphml(
-            os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name, 'Sample' + embryo_name + '_' + last_fame + '.graphml'))
+            os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name,
+                         'Sample' + embryo_name + '_' + last_fame + '.graphml'))
         # the way to read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # iGraph.Graph.Read_GraphML('------')
 
+
 def enhanced_graph_wavelet_feature():
-    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    name_cellname,cellname_number=get_cell_name_affine_table()
+    embryo_names = [str(i).zfill(2) for i in range(20, 21)]
+    name_cellname, cellname_number = get_cell_name_affine_table()
 
-    hop=6
+    hop = 1
     for embryo_name in embryo_names:
-        print('embryo  ',embryo_name)
-        df_embryo_cell_fea=read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
+        print('embryo  ', embryo_name)
+        df_embryo_cell_fea = read_csv_to_df(
+            os.path.join(config.data_path,
+                         'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum_norm.csv'.format(embryo_name)))
 
-        df_enhanced_cell_fea=pd.DataFrame(index=df_embryo_cell_fea.index,columns=df_embryo_cell_fea.columns)
+        df_enhanced_cell_fea = pd.DataFrame(index=df_embryo_cell_fea.index, columns=df_embryo_cell_fea.columns)
         # start frame!
         current_frame = '001'
         last_fame = '001'
-        this_graph=iGraph.Graph.Read_GraphML(os.path.join(config.data_path,'Graph_embryo/Sample'+embryo_name,'Sample'+embryo_name+'_'+current_frame+'.graphml'))
+        this_graph = iGraph.Graph.Read_GraphML(os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name,
+                                                            'Sample' + embryo_name + '_' + current_frame + '.graphml'))
         for idx in df_embryo_cell_fea.index:  # segmented successfully
             print(idx)
             cell_name, current_frame = idx.split('::')[1], idx.split('::')[0]
             if current_frame != last_fame:  # frame by frame to read the graph(cell graph base on contact) file
                 # is time to read a new graph, move to next frame
 
-                this_graph=iGraph.Graph.Read_GraphML(os.path.join(config.data_path,'Graph_embryo/Sample'+embryo_name,'Sample'+embryo_name+'_'+current_frame+'.graphml'))
+                this_graph = iGraph.Graph.Read_GraphML(
+                    os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name,
+                                 'Sample' + embryo_name + '_' + current_frame + '.graphml'))
 
             last_fame = current_frame
 
@@ -1004,45 +1029,562 @@ def enhanced_graph_wavelet_feature():
             #     for read_cell_node in this_cell_kth_neigh_dict[kth]:
             #         fea_arr.append()
             # print(this_cell_kth_neigh_dict)
-            star_node=this_graph.vs.find(name=cell_name)
-            cellname_node_list=[]
-            for ith in range(hop+1):
+            star_node = this_graph.vs.find(name=cell_name)
+            cellname_node_list = []
+            for ith in range(hop + 1):
                 # print(this_graph.neighborhood_size(star_node, order=ith))
-                if ith==0:
+                if ith == 0:
                     cellname_node_list.append(this_graph.neighborhood(star_node, order=ith))
                 else:
-                    previous_hop_node_num=len(this_graph.neighborhood(star_node, order=ith-1))
-                    cell_contact_kth_list=this_graph.neighborhood(star_node, order=ith)[previous_hop_node_num:]
-                    if len(cell_contact_kth_list)>0:
+                    previous_hop_node_num = len(this_graph.neighborhood(star_node, order=ith - 1))
+                    cell_contact_kth_list = this_graph.neighborhood(star_node, order=ith)[previous_hop_node_num:]
+                    if len(cell_contact_kth_list) > 0:
                         cellname_node_list.append(cell_contact_kth_list)
                     else:
                         break
             # get the node's features
-            node_fea_list=[]
+            node_fea_list = []
             # for ith,ith_value in enumerate(cellname_node_list):
             for ith_value in cellname_node_list:
                 for node_id in ith_value:
-                    idx_tmp=current_frame+'::'+this_graph.vs[node_id]['name']
+                    idx_tmp = current_frame + '::' + this_graph.vs[node_id]['name']
                     node_fea_list.append(list(df_embryo_cell_fea.loc[idx_tmp]))
             # print(node_fea_list)
             # enhance the feature by cell graph and graph wavelet
             phi_j_h_list = []
             tmp_C_j_vk_list = []
             for h_ in range(hop + 1):
-                phi_j_h_=phi_j_h_wavelet(hop, h_,wavelet='MexicanHat')
+                phi_j_h_ = phi_j_h_wavelet(hop, h_, wavelet='MexicanHat')
                 phi_j_h_list.append(phi_j_h_)
                 if h_ < len(cellname_node_list):
                     # print(h_,len(cellname_node_list),len(cellname_node_list[h_]),cellname_node_list[h_])
-                    tmp_C_j_vk_list.append(phi_j_h_**2/len(cellname_node_list[h_]))
-            C_j_vk=(sum(tmp_C_j_vk_list))**(-1/2)
-            df_enhanced_cell_fea.loc[idx]=embryo_enhanced_graph_wavelet(node_fea_list,cellname_node_list,phi_j_h_list,C_j_vk)
+                    tmp_C_j_vk_list.append(phi_j_h_ ** 2 / len(cellname_node_list[h_]))
+            C_j_vk = (sum(tmp_C_j_vk_list)) ** (-1 / 2)
+            df_enhanced_cell_fea.loc[idx] = embryo_enhanced_graph_wavelet(node_fea_list, cellname_node_list,
+                                                                          phi_j_h_list, C_j_vk)
             # df_enhanced_cell_fea.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
             #                                          'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
         print(df_enhanced_cell_fea)
-        df_enhanced_cell_fea.to_csv(os.path.join(config.data_path,'my_data_csv/Spectrum_graph_enhanced_csv','Sample'+embryo_name+'_h{}_M.csv'.format(hop)))
+        df_enhanced_cell_fea.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
+                                                 'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
+
+
+def calculate_cell_shape_asymmetric_between_sisters():
+    cell_combine_tree, begin_frame = get_combined_lineage_tree()
+
+    # EIGENGRID
+    pca_num = 96
+    path_saving_dynamic_eigengrid = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    df_asymmetric_eigengrid = pd.DataFrame(columns=range(pca_num))
+    df_dynamic_f = read_csv_to_df(
+        os.path.join(path_saving_dynamic_eigengrid, 'Mean_cellLineageTree_dynamic_eigengrid.csv'))
+    for cell_name in df_dynamic_f.index:
+        # cell_combine_tree.expand_tree(sorting=False):
+
+        # cell_name = idx.split('::')[1]
+        # time_int, node_id=
+        if not cell_combine_tree.contains(cell_name):
+            continue
+
+        children_list = cell_combine_tree.children(cell_name)
+
+        if not len(children_list) == 2:
+            continue
+        else:
+            child1 = children_list[0].identifier
+            child2 = children_list[1].identifier
+            print(cell_name, child1, child2)
+            # print(np.power(list(df_dynamic_f.loc[child1]) - list(df_dynamic_f.loc[child2]), 2))
+            df_asymmetric_eigengrid.loc[cell_name] = list(
+                np.absolute(df_dynamic_f.loc[child1] - df_dynamic_f.loc[child2]))
+    df_asymmetric_eigengrid.to_csv(
+        os.path.join(path_saving_dynamic_eigengrid, 'asymmetric_Mean_cellLineageTree_dynamic_eigengrid.csv'))
+
+    # EIGENHARMONIC
+    pca_num = 12
+    path_saving_dynamic_eigenharmonic = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
+    df_asymmetric_eigenharmonic = pd.DataFrame(columns=range(pca_num))
+    df_dynamic_f = read_csv_to_df(
+        os.path.join(path_saving_dynamic_eigenharmonic, 'Mean_cellLineageTree_dynamic_eigenharmonic.csv'))
+    for cell_name in df_dynamic_f.index:
+        # cell_combine_tree.expand_tree(sorting=False):
+
+        # cell_name = idx.split('::')[1]
+        # time_int, node_id=
+        if not cell_combine_tree.contains(cell_name):
+            continue
+
+        children_list = cell_combine_tree.children(cell_name)
+
+        if not len(children_list) == 2:
+            continue
+        else:
+            child1 = children_list[0].identifier
+            child2 = children_list[1].identifier
+            print(cell_name, child1, child2)
+            # print(np.power(list(df_dynamic_f.loc[child1]) - list(df_dynamic_f.loc[child2]), 2))
+            df_asymmetric_eigenharmonic.loc[cell_name] = list(
+                np.absolute(df_dynamic_f.loc[child1] - df_dynamic_f.loc[child2]))
+    df_asymmetric_eigenharmonic.to_csv(
+        os.path.join(path_saving_dynamic_eigenharmonic, 'asymmetric_Mean_cellLineageTree_dynamic_eigenharmonic.csv'))
+
+    # energy spectrum
+    f_num = 26
+    path_saving_dynamic_spectrum = config.data_path + r'my_data_csv/norm_Spectrum_csv'
+    df_asymmetric_spectrum = pd.DataFrame(columns=range(f_num))
+    df_dynamic_f = read_csv_to_df(
+        os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_dynamic_spectrum.csv'))
+    for cell_name in df_dynamic_f.index:
+        # cell_combine_tree.expand_tree(sorting=False):
+
+        # cell_name = idx.split('::')[1]
+        # time_int, node_id=
+        if not cell_combine_tree.contains(cell_name):
+            continue
+
+        children_list = cell_combine_tree.children(cell_name)
+
+        if not len(children_list) == 2:
+            continue
+        else:
+            child1 = children_list[0].identifier
+            child2 = children_list[1].identifier
+            print(cell_name, child1, child2)
+            # print(np.power(list(df_dynamic_f.loc[child1]) - list(df_dynamic_f.loc[child2]), 2))
+            df_asymmetric_spectrum.loc[cell_name] = list(
+                np.absolute(df_dynamic_f.loc[child1] - df_dynamic_f.loc[child2]))
+    df_asymmetric_spectrum.to_csv(
+        os.path.join(path_saving_dynamic_spectrum, 'asymmetric_Mean_cellLineageTree_dynamic_spectrum.csv'))
+
+    # noC00spectrum
+    f_num = 25
+    path_saving_dynamic_noC00spectrum = config.data_path + r'my_data_csv/Spectrum_no_C00_csv'
+    df_asymmetric_noC00spectrum = pd.DataFrame(columns=range(f_num))
+    df_dynamic_f = read_csv_to_df(
+        os.path.join(path_saving_dynamic_noC00spectrum, 'Mean_cellLineageTree_dynamic_spectrum_no_C00.csv'))
+    for cell_name in df_dynamic_f.index:
+        # cell_combine_tree.expand_tree(sorting=False):
+
+        # cell_name = idx.split('::')[1]
+        # time_int, node_id=
+        if not cell_combine_tree.contains(cell_name):
+            continue
+
+        children_list = cell_combine_tree.children(cell_name)
+
+        if not len(children_list) == 2:
+            continue
+        else:
+            child1 = children_list[0].identifier
+            child2 = children_list[1].identifier
+            print(cell_name, child1, child2)
+            # print(np.power(list(df_dynamic_f.loc[child1]) - list(df_dynamic_f.loc[child2]), 2))
+            df_asymmetric_noC00spectrum.loc[cell_name] = list(
+                np.absolute(df_dynamic_f.loc[child1] - df_dynamic_f.loc[child2]))
+    df_asymmetric_noC00spectrum.to_csv(
+        os.path.join(path_saving_dynamic_noC00spectrum, 'asymmetric_Mean_cellLineageTree_dynamic_noC00spectrum.csv'))
+
+
+def cell_shape_asymmetric_boxplot():
+    detected_cell_lineage = {
+        'P0': ['P0'],
+        'AB1': ['AB'],
+        'P1': ['P1'],
+
+        'AB2': ['ABa', 'ABp'],
+        'EMS1': ['EMS'],
+        'P2': ['P2'],
+
+        'AB4': ['ABal', 'ABar', 'ABpl', 'ABpr'],
+        'EMS2': ['E', 'MS'],
+        'C1': ['C'],
+        'P3': ['P3'],
+
+        # 'AB8': ['ABpra', 'ABprp', 'ABala', 'ABalp', 'ABpla', 'ABplp', 'ABara', 'ABarp'],
+
+    }
+
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    name_cellname, cellname_number = get_cell_name_affine_table()
+
+    cells_asymmetric1_1 = {}
+    cells_asymmetric1_2 = {}
+
+    cells_asymmetric2_1 = {}
+    cells_asymmetric2_2 = {}
+
+    for idx in detected_cell_lineage.keys():
+        for cell_name in detected_cell_lineage[idx]:
+            # print(cell_name)
+            cells_asymmetric1_1[cell_name] = []
+            cells_asymmetric1_2[cell_name] = []
+
+            cells_asymmetric2_1[cell_name] = []
+            cells_asymmetric2_2[cell_name] = []
+
+    for embryo_name in embryo_names:
+        # --------------------the tree of this embryo-------------------------------------
+        cell_tree_file_path = os.path.join(config.data_path + r'lineage_tree/LifeSpan',
+                                           'Sample{}_cell_life_tree'.format(embryo_name))
+        with open(cell_tree_file_path, 'rb') as f:
+            # print(f)
+            embryo_tree = Tree(load(f))
+        # -------------------------------------------------------------------------------
+
+        # --------------------------the feature file path-- you can modify------------------
+        eigengrid_file_path = os.path.join(config.data_path, 'my_data_csv/Spectrum_no_C00_csv',
+                                           'Sample{}_dynamic_spectrum_no_C00.csv'.format(embryo_name))
+        df_eigengrid = read_csv_to_df(eigengrid_file_path)
+        for cell_name in cells_asymmetric1_1.keys():
+            children_list = embryo_tree.children(cell_name)
+            child1 = children_list[0].identifier
+            child2 = children_list[1].identifier
+
+            if child1 in df_eigengrid.index and child2 in df_eigengrid.index:
+                # ------------------the dissimilarity between cells------------------
+
+                cells_asymmetric1_1[cell_name].append(np.sqrt(
+                    # np.sum(np.power(df_eigengrid.loc[child1][1:] - df_eigengrid.loc[child2][1:], 2))))
+                    np.sum(np.power(df_eigengrid.loc[child1] - df_eigengrid.loc[child2], 2))))
+
+                # tmp_cell_asymmetric=np.sqrt(np.sum(np.power(np.abs(df_eigengrid.loc[child1][:6] / df_eigengrid.loc[child2][:6]), 2)))
+                # cells_asymmetric1_2[cell_name].append(tmp_cell_asymmetric if tmp_cell_asymmetric>1 else 1/tmp_cell_asymmetric)
+
+                cells_asymmetric2_1[cell_name].append(np.abs(df_eigengrid.loc[child1][0] - df_eigengrid.loc[child2][0]))
+                # tmp_cell_asymmetric=np.abs(df_eigengrid.loc[child1][0] / df_eigengrid.loc[child2][0])
+                # cells_asymmetric2_2[cell_name].append(tmp_cell_asymmetric if tmp_cell_asymmetric>1 else 1/tmp_cell_asymmetric)
+
+    df_symmetry_cellname = pd.DataFrame(
+        # columns=['cell_name', 'asymmetry1-1', 'asymmetry1-2', 'asymmetry2-1', 'asymmetry2-2'])
+        columns=['cell_name', 'asymmetry1-1', 'asymmetry2-1'])
+    for cell_name in cells_asymmetric1_1.keys():
+        for ith, _ in enumerate(cells_asymmetric1_1[cell_name]):
+            df_symmetry_cellname.loc[str(ith) + '-' + cell_name] = [cell_name, cells_asymmetric1_1[cell_name][ith],
+                                                                    # cells_asymmetric1_2[cell_name][ith],
+                                                                    cells_asymmetric2_1[cell_name][ith],
+                                                                    # cells_asymmetric2_2[cell_name][ith]]
+                                                                    ]
+
+    print(df_symmetry_cellname)
+    sns.set_theme(style="whitegrid")
+    # print(df_symmetry_cellname['asymmetry1-1'].quantile(.25))
+
+    ax = sns.boxplot(x="asymmetry1-1", y="cell_name", data=df_symmetry_cellname, orient="h", showfliers=False)
+    # ax = sns.boxplot(data=iris, orient="h", palette="Set2")
+    plt.show()
+
+
+def division_time_asymmetry(frame_time_ratio=1.39):
+    # time segregation ratio
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    for embryo_name in embryo_names:
+        # --------------------the tree of this embryo-------------------------------------
+        cell_tree_file_path = os.path.join(config.data_path + r'lineage_tree/LifeSpan',
+                                           'Sample{}_cell_life_tree'.format(embryo_name))
+        df_time_segregation_ratio = pd.DataFrame(
+            columns=['cell_cycle_length', 'cell_cycle_asymmetric_ratio', 'division_time_asymmetry',
+                     'cell_cycle_segregation_ratio', 'division_time_segregation_asymmetry', ])
+        with open(cell_tree_file_path, 'rb') as f:
+            # print(f)
+            embryo_tree = Tree(load(f))
+        # for cell_name in tqdm(embryo_tree.expand_tree(), desc="dealing with Sample{}".format(embryo_name)):
+        for cell_name in embryo_tree.expand_tree(sorting=False):
+
+            cell_time = embryo_tree.get_node(cell_name).data.get_time()
+            # print(embryo_name,cell_name,cell_time)
+
+            if len(cell_time) == 0:
+                print('no this cell', 'Sample{}  '.format(embryo_name), cell_name)
+            elif cell_time[0] < 150:
+                # 1.cell_cycle_length
+                cell_cycle_length = len(cell_time) * frame_time_ratio
+
+                # parent=embryo_tree.parent(cell_name).identifier
+                twins = embryo_tree.children(embryo_tree.parent(cell_name).identifier)
+                sister = twins[1] if twins[0].identifier == cell_name else twins[0]
+                sister_time = sister.data.get_time()
+                # 2.cell_cycle_asymmetric_ratio
+                cell_cycle_asymmetric_ratio = 0
+                division_time_asymmetry = 0
+                if len(sister_time) != 0:
+                    cell_cycle_asymmetry_tmp = len(cell_time) / len(sister_time)
+                    cell_cycle_asymmetric_ratio = cell_cycle_asymmetry_tmp if cell_cycle_asymmetry_tmp > 1 else 1 / cell_cycle_asymmetry_tmp
+                    # 3.division_time_asymmetry
+                    division_time_asymmetry = abs(cell_time[-1] - sister_time[-1]) * frame_time_ratio
+
+                cell_cycle_segregation_ratio = 0
+                division_time_segregation_asymmetry = 0
+                children_list = embryo_tree.children(cell_name)
+                if len(children_list) == 2:
+
+                    child1_time = children_list[0].data.get_time()
+                    child2_time = children_list[1].data.get_time()
+
+                    if len(child1_time) != 0 and len(child2_time) != 0:
+                        # 4.cell_cycle_segregation_ratio
+                        cell_cycle_segregation_ratio_tmp = len(child1_time) / len(child2_time)
+                        cell_cycle_segregation_ratio = cell_cycle_segregation_ratio_tmp if cell_cycle_segregation_ratio_tmp > 1 else 1 / cell_cycle_segregation_ratio_tmp
+                        # 5. division_time_segregation_asymmetry
+                        division_time_segregation_asymmetry = abs(child1_time[-1] - child2_time[-1]) * frame_time_ratio
+                # add these 5 time feature (characteristics) in to dataframe
+                df_time_segregation_ratio.loc[cell_name] = [cell_cycle_length, cell_cycle_asymmetric_ratio,
+                                                            division_time_asymmetry, cell_cycle_segregation_ratio,
+                                                            division_time_segregation_asymmetry]
+        df_time_segregation_ratio.to_csv(
+            os.path.join(config.data_path, 'my_data_csv/time_segregation_ratio', 'Sample{}.csv'.format(embryo_name)))
+    # we need to calculate ficision time asymmetric and cell cycle length
+
+
+def cell_shape_feature_final_2D_grid_base_part1():
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+
+    # dict_final_fea_part1={}
+    dict_index = {}
+    arr_fea = None
+    for embryo_name in embryo_names:
+        df_grid = read_csv_to_df(
+            os.path.join(config.data_path, r'my_data_csv\SH_time_domain_csv', '2D_matrix_Sample{}'.format(embryo_name)))
+
+        dict_index[embryo_name] = df_grid.index
+        if arr_fea:
+            arr_fea = np.concatenate((arr_fea, df_grid.values), axis=0)
+        else:
+            arr_fea = df_grid.values
+    print(arr_fea.shape)
+
+    pca_grid = PCA(n_components=3).fit_transform(arr_fea)
+    kernelpca_grid = KernelPCA(n_components=3, kernel='sigmoid').fit_transform(arr_fea)
+    tsne_grid = TSNE(n_components=3, learning_rate='auto', init='pca').fit_transform(arr_fea)
+    umap_grid = umap.UMAP().fit_transform(arr_fea)
+    # df_norm_grid
+
+    fea_index = 0
+    for embryo_name in embryo_names:
+        # features reading
+        cell_number_length = len(dict_index[embryo_name])
+        df_fea = pd.DataFrame(index=dict_index[embryo_name],
+                              columns=['eigengrid0', 'eigengrid1', 'eigengrid2',
+                                       'kernel_eigengrid0', 'kernel_eigengrid1', 'kernel_eigengrid2',
+                                       'grid_tSNEx', 'grid_tSNEy', 'grid_tSNEz',
+                                       'grid_UMAPx', 'grid_UMAPy', 'grid_UMAPz'
+                                       ],
+                              data=np.concatenate(pca_grid[fea_index:fea_index + cell_number_length],
+                                                  kernelpca_grid[fea_index:fea_index + cell_number_length],
+                                                  tsne_grid[fea_index:fea_index + cell_number_length],
+                                                  umap_grid[fea_index:fea_index + cell_number_length]))
+        fea_index=fea_index+cell_number_length
+        print(df_fea)
+        df_fea.to_csv(os.path.join(config.data_path,r'cell_shape_feature\2D_grid','Sample{}'.format(embryo_name)))
+
+
+def correlation_matrix_of_cell_shape_fea_and_time_fea():
+    X = []
+    Y = []
+
+    # --------------------cell fate----------------------------------------------
+    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    this_cell_fate_dict = {}
+    for idx in df_cell_fate.index:
+        this_cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+    # print(this_cell_fate_dict)
+
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    for embryo_name in embryo_names:
+
+        # features reading
+        path_fea_csv = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv/' + 'Sample{}LabelUnified_dynamic_eigengrid.csv'.format(
+            embryo_name)
+        df_eigengrid = read_csv_to_df(path_fea_csv)
+
+        path_fea_csv = config.data_path + r'my_data_csv/norm_SH_PCA_csv/' + 'Sample{}LabelUnified_dynamic_eigenharmonic12_norm.csv'.format(
+            embryo_name)
+        df_eigenharmonic = read_csv_to_df(path_fea_csv)
+
+        # ------------spectrum norm----------------------------------------
+        path_fea_csv = config.data_path + r'my_data_csv/norm_Spectrum_csv/' + 'Sample{}LabelUnified_dynamic_spectrum.csv'.format(
+            embryo_name)
+        df_spectrum = read_csv_to_df(path_fea_csv)
+
+        hop = 1
+        path_saving_enhanced_spectrum = config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
+        df_dynamic_spectrum_h1 = read_csv_to_df(
+            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
+        hop = 3
+        df_dynamic_spectrum_h3 = read_csv_to_df(
+            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
+
+        path_fea_csv = config.data_path + r'my_data_csv/Spectrum_no_C00_csv/' + 'Sample{}_dynamic_spectrum_no_C00.csv'.format(
+            embryo_name)
+        df_noC00spectrum = read_csv_to_df(path_fea_csv)
+
+        hop = 1
+        path_saving_enhanced_spectrum = config.data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(
+            str(hop))
+        df_dynamic_n00spectrum_h1 = read_csv_to_df(
+            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
+
+        hop = 3
+        path_saving_enhanced_spectrum = config.data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(
+            str(hop))
+        df_dynamic_n00spectrum_h3 = read_csv_to_df(
+            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
+
+        # -------------Y ---------biological meaning------------------------
+        df_time_segregation_ratio = read_csv_to_df(
+            os.path.join(config.data_path, 'my_data_csv/time_segregation_ratio', 'Sample{}.csv'.format(embryo_name)))
+        for idx in df_time_segregation_ratio.index:
+            print(embryo_name, idx)
+            Y.append(list(df_time_segregation_ratio.loc[idx]) + [cell_fate_map[this_cell_fate_dict[idx]]])
+            X.append(list(df_eigengrid.loc[idx][:6]) +
+                     list(df_eigenharmonic.loc[idx][:6]) +
+                     list(df_spectrum.loc[idx]) +
+                     list(df_dynamic_spectrum_h1.loc[idx]) +
+                     list(df_dynamic_spectrum_h3.loc[idx]) +
+                     list(df_noC00spectrum.loc[idx]) +
+                     list(df_dynamic_n00spectrum_h1.loc[idx]) +
+                     list(df_dynamic_n00spectrum_h3.loc[idx]))
+
+    X_arr = np.array(X)
+    Y_arr = np.array(Y)
+    print(X_arr, X_arr.shape)
+    print(Y_arr, Y_arr.shape)
+    for i in range(Y_arr.shape[1]):
+        # print(X_arr.shape)
+        # print(Y_arr[i].shape)
+        for j, value in enumerate(r_regression(X_arr, Y_arr[:, i])):
+            if value > 0.1:
+                print(i, j, value)
+
+
+def sns_pairplot_visualization():
+    # get cell fate dictionary
+    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    cell_fate_dict = {}
+    for idx in df_cell_fate.index:
+        cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+
+    # eigengrid or what, just change the directory path and the file name
+    path_saving_dynamic_eigengrid = config.data_path + r'my_data_csv/norm_Spectrum_csv'
+    df_dynamic_f = read_csv_to_df(
+        os.path.join(path_saving_dynamic_eigengrid, 'Mean_cellLineageTree_static_Spectrum.csv'))
+
+    y_fate = []
+    for cell_name in df_dynamic_f.index:
+        cell_name = cell_name.split('::')[1]
+        if cell_name in cell_fate_dict.keys():
+            y_fate.append(cell_fate_dict[cell_name])
+        else:
+            y_fate.append('Unspecified')
+
+    df_used = pd.DataFrame(df_dynamic_f.values[:, 1:11])
+    df_used['cell_fate'] = pd.Series(np.array(y_fate))
+    # df_dynamic_f['cell_fate'] = pd.Series(digits.target).map(lambda x: ' {}'.format(cell_fate_map[x]))
+    # https://seaborn.pydata.org/generated/seaborn.pairplot.html !!!!!!!!!!!!!!!!!!!!
+    sns.pairplot(df_used, hue='cell_fate')
+    plt.show()
+
+
+def t_sne_visualization():
+    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    cell_fate_dict = {}
+    for idx in df_cell_fate.index:
+        cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+
+    time_start_threshold = 150
+    # eigengrid or what, just change the directory path and the file name
+    path_saving_dynamic_eigengrid = config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
+    df_dynamic_f = read_csv_to_df(
+        os.path.join(path_saving_dynamic_eigengrid, 'Mean_cellLineageTree_static_enhanced_h3_M.csv'))
+    # ------------different color means different cell fate ----------------
+    y_label = []
+    X_fea = []
+    for idx in df_dynamic_f.index:
+        cell_frame = idx.split('::')[0]
+        if int(cell_frame) > time_start_threshold:
+            X_fea.append(df_dynamic_f.loc[idx])
+            cell_name = idx.split('::')[1]
+            if cell_name in cell_fate_dict.keys():
+                y_label.append(cell_fate_dict[cell_name])
+            else:
+                y_label.append('Unspecified')
+
+    fea_embedded = TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(np.array(X_fea))
+    df_dynamic_f['cell_fate'] = pd.Series(np.array(y_label))
+    # ---------------plot with plt.scatter---------------
+    colors = [sns.color_palette()[x] for x in range(9)]
+    cmap = ListedColormap(colors)
+    plt.scatter(
+        fea_embedded[:, 0],
+        fea_embedded[:, 1],
+        c=[x for x in pd.Series(np.array(y_label)).map(cell_fate_map)], cmap=cmap)
+    # c=y_label)
+    plt.gca().set_aspect('equal', 'datalim')
+    plt.title('TSNE projection of the cell feature dataset', fontsize=24)
+
+    plt.colorbar()
+    plt.show()
+
+
+def umap_visualization_1():
+    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    cell_fate_dict = {}
+    for idx in df_cell_fate.index:
+        cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+
+    time_start_threshold = 150
+    # eigengrid or what, just change the directory path and the file name
+    path_saving_dynamic_eigengrid = config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
+    df_dynamic_f = read_csv_to_df(
+        os.path.join(path_saving_dynamic_eigengrid, 'Mean_cellLineageTree_static_enhanced_h3_M.csv'))
+
+    # ------------different color means different cell fate ----------------
+    y_label = []
+    X_fea = []
+    for idx in df_dynamic_f.index:
+        cell_frame = idx.split('::')[0]
+        if int(cell_frame) > time_start_threshold:
+            X_fea.append(df_dynamic_f.loc[idx])
+            cell_name = idx.split('::')[1]
+            if cell_name in cell_fate_dict.keys():
+                y_label.append(cell_fate_dict[cell_name])
+            else:
+                y_label.append('Unspecified')
+
+    # # -----------different color means different time -----------
+    # y_label = []
+    # for cell_name in df_dynamic_f.index:
+    #     cell_frame=cell_name.split('::')[1]
+    #     y_label.append(int(int(cell_frame)/20))
+
+    reducer = umap.UMAP()
+    scaled_cell_fea_data = StandardScaler().fit_transform(X_fea)
+    embedding = reducer.fit_transform(scaled_cell_fea_data)
+    df_dynamic_f['cell_fate'] = pd.Series(np.array(y_label))
+    # ---------------plot with plt.scatter---------------
+    colors = [sns.color_palette()[x] for x in range(9)]
+    cmap = ListedColormap(colors)
+    plt.scatter(
+        embedding[:, 0],
+        embedding[:, 1],
+        c=[x for x in pd.Series(np.array(y_label)).map(cell_fate_map)], cmap=cmap)
+    # c=y_label)
+    plt.gca().set_aspect('equal', 'datalim')
+    plt.title('UMAP projection of the cell feature dataset', fontsize=24)
+
+    plt.colorbar()
+    plt.show()
+
+    # mapper=umap.UMAP().fit(df_dynamic_f.values[:,1:])
+    # umap.plot.points(mapper, labels=np.array(y_label), theme='fire')
+    # plt.show()
 
 
 if __name__ == "__main__":
     print('test2 run')
-    while(True):
-        plot_voxel_and_reconstructed_surface_01paper()
+    # enhanced_graph_wavelet_feature()
+    # division_time_asymmetry()
+
+    cell_shape_feature_final_2D_grid_base_part1()
+
+    # while(True):
+    #     plot_voxel_and_reconstructed_surface_01paper()

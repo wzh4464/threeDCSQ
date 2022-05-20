@@ -1,4 +1,4 @@
-data_path = r'D:\cell_shape_quantification\DATA/'
+data_path = r'D:\cell_shape_quantification\DATA\\'
 
 dir_segemented_tmp1 = data_path + r'Embryo04LabelUnified'
 

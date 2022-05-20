@@ -2103,7 +2103,7 @@ def cluster_acc_spectrum_01paper():
         single_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
         print('dynamic feature spectrum single', single_acc_list[-1])
 
-    print('================individual clustering score==========')
+    print('================individual accuracy ==========')
 
     print('static feature spectrum Kmeans  ', sum(kmeans_acc_list_static) / len(kmeans_acc_list_static))
     print('static feature spectrum ward   ', sum(ward_acc_list_static) / len(ward_acc_list_static))
@@ -2946,19 +2946,19 @@ def cluster_silhouette_score_spectrum_01paper():
         cluster_arr=np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_score_list_static.append(silhouette_score(cluster_arr, y_kmeans_estimation))
-        print('static feature eigenharmonic Kmeans', kmeans_score_list_static[-1])
+        print('static feature SPECTRUM Kmeans', kmeans_score_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
         ward_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
-        print('static feature eigenharmonic ward', ward_score_list_static[-1])
+        print('static feature SPECTRUM ward', ward_score_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
         average_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
-        print('static feature eigenharmonic average', average_score_list_static[-1])
+        print('static feature SPECTRUM average', average_score_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
         maximum_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
-        print('static feature eigenharmonic maximum', maximum_score_list_static[-1])
+        print('static feature SPECTRUM maximum', maximum_score_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
         single_score_list_static.append(silhouette_score(cluster_arr, y_agglo))
-        print('static feature eigenharmonic single', single_score_list_static[-1])
+        print('static feature SPECTRUM single', single_score_list_static[-1])
         # -------------------------------------------------------------------------
 
         # --------------------dynamic feature--------------------------------------
@@ -3058,12 +3058,13 @@ def cluster_silhouette_score_spectrum_01paper():
 # do the clustering for static feature if avaliable.
 def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
 
+    hop=1
     df_pd_values_dict={}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     path_saving_enhanced_spectrum=config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
     for embryo_name in embryo_names:
         cell_list_dict = {}
-        path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,'Sample{}_h3_M.csv'.format(embryo_name))
+        path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,'Sample{}_h{}_M.csv'.format(embryo_name,str(hop)))
         df_pd_values_dict[embryo_name] = read_csv_to_df(path_spectrum_csv)
         for idx in df_pd_values_dict[embryo_name].index:
             cell_name = idx.split('::')[1]
@@ -3079,7 +3080,7 @@ def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
             # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
             df_dynamci_f.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
         print(embryo_name, df_dynamci_f)
-        df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h3_M.csv'.format(embryo_name)))
+        df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h{}_M.csv'.format(embryo_name,str(hop))))
 
     # ====================calculate average of 17 embryos==============================
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
@@ -3103,11 +3104,11 @@ def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
             else:
                 df_static_mean_tree.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list), axis=0)
     print(df_static_mean_tree)
-    df_static_mean_tree.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_static_enhanced_h3_M.csv'))
+    df_static_mean_tree.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_static_enhanced_h{}_M.csv'.format(str(hop))))
 
     embryo_list_dict = {}
     for embryo_name in embryo_names:
-        df_dynamic_spectrum = read_csv_to_df(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h3_M.csv'.format(embryo_name)))
+        df_dynamic_spectrum = read_csv_to_df(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h{}_M.csv'.format(embryo_name,str(hop))))
         for cell_name in df_dynamic_spectrum.index:
             # cell_name = idx.split('::')[1]
             if cell_name in embryo_list_dict.keys():
@@ -3123,7 +3124,7 @@ def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
         df_dynamci_f.loc[cell_name] = np.mean(np.array(embryo_list_dict[cell_name]), axis=0)
     print('avg:', df_dynamci_f)
     # 看一下效果，如果和其他一個吊樣就把c0_0去掉
-    df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_dynamic_enhanced_h3_M.csv'))
+    df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_dynamic_enhanced_h{}_M.csv'.format(str(hop))))
 
 def cluster_acc_and_score_enhanced_spectrum_norm():
     """
@@ -3419,7 +3420,6 @@ def construct_mean_tree_and_dynamic_spectrum_no_C00():
     # 看一下效果，如果和其他一個吊樣就把c0_0去掉
     df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_dynamic_spectrum_no_C00.csv'))
 
-
 def cluster_acc_and_score_spectrum_no_C00():
     """
     do clustering with SPECTRUM feature vector , ACCURACY AND SILHOUETTE SCORE
@@ -3643,9 +3643,80 @@ def cluster_acc_and_score_spectrum_no_C00():
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('dynamic single', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
 
+def construct_mean_tree_and_dynamic_enhanced_noC00spectrum():
+
+    hop=1
+    fea_num=25
+    df_pd_values_dict={}
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    path_saving_enhanced_spectrum=config.data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(str(hop))
+    for embryo_name in embryo_names:
+        cell_list_dict = {}
+        path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,'Sample{}_h{}_M.csv'.format(embryo_name,str(hop)))
+        df_pd_values_dict[embryo_name] = read_csv_to_df(path_spectrum_csv)
+        for idx in df_pd_values_dict[embryo_name].index:
+            cell_name = idx.split('::')[1]
+            if cell_name in cell_list_dict.keys():
+                cell_list_dict[cell_name].append(list(df_pd_values_dict[embryo_name].loc[idx]))
+            else:
+                # print(df_values_dict.loc[idx])
+                cell_list_dict[cell_name] = [list(df_pd_values_dict[embryo_name].loc[idx])]
+        df_dynamci_f = pd.DataFrame(columns=range(fea_num))
+        for cell_name in cell_list_dict.keys():
+            # print(cell_list_dict[cell_name])
+            # print(np.array(cell_list_dict[cell_name]))
+            # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
+            df_dynamci_f.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+        print(embryo_name, df_dynamci_f)
+        df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h{}_M.csv'.format(embryo_name,str(hop))))
+
+    # ====================calculate average of 17 embryos==============================
+    cell_combine_tree, begin_frame = get_combined_lineage_tree()
+    # ------static eigenharmonic weight in mean cell lineage tree-----------------------
+    df_static_mean_tree = pd.DataFrame(columns=range(fea_num))
+    for node_id in cell_combine_tree.expand_tree(sorting=False):
+        for time_int in cell_combine_tree.get_node(node_id).data.get_time():
+            # if time_int > 0:
+            tp_value_list = []
+            for embryo_name in df_pd_values_dict.keys():
+                frame_int = int(time_int / 1.39 + begin_frame[embryo_name])
+                frame_and_cell_index = f'{frame_int:03}' + '::' + node_id
+                if frame_and_cell_index in df_pd_values_dict[embryo_name].index:
+                    # print(frame_and_cell_index,df_pd_values_dict[embryo_name].loc[frame_and_cell_index][column])
+                    tp_value_list.append(df_pd_values_dict[embryo_name].loc[frame_and_cell_index])
+
+            # we have already got all values at this time from all(17) embryos, we just need to draw its average
+            tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+            if len(tp_value_list) == 0:  # need to do interpolation
+                print('lost cell even in mean cell lineage tree', tp_and_cell_index, tp_value_list)
+            else:
+                df_static_mean_tree.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list), axis=0)
+    print(df_static_mean_tree)
+    df_static_mean_tree.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_static_enhanced_h{}_M.csv'.format(str(hop))))
+
+    embryo_list_dict = {}
+    for embryo_name in embryo_names:
+        df_dynamic_spectrum = read_csv_to_df(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h{}_M.csv'.format(embryo_name,str(hop))))
+        for cell_name in df_dynamic_spectrum.index:
+            # cell_name = idx.split('::')[1]
+            if cell_name in embryo_list_dict.keys():
+                embryo_list_dict[cell_name].append(list(df_dynamic_spectrum.loc[cell_name]))
+            else:
+                # print(df_values_dict.loc[idx])
+                embryo_list_dict[cell_name] = [list(df_dynamic_spectrum.loc[cell_name])]
+    df_dynamci_f = pd.DataFrame(columns=range(fea_num))
+    for cell_name in embryo_list_dict.keys():
+        # print(cell_list_dict[cell_name])
+        # print(np.array(cell_list_dict[cell_name]))
+        # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
+        df_dynamci_f.loc[cell_name] = np.mean(np.array(embryo_list_dict[cell_name]), axis=0)
+    print('avg:', df_dynamci_f)
+    # 看一下效果，如果和其他一個吊樣就把c0_0去掉
+    df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_dynamic_enhanced_h{}_M.csv'.format(str(hop))))
+
 if __name__ == "__main__":
     # a={1:[1,2],2:[4,5]}
     # print([a[x] for x in a.keys()])
     # clustering_original_and_normalized_feature_vector()
     # cluster_with_lifespan_shape_features()
-    cluster_acc_and_score_spectrum_no_C00()
+    construct_mean_tree_and_dynamic_enhanced_noC00spectrum()
