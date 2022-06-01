@@ -769,6 +769,7 @@ def display_Map_2D_eigengrid_01paper():
     pca_instance = PCA_f.read_PCA_file(
         os.path.join(config.data_path, 'my_data_csv/PCA_file/2D_matrix_norm_PCA.csv'))
     plt.rcParams['text.usetex'] = True
+    # plt.rc.update({'text.usetex': True})
     figure, axes = plt.subplots(nrows=2, ncols=3, figsize=(16, 10))
 
     for i in range(6):
@@ -777,32 +778,32 @@ def display_Map_2D_eigengrid_01paper():
         print(grid_tmp)
         x, y = int(i / 3), i % 3
         if i == 0:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
                           xlabel=r'',
                           ylabel=r'Latitude (\textit{degree} \textdegree)', axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
         elif i == 3:  # from 12 figures to 6 figures
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
                           xlabel=r'Longitude (\textit{degree} \textdegree)',
                           ylabel=r'Latitude (\textit{degree} \textdegree)', axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
         elif i == 4:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
                           xlabel=r'Longitude (\textit{degree} \textdegree)',
                           ylabel=r'', axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
         elif i == 2:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
                           xlabel='',
                           ylabel='',axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
         elif i == 5:  # from 12 figures to 6 figures
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
                           xlabel=r'Longitude (\textit{degree} \textdegree)',
                           ylabel='', axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
         elif i == 1:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
                           xlabel='',
                           ylabel='',axes_labelsize=22,tick_labelsize=12,titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
@@ -810,11 +811,11 @@ def display_Map_2D_eigengrid_01paper():
         #               xlabel=r'Longitude (degree \textdegree)',
         #               ylabel=r'Latitude (degree \textdegree)', axes_labelsize=12,
         #               tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
-    plt.show()
-    # plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.svg',
-    #             format='svg')
-    # plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong\Documents\01paper\Figure04.pdf',
-    #             format='pdf')
+    # plt.show()
+    plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\Documents\01paper\Figure04.svg',
+                format='svg')
+    plt.savefig(r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\Documents\01paper\Figure04.pdf',
+                format='pdf')
 
 
 def SPHARM_eigenharmonic():
@@ -997,7 +998,7 @@ def construct_mean_tree_and_dynamic_spectrum_01paper():
     # 看一下效果，如果和其他一個吊樣就把c0_0去掉
     df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_dynamic_spectrum.csv'))
 
-def draw_2Dmatrix_pca_linear_relationship():
+def draw_2Dmatrix_pca_linear_relationship_dynamic_01paper():
     norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
 
     df_avg_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path, 'Mean_cellLineageTree_dynamic_eigengrid.csv'))
@@ -1041,8 +1042,8 @@ def draw_2Dmatrix_pca_linear_relationship():
             else:
                 dict_var2[cell_name]=[value2_avg-value2_this]
         c = color_list[color_num]
-        axes[0].scatter(x=x1, y=y1, c=c)
-        axes[1].scatter(x=x2, y=y2, c=c)
+        axes[0].scatter(x=x1, y=y1, c=c,s=.1)
+        axes[1].scatter(x=x2, y=y2, c=c,s=.1)
 
         # tmp = np.abs(np.array(x1) - np.array(y1))
         # print(np.histogram(tmp,bins=[0,50,100,800]))
@@ -1064,15 +1065,116 @@ def draw_2Dmatrix_pca_linear_relationship():
     axes[0].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
     axes[0].set_xlim((start, stop))
     axes[0].set_ylim((start, stop))
-    axes[0].set_xlabel("Average weight of eigengrid 0", fontsize=22)
-    axes[0].set_ylabel("Weight of eigengrid 0 in individuals", fontsize=22)
-    axes[1].plot(np.arange(start=-150, stop=(200 + 1), step=1), np.arange(start=-150, stop=(200 + 1), step=1))
-    axes[1].set_xlim((-150, 200))
-    axes[1].set_ylim((-150, 200))
-    axes[1].set_xlabel("Average weight of eigengrid 2", fontsize=22)
-    axes[1].set_ylabel("Weight of eigengrid 2 in individuals", fontsize=22)
+    axes[0].set_xlabel("Average weight of eigengrid 1", fontsize=22)
+    axes[0].set_ylabel("Weight of eigengrid 1 in individuals", fontsize=22)
+    axes[1].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
+    axes[1].set_xlim((start, stop))
+    axes[1].set_ylim((start, stop))
+    axes[1].set_xlabel("Average weight of eigengrid 3", fontsize=22)
+    axes[1].set_ylabel("Weight of eigengrid 3 in individuals", fontsize=22)
 
-    figure_tmp.suptitle("Eigengrid 0 & 2 weight reproducibility", fontsize=28)
+    figure_tmp.suptitle("(Dynamic) Eigengrid 1 & 3 weights' reproducibility", fontsize=28)
+    plt.show()
+
+def draw_2Dmatrix_pca_linear_relationship_static_01paper():
+    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+
+    df_mean_tree_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path, 'Mean_cellLineageTree_static_eigengrid.csv'))
+
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+
+    figure_tmp, axes = plt.subplots(1, 2, figsize=(20, 10))
+
+    column1 = str(0)
+    column2 = str(2)
+    start = -350
+    stop = 350
+
+    time_frame_ratio=1.39
+    # color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+    dict_var1={}
+    dict_var2={}
+    cell_combine_tree, begin_frame = get_combined_lineage_tree()
+
+    X1=[]
+    Y1=[]
+    Color1=[]
+    X2=[]
+    Y2=[]
+    Color2=[]
+    for embryo_name in embryo_names:
+        x1, x2 = [], []
+        y1, y2 = [], []
+        embryo_num = int(embryo_name)
+        color_num = embryo_num
+        df_individual_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
+                                                'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv'))
+        for idx in df_individual_fea.index:
+            [frame,cell_name]=idx.split('::')
+            time_point=str(int((int(frame)-begin_frame[embryo_name])*time_frame_ratio)).zfill(3)
+
+            if time_point+'::'+cell_name not in df_mean_tree_fea.index:
+                continue
+
+            value1_this=df_individual_fea.at[idx, column1]
+            value1_avg=df_mean_tree_fea.at[time_point+'::'+cell_name, column1]
+            value2_this=df_individual_fea.at[idx, column2]
+            value2_avg=df_mean_tree_fea.at[time_point+'::'+cell_name, column2]
+            x1.append(value1_avg)
+            y1.append(value1_this)
+            x2.append(value2_avg)
+            y2.append(value2_this)
+
+            if cell_name in dict_var1.keys():
+                dict_var1[cell_name].append(value1_avg-value1_this)
+            else:
+                dict_var1[cell_name]=[value1_avg-value1_this]
+
+            if cell_name in dict_var2.keys():
+                dict_var2[cell_name].append(value2_avg-value2_this)
+            else:
+                dict_var2[cell_name]=[value2_avg-value2_this]
+        X1=X1+x1
+        Y1=Y1+y1
+        X2=X2+x2
+        Y2=Y2+y2
+        Color1=Color1+[color_num] * len(x1)
+        Color2 = Color2 + [color_num] * len(x2)
+
+
+        # tmp = np.abs(np.array(x1) - np.array(y1))
+        # print(np.histogram(tmp,bins=[0,50,100,800]))
+        # print('average variation coefficient', np.mean(tmp), 'min ', np.min(tmp), 'max ', np.max(tmp))
+        #
+        # tmp=np.abs(np.array(x2)-np.array(y2))
+        # # print(tmp)
+        # print('average variation coefficient', np.mean(tmp),'min ',np.min(tmp),'max ',np.max(tmp))
+        # # print(np.abs(np.array(x1) - np.array(y1)))
+        # # print(np.array(x1))
+
+        # plt.show()
+
+    mean_embryo_1218_value1=[]
+    for cell_idx in dict_var1.keys():
+        mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]),2))**(1/2))
+    print(np.histogram(np.array(mean_embryo_1218_value1),bins=[0,10,20,30,40,50,100]))
+
+    axes[0].scatter(x=X1, y=Y1, c=Color1, cmap='tab20', s=.1)
+    axes[1].scatter(x=X2, y=Y2, c=Color2, cmap='tab20', s=.1)
+
+    axes[0].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
+    axes[0].set_xlim((start, stop))
+    axes[0].set_ylim((start, stop))
+    axes[0].set_xlabel("Average weight of eigengrid 1", fontsize=22)
+    axes[0].set_ylabel("Weight of eigengrid 1 in individuals", fontsize=22)
+    axes[1].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
+    axes[1].set_xlim((start, stop))
+    axes[1].set_ylim((start, stop))
+    axes[1].set_xlabel("Average weight of eigengrid 3", fontsize=22)
+    axes[1].set_ylabel("Weight of eigengrid 3 in individuals", fontsize=22)
+
+    figure_tmp.suptitle("(Static) Eigengrid 1 & 3 weights' reproducibility", fontsize=28)
     plt.show()
 
 
@@ -1160,7 +1262,7 @@ def construct_mean_tree_and_dynamic_eigenharmonic_01paper():
                                           'Mean_cellLineageTree_dynamic_eigenharmonic.csv'))
 
 
-def draw_shcpca_linear_relationship_01paper():
+def draw_shcpca_linear_relationship_dynamic_01paper():
     norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
 
     pca_num = 12
@@ -1206,8 +1308,8 @@ def draw_shcpca_linear_relationship_01paper():
             else:
                 dict_var2[cell_name] = [value2_avg - value2_this]
         c = color_list[color_num]
-        axes[0].scatter(x=x1, y=y1, c=c)
-        axes[1].scatter(x=x2, y=y2, c=c)
+        axes[0].scatter(x=x1, y=y1, c=c,s=.1)
+        axes[1].scatter(x=x2, y=y2, c=c,s=.1)
         # plt.show()
 
     mean_embryo_1218_value1 = []
@@ -1218,19 +1320,120 @@ def draw_shcpca_linear_relationship_01paper():
     axes[0].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
     axes[0].set_xlim((start, stop))
     axes[0].set_ylim((start, stop))
-    axes[0].set_xlabel("Average weight of eigenharmonic 0", fontsize=22)
-    axes[0].set_ylabel("Weight of eigenharmonic 0 in individuals", fontsize=22)
+    axes[0].set_xlabel("Average weight of eigenharmonic 1", fontsize=22)
+    axes[0].set_ylabel("Weight of eigenharmonic 1 in individuals", fontsize=22)
     start = -3
     stop = 3
     axes[1].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
     axes[1].set_xlim((start, stop))
     axes[1].set_ylim((start, stop))
-    axes[1].set_xlabel("Average weight of eigenharmonic 1", fontsize=22)
-    axes[1].set_ylabel("Weight of eigenharmonic 1 in individuals", fontsize=22)
+    axes[1].set_xlabel("Average weight of eigenharmonic 2", fontsize=22)
+    axes[1].set_ylabel("Weight of eigenharmonic 2 in individuals", fontsize=22)
 
-    figure_tmp.suptitle("Eigenharmonic 0 & 1 weight reproducibility", fontsize=28)
+    figure_tmp.suptitle("(Dynamic) Eigenharmonic 1 & 2 weights' reproducibility", fontsize=28)
     plt.show()
 
+def draw_shcpca_linear_relationship_static_01paper():
+    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
+
+    df_mean_tree_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
+                                                'Mean_cellLineageTree_static_eigenharmonic.csv'))
+
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+
+    figure_tmp, axes = plt.subplots(1, 2, figsize=(20, 10))
+
+    column1 = str(0)
+    column2 = str(1)
+    start = -5
+    stop = 5
+
+    time_frame_ratio=1.39
+    # color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+    dict_var1={}
+    dict_var2={}
+    cell_combine_tree, begin_frame = get_combined_lineage_tree()
+
+    X1=[]
+    Y1=[]
+    Color1=[]
+    X2=[]
+    Y2=[]
+    Color2=[]
+    for embryo_name in embryo_names:
+        x1, x2 = [], []
+        y1, y2 = [], []
+        embryo_num = int(embryo_name)
+        color_num = embryo_num
+        df_individual_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
+                                                'Sample' + embryo_name + 'LabelUnified_SHcPCA12_norm.csv'))
+        for idx in df_individual_fea.index:
+            [frame,cell_name]=idx.split('::')
+            time_point=str(int((int(frame)-begin_frame[embryo_name])*time_frame_ratio)).zfill(3)
+
+            if time_point+'::'+cell_name not in df_mean_tree_fea.index:
+                continue
+
+            value1_this=df_individual_fea.at[idx, column1]
+            value1_avg=df_mean_tree_fea.at[time_point+'::'+cell_name, column1]
+            value2_this=df_individual_fea.at[idx, column2]
+            value2_avg=df_mean_tree_fea.at[time_point+'::'+cell_name, column2]
+            x1.append(value1_avg)
+            y1.append(value1_this)
+            x2.append(value2_avg)
+            y2.append(value2_this)
+
+            if cell_name in dict_var1.keys():
+                dict_var1[cell_name].append(value1_avg-value1_this)
+            else:
+                dict_var1[cell_name]=[value1_avg-value1_this]
+
+            if cell_name in dict_var2.keys():
+                dict_var2[cell_name].append(value2_avg-value2_this)
+            else:
+                dict_var2[cell_name]=[value2_avg-value2_this]
+        X1=X1+x1
+        Y1=Y1+y1
+        X2=X2+x2
+        Y2=Y2+y2
+        Color1=Color1+[color_num] * len(x1)
+        Color2 = Color2 + [color_num] * len(x2)
+
+
+        # tmp = np.abs(np.array(x1) - np.array(y1))
+        # print(np.histogram(tmp,bins=[0,50,100,800]))
+        # print('average variation coefficient', np.mean(tmp), 'min ', np.min(tmp), 'max ', np.max(tmp))
+        #
+        # tmp=np.abs(np.array(x2)-np.array(y2))
+        # # print(tmp)
+        # print('average variation coefficient', np.mean(tmp),'min ',np.min(tmp),'max ',np.max(tmp))
+        # # print(np.abs(np.array(x1) - np.array(y1)))
+        # # print(np.array(x1))
+
+        # plt.show()
+
+    mean_embryo_1218_value1=[]
+    for cell_idx in dict_var1.keys():
+        mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]),2))**(1/2))
+    print(np.histogram(np.array(mean_embryo_1218_value1),bins=[0,10,20,30,40,50,100]))
+
+    axes[0].scatter(x=X1, y=Y1, c=Color1, cmap='tab20', s=.01)
+    axes[1].scatter(x=X2, y=Y2, c=Color2, cmap='tab20', s=.01)
+
+    axes[0].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
+    axes[0].set_xlim((start, stop))
+    axes[0].set_ylim((start, stop))
+    axes[0].set_xlabel("Average weight of eigenharmonic 1", fontsize=22)
+    axes[0].set_ylabel("Weight of eigenharmonic 1 in individuals", fontsize=22)
+    axes[1].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
+    axes[1].set_xlim((start, stop))
+    axes[1].set_ylim((start, stop))
+    axes[1].set_xlabel("Average weight of eigenharmonic 2", fontsize=22)
+    axes[1].set_ylabel("Weight of eigenharmonic 2 in individuals", fontsize=22)
+
+    figure_tmp.suptitle("(Static) Eigenharmonic 1 & 2 weights' reproducibility", fontsize=28)
+    plt.show()
 
 from pickle import load
 from treelib import Tree
@@ -3719,4 +3922,4 @@ if __name__ == "__main__":
     # print([a[x] for x in a.keys()])
     # clustering_original_and_normalized_feature_vector()
     # cluster_with_lifespan_shape_features()
-    construct_mean_tree_and_dynamic_enhanced_noC00spectrum()
+    draw_2Dmatrix_pca_linear_relationship_static_01paper()

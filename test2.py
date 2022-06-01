@@ -684,7 +684,7 @@ def display_contact_points():
         contact_mesh = o3d.geometry.TriangleMesh(o3d.cpu.pybind.utility.Vector3dVector(verts),
                                                  o3d.cpu.pybind.utility.Vector3iVector(faces))
 
-        print(idx, '  matching cubes method surface area:', mesh_surface_area(verts, faces) / 2)
+        print(idx, '  marching cubes method surface area:', mesh_surface_area(verts, faces) / 2)
 
         contact_mesh.compute_vertex_normals()
         o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
@@ -751,6 +751,7 @@ def calculate_SH_PCA_coordinate():
 
 def plot_voxel_and_reconstructed_surface_01paper():
     # Sample05,ABpl,014
+    # Sample04,ABpl,012
     """
     plot original surface and reconstructed surface through SPHARM
     """
@@ -765,7 +766,7 @@ def plot_voxel_and_reconstructed_surface_01paper():
     the following plotted figure need configure then capture to .png
     
     camera position and rotation: paste action in figure window
-    
+    # Sample04,ABpl,012
     {
 	"class_name" : "ViewTrajectory",
 	"interval" : 29,
@@ -812,10 +813,22 @@ def plot_voxel_and_reconstructed_surface_01paper():
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     m_pcd = o3d.geometry.PointCloud()
-    resctruct_xyz = do_reconstruction_for_SH(500, sh_instance)
+    resctruct_xyz = do_reconstruction_for_SH(100, sh_instance)
+    print(resctruct_xyz)
+    pd.DataFrame(resctruct_xyz).to_csv("{}.csv".format(embryo_name+' '+cell_name+' ' + tp))
     m_pcd.points = o3d.utility.Vector3dVector(resctruct_xyz)
     m_pcd.estimate_normals()
-    o3d.visualization.draw_geometries([m_pcd])
+    # o3d.visualization.draw_geometries([m_pcd],{
+    o3d.visualization.draw_geometries(geometry_list=[m_pcd],
+                                      window_name=embryo_name+' '+cell_name+' ' + tp,
+                                      # boundingbox_max=[58.949796990685456, 73.062096966802002, 17.53928827322666],
+                                      # boundingbox_min=[-58.050203009314544, -64.937903033197998, -32.46071172677334],
+                                      # field_of_view=60.0,
+                                      front=[-0.022170625825107981, 0.031107593735803508, -0.9992701241218469],
+                                      lookat=[0.44979699068545642, 4.0620969668020024, -7.46071172677334],
+                                      up=[0.039903629142300223, 0.99874686470810126, 0.030205969890268435],
+                                      zoom=0.69999999999999996)
+
     # ==================================================================================
 
 
@@ -1343,22 +1356,28 @@ def cell_shape_feature_final_2D_grid_base_part1():
     arr_fea = None
     for embryo_name in embryo_names:
         df_grid = read_csv_to_df(
-            os.path.join(config.data_path, r'my_data_csv\SH_time_domain_csv', '2D_matrix_Sample{}'.format(embryo_name)))
+            os.path.join(config.data_path, r'my_data_csv\SH_time_domain_csv',
+                         '2D_matrix_Sample{}_norm.csv'.format(embryo_name)))
 
         dict_index[embryo_name] = df_grid.index
-        if arr_fea:
+        if arr_fea is not None:
             arr_fea = np.concatenate((arr_fea, df_grid.values), axis=0)
         else:
             arr_fea = df_grid.values
     print(arr_fea.shape)
 
-    pca_grid = PCA(n_components=3).fit_transform(arr_fea)
-    kernelpca_grid = KernelPCA(n_components=3, kernel='sigmoid').fit_transform(arr_fea)
-    tsne_grid = TSNE(n_components=3, learning_rate='auto', init='pca').fit_transform(arr_fea)
+    print('linear pca part')
+    pca_grid = PCA(n_components=50).fit_transform(arr_fea)
+    print('kernel pca part')
+    kernelpca_grid = KernelPCA(n_components=3, kernel='sigmoid').fit_transform(pca_grid)
+    print('tsne part')
+    tsne_grid = TSNE(n_components=3, learning_rate='auto', init='pca').fit_transform(pca_grid)
+    print('umap part')
     umap_grid = umap.UMAP().fit_transform(arr_fea)
     # df_norm_grid
 
     fea_index = 0
+    print('concatenate part')
     for embryo_name in embryo_names:
         # features reading
         cell_number_length = len(dict_index[embryo_name])
@@ -1368,13 +1387,13 @@ def cell_shape_feature_final_2D_grid_base_part1():
                                        'grid_tSNEx', 'grid_tSNEy', 'grid_tSNEz',
                                        'grid_UMAPx', 'grid_UMAPy', 'grid_UMAPz'
                                        ],
-                              data=np.concatenate(pca_grid[fea_index:fea_index + cell_number_length],
+                              data=np.concatenate(pca_grid[fea_index:fea_index + cell_number_length, :3],
                                                   kernelpca_grid[fea_index:fea_index + cell_number_length],
                                                   tsne_grid[fea_index:fea_index + cell_number_length],
                                                   umap_grid[fea_index:fea_index + cell_number_length]))
-        fea_index=fea_index+cell_number_length
+        fea_index = fea_index + cell_number_length
         print(df_fea)
-        df_fea.to_csv(os.path.join(config.data_path,r'cell_shape_feature\2D_grid','Sample{}'.format(embryo_name)))
+        df_fea.to_csv(os.path.join(config.data_path, r'cell_shape_feature\2D_grid', 'Sample{}.csv'.format(embryo_name)))
 
 
 def correlation_matrix_of_cell_shape_fea_and_time_fea():
@@ -1584,7 +1603,7 @@ if __name__ == "__main__":
     # enhanced_graph_wavelet_feature()
     # division_time_asymmetry()
 
-    cell_shape_feature_final_2D_grid_base_part1()
+    # plot_voxel_and_reconstructed_surface_01paper()
 
-    # while(True):
-    #     plot_voxel_and_reconstructed_surface_01paper()
+    while (True):
+        plot_voxel_and_reconstructed_surface_01paper()

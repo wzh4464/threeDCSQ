@@ -102,7 +102,7 @@ def draw_spharm_pca_lifespan(embryo_name, embryo_time_tree, print_num=4):
     pca_num = 12
 
 
-def draw_static_eigenmatrix_meantree(print_num=2):
+def draw_static_eigengrid_meantree(print_num=2):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
 
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
@@ -119,7 +119,7 @@ def draw_static_eigenmatrix_meantree(print_num=2):
 
     # frame = time / 1.39 +begin_frame
     for i in range(print_num):
-        column = str(i)
+        column = str(i+1)
         values_dict = {}
         for node_id in cell_combine_tree.expand_tree(sorting=False):
             for time_int in cell_combine_tree.get_node(node_id).data.get_time():
@@ -172,8 +172,7 @@ def draw_static_eigenmatrix_meantree(print_num=2):
         # cmap_list = ListedColormap(colors)
         cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
         draw_cell_lineage_tree(cell_combine_tree, values_dict=values_dict,
-                               embryo_name='combine_tree',
-                               plot_title='Static feature - eigengrid ' + column + ' mean cell lineage tree',
+                               plot_title='(Static) Eigengrid ' + column + ' on average cell lineage tree',
                                color_map=cmap1)
 
 
@@ -252,7 +251,7 @@ def draw_static_eigenharmonic_meantree(print_num=2):
                                plot_title='average SPHARM\'s ' + column + 'th principle component', color_map=cmap1)
 
 
-def draw_eigenmatrix_dynamic_mean_tree(print_num=2):
+def draw_eigengrid_dynamic_mean_tree(print_num=2):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
     pca_num = 12
     norm_shcpca_csv_path = data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
@@ -267,7 +266,7 @@ def draw_eigenmatrix_dynamic_mean_tree(print_num=2):
 
     # frame = time / 1.39 +begin_frame
     for i in range(print_num):
-        column = str(i)
+        column = str(i+1)
         values_dict = {}
         for node_id in cell_combine_tree.expand_tree(sorting=False):
             for time_int in cell_combine_tree.get_node(node_id).data.get_time():
@@ -281,9 +280,8 @@ def draw_eigenmatrix_dynamic_mean_tree(print_num=2):
 
         cmap1 = LinearSegmentedColormap.from_list("mycmap", colors2)
         draw_cell_lineage_tree(cell_combine_tree, values_dict=values_dict,
-                               embryo_name='combine_tree',
-                               plot_title='Dynamic feature - eigengrid ' + column + ' mean cell lineage tree-24cellstage',
-                               color_map=cmap1, end_time_point=60)
+                               plot_title='Dynamic feature - eigengrid ' + column + ' average cell lineage tree',
+                               color_map=cmap1, end_time_point=220)
 
 
 def draw_shc_PCA_dynamic_mean_tree(print_num=2):
@@ -320,7 +318,7 @@ def draw_shc_PCA_dynamic_mean_tree(print_num=2):
                                color_map=cmap1)
 
 
-def draw_cell_fate_lineage_tree():
+def draw_cell_fate_lineage_tree_01paper():
     cell_fate_map = {'Unspecified': 0, 'Other': 1, 'Death': 2, 'Neuron': 3, 'Intestin': 4, 'Muscle': 5, 'Pharynx': 6,
                      'Skin': 7, 'Germ Cell': 8}
     cell_combine_tree, begin_frame = data_struct.get_combined_lineage_tree()
@@ -346,9 +344,9 @@ def draw_cell_fate_lineage_tree():
 
 
 if __name__ == "__main__":
-    draw_static_each_embryo_cell_lineage_tree(max_frame=75)
+    # draw_static_each_embryo_cell_lineage_tree(max_frame=75)
     # draw_2Dmatrix_PCA_combined()
     # draw_PCA_combined(print_num=12)
-    # draw_eigenmatrix_dynamic_mean_tree(print_num=1)
+    draw_eigengrid_dynamic_mean_tree(print_num=1)
     # draw_tree_test()
     # data_struct.get_combined_lineage_tree()
