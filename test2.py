@@ -728,10 +728,12 @@ def display_contact_alpha_surface():
     m_mesh = generate_alpha_shape(cell_points_building_as, displaying=True)
     # ---------------------------finished generating alpha shape -------------------------------
 
-    with open(os.path.join(r'./DATA/cell_dia_surface', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
+    with open(os.path.join(r'./DATA/cell_dia_surface', embryo_name, embryo_name + '_' + tp + '_segCell.json'),
+              'rb') as fp:
         surface_data = json.load(fp)
 
-    with open(os.path.join(r'./DATA/cshaper_contact_data', embryo_name + '_' + tp + '_segCell.json'), 'rb') as fp:
+    with open(os.path.join(r'./DATA/cshaper_contact_data', embryo_name, embryo_name + '_' + tp + '_segCell.json'),
+              'rb') as fp:
         surface_contact_data = json.load(fp)
 
     get_contact_surface_mesh(this_cell_keys, surface_data, surface_contact_data, m_mesh, True)
@@ -815,12 +817,12 @@ def plot_voxel_and_reconstructed_surface_01paper():
     m_pcd = o3d.geometry.PointCloud()
     resctruct_xyz = do_reconstruction_for_SH(100, sh_instance)
     print(resctruct_xyz)
-    pd.DataFrame(resctruct_xyz).to_csv("{}.csv".format(embryo_name+' '+cell_name+' ' + tp))
+    pd.DataFrame(resctruct_xyz).to_csv("{}.csv".format(embryo_name + ' ' + cell_name + ' ' + tp))
     m_pcd.points = o3d.utility.Vector3dVector(resctruct_xyz)
     m_pcd.estimate_normals()
     # o3d.visualization.draw_geometries([m_pcd],{
     o3d.visualization.draw_geometries(geometry_list=[m_pcd],
-                                      window_name=embryo_name+' '+cell_name+' ' + tp,
+                                      window_name=embryo_name + ' ' + cell_name + ' ' + tp,
                                       # boundingbox_max=[58.949796990685456, 73.062096966802002, 17.53928827322666],
                                       # boundingbox_min=[-58.050203009314544, -64.937903033197998, -32.46071172677334],
                                       # field_of_view=60.0,
@@ -1604,6 +1606,7 @@ if __name__ == "__main__":
     # division_time_asymmetry()
 
     # plot_voxel_and_reconstructed_surface_01paper()
+    display_contact_alpha_surface()
 
-    while (True):
-        plot_voxel_and_reconstructed_surface_01paper()
+    # while (True):
+    #     plot_voxel_and_reconstructed_surface_01paper()
