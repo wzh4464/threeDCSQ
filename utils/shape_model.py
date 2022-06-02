@@ -5,6 +5,7 @@
 # import dependency library
 from copy import deepcopy
 from json import load
+from time import time
 
 import open3d as o3d
 import numpy as np
@@ -13,6 +14,8 @@ import urllib.request
 import tarfile
 import gzip
 import shutil
+
+
 
 
 # import user defined library
@@ -40,29 +43,55 @@ def get_contact_surface_mesh(cell_key: int, surface_data: dict, surface_contact_
             display_key_list.append(idx)
 
     item_count = 1
-    print('contact cell number', len(display_key_list))
-    print(len(surface_data[str(cell_key)]))
+    print('===========>contact with cell number', len(display_key_list),len(surface_data[str(cell_key)]))
 
     # enumerate each contact surface (cell - cell)
     for idx in display_key_list:
-        # build a mask to erase not contact points
-        contact_mask_not = [False for i in range(len(cell_vertices))]
-        print(idx)
-        # enumerate each points in contact,
-        for item_str in surface_data[str(cell_key)]:
-            if item_str not in surface_contact_data[idx]:
-                x, y, z = item_str.split('_')
-                x, y, z = int(x), int(y), int(z)
-                # print(np.prod(cell_vertices == [x, y, z], axis=-1))
-                contact_vertices_loc = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
-                # t1,
-                if len(contact_vertices_loc[0]) != 0:
-                    contact_mask_not[contact_vertices_loc[0][0]] = True
+        print(cell_key,idx)
 
+
+        # # --------------------- build a mask to erase not contact points------------------
+        # time0=time()
+        # contact_mask_not = [False for i in range(len(cell_vertices))]
+        # # enumerate each points in contact,
+        # for item_str in surface_data[str(cell_key)]:
+        #     if item_str not in surface_contact_data[idx]:
+        #         x, y, z = item_str.split('_')
+        #         x, y, z = int(x), int(y), int(z)
+        #         # print(np.prod(cell_vertices == [x, y, z], axis=-1))
+        #         no_contact_vertices_loc = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
+        #         # t1,
+        #         if len(no_contact_vertices_loc[0]) != 0:
+        #             contact_mask_not[no_contact_vertices_loc[0][0]] = True
+        # contact_mesh = deepcopy(m_mesh)
+        # contact_mesh.remove_vertices_by_mask(contact_mask_not)
+        # print('timing', time() - time0)
+
+        # ---------------------directly------------------------------------------
+        # contact_vertices_loc_tmp=None
+        # contact_mask=[]
+        # # contact_vertices = None
+        time0=time()
+        contact_mask_not = [True for i in range(len(cell_vertices))]
+        for item_str in surface_contact_data[idx]:
+            x, y, z = item_str.split('_')
+            x, y, z = int(x), int(y), int(z)
+            # print(np.prod(cell_vertices == [x, y, z], axis=-1))
+            contact_vertices_loc_tmp = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
+
+            # contact_vertices=np.concatenate(contact_vertices,contact_mesh_direct.vertices[])
+            # if len(contact_vertices_loc_tmp[0]) != 0:
+            #     contact_mask.append(contact_vertices_loc_tmp[0][0])
+            # t1,
+            if len(contact_vertices_loc_tmp[0]) != 0:
+                    contact_mask_not[contact_vertices_loc_tmp[0][0]] = False
+        # ----------------mesh -------------------------
         # contact_vertices_loc=np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
         # contact_mask_not=np.logical_not(np.prod(cell_vertices == [x, y, z], axis=-1))
         contact_mesh = deepcopy(m_mesh)
         contact_mesh.remove_vertices_by_mask(contact_mask_not)
+        print('timing',time()-time0)
+
 
         print('mesh info', contact_mesh)
         print('edge manifold', contact_mesh.is_edge_manifold(allow_boundary_edges=True))

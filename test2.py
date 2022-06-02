@@ -717,14 +717,14 @@ def display_contact_alpha_surface():
     with open(os.path.join(r'./DATA/cell_dia_points', embryo_name + '_' + tp + '_segCell.json')) as fp:
         cell_data = json.load(fp)
     cell_points_building_as = []
-    print(cell_data.keys())
+    # print(cell_data.keys())
     for item_str in cell_data[str(this_cell_keys)]:
         x, y, z = item_str.split('_')
         x, y, z = float(x) + uniform(0, 0.001), float(y) + uniform(0, 0.001), float(
             z) + uniform(0, 0.001)
         cell_points_building_as.append([x, y, z])
     cell_points_building_as = np.array(cell_points_building_as)
-    print(cell_points_building_as)
+    # print(cell_points_building_as)
     m_mesh = generate_alpha_shape(cell_points_building_as, displaying=True)
     # ---------------------------finished generating alpha shape -------------------------------
 
@@ -1610,3 +1610,4 @@ if __name__ == "__main__":
 
     # while (True):
     #     plot_voxel_and_reconstructed_surface_01paper()
+
