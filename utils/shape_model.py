@@ -16,8 +16,6 @@ import gzip
 import shutil
 
 
-
-
 # import user defined library
 
 
@@ -43,12 +41,14 @@ def get_contact_surface_mesh(cell_key: int, surface_data: dict, surface_contact_
             display_key_list.append(idx)
 
     item_count = 1
-    print('===========>contact with cell number', len(display_key_list),len(surface_data[str(cell_key)]))
+    print('===========>contact with cell number', len(display_key_list), len(surface_data[str(cell_key)]))
 
+    contact_list=[]
+    cell_volume_size = m_mesh.get_volume()
+    cell_surface_area = m_mesh.get_surface_area()
     # enumerate each contact surface (cell - cell)
     for idx in display_key_list:
-        print(cell_key,idx)
-
+        # print(cell_key,idx)
 
         # # --------------------- build a mask to erase not contact points------------------
         # time0=time()
@@ -71,7 +71,7 @@ def get_contact_surface_mesh(cell_key: int, surface_data: dict, surface_contact_
         # contact_vertices_loc_tmp=None
         # contact_mask=[]
         # # contact_vertices = None
-        time0=time()
+        # time0 = time()
         contact_mask_not = [True for i in range(len(cell_vertices))]
         for item_str in surface_contact_data[idx]:
             x, y, z = item_str.split('_')
@@ -84,17 +84,17 @@ def get_contact_surface_mesh(cell_key: int, surface_data: dict, surface_contact_
             #     contact_mask.append(contact_vertices_loc_tmp[0][0])
             # t1,
             if len(contact_vertices_loc_tmp[0]) != 0:
-                    contact_mask_not[contact_vertices_loc_tmp[0][0]] = False
+                contact_mask_not[contact_vertices_loc_tmp[0][0]] = False
         # ----------------mesh -------------------------
         # contact_vertices_loc=np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
         # contact_mask_not=np.logical_not(np.prod(cell_vertices == [x, y, z], axis=-1))
+
         contact_mesh = deepcopy(m_mesh)
         contact_mesh.remove_vertices_by_mask(contact_mask_not)
-        print('timing',time()-time0)
+        # print('timing', time() - time0)
 
-
-        print('mesh info', contact_mesh)
-        print('edge manifold', contact_mesh.is_edge_manifold(allow_boundary_edges=True))
+        # print('mesh info', contact_mesh)
+        # print('edge manifold', contact_mesh.is_edge_manifold(allow_boundary_edges=True))
         # print('edge manifold boundary', contact_mesh.is_edge_manifold(allow_boundary_edges=False))
 
         if displaying:
@@ -106,7 +106,8 @@ def get_contact_surface_mesh(cell_key: int, surface_data: dict, surface_contact_
                     vertex_colors[vertex_id] = [1, 0, 0]
             contact_mesh.vertex_colors = o3d.utility.Vector3dVector(vertex_colors)
 
-            print(idx,'  alpha shape method contace surface area',contact_mesh.get_surface_area())
+            print(cell_key, ' volume', cell_volume_size, ' surface area', cell_surface_area,
+                  '  alpha shape method contace surface area', contact_mesh.get_surface_area())
 
             o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True, mesh_show_wireframe=True)
         # p = Process(target=generate_alpha_shape,
@@ -114,6 +115,8 @@ def get_contact_surface_mesh(cell_key: int, surface_data: dict, surface_contact_
         # p.start()
 
         item_count += 1
+        contact_list.append(contact_mesh.get_surface_area())
+    print(cell_volume_size, cell_surface_area,contact_list)
 
 
 def get_armadillo_mesh():
@@ -178,7 +181,7 @@ def generate_alpha_shape(points_np: np.array, displaying: bool = False, alpha_va
     # the mesh is developed from http://www.open3d.org/docs/release/python_api/open3d.geometry.TriangleMesh.html
     m_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(m_pcd, alpha_value)
 
-    print('mesh info',m_mesh)
+    print('mesh info', m_mesh)
     print('edge manifold', m_mesh.is_edge_manifold(allow_boundary_edges=True))
     print('edge manifold boundary', m_mesh.is_edge_manifold(allow_boundary_edges=False))
     # print('vertex manifold', m_mesh.is_vertex_manifold())
@@ -187,7 +190,6 @@ def generate_alpha_shape(points_np: np.array, displaying: bool = False, alpha_va
     print(f"alpha={alpha_value:.3f}")
 
     if displaying:
-
 
         # add normals, add light effect
         m_mesh.compute_vertex_normals()

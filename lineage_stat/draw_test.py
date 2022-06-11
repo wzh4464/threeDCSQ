@@ -344,9 +344,9 @@ def draw_cell_fate_lineage_tree_01paper():
 
 
 if __name__ == "__main__":
-    # draw_static_each_embryo_cell_lineage_tree(max_frame=75)
+    draw_static_each_embryo_cell_lineage_tree(max_frame=150)
     # draw_2Dmatrix_PCA_combined()
     # draw_PCA_combined(print_num=12)
-    draw_eigengrid_dynamic_mean_tree(print_num=1)
+    # draw_eigengrid_dynamic_mean_tree(print_num=1)
     # draw_tree_test()
     # data_struct.get_combined_lineage_tree()

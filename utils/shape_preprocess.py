@@ -53,9 +53,8 @@ def export_dia_cell_points_json(volume):
             point_position_x, point_position_y, point_position_z = np.where(cell_point_mask == True)
             cell_points_list = []
             for i in range(len(point_position_x)):
-                cell_points_list.append(
-                    str(point_position_x[i]) + '_' + str(point_position_y[i]) + '_' + str(point_position_z[i]))
-            cell_dict[str(cell_idx)] = cell_points_list
+                cell_points_list.append((point_position_x[i],point_position_y[i],point_position_z[i]))
+            cell_dict[cell_idx] = cell_points_list
             print(cell_idx, 'surface points', len(point_position_x))
     return cell_dict
 
@@ -106,9 +105,9 @@ def get_contact_area(volume):
 
             contact_points_list = []
             for i in range(len(point_position_x)):
-                contact_points_list.append(
-                    str(point_position_x[i]) + '_' + str(point_position_y[i]) + '_' + str(point_position_z[i]))
-            str_key = str(label1) + '_' + str(label2)
-            print(str_key)
-            contact_points_dict[str_key] = contact_points_list
+                contact_points_list.append((point_position_x[i],point_position_y[i],point_position_z[i]))
+            # str_key = str(label1) + '_' + str(label2)
+            print((label1, label2))
+            contact_points_dict[(label1, label2)] = contact_points_list
+    # print(contact_points_dict)
     return cell_conatact_pair_renew, contact_area, contact_points_dict
