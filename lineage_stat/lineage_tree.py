@@ -18,8 +18,10 @@ import numpy as np
 
 from static.config import data_path
 
-def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot_title='', color_map='seismic',
-                        is_frame=False, time_resolution=1,is_abs=True):
+
+def draw_cell_lineage_tree(cell_tree: Tree, values_dict, plot_title='', color_map='seismic',
+                           is_frame=False, time_resolution=1, is_abs=True, end_time_point=None, showing=False,
+                           path_saving=os.path.join(data_path, r'lineage_tree\tree_plot')):
     """
 
     :param cell_tree:
@@ -28,21 +30,41 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
     :return:
     """
     drawing_points_array = []
+    if is_frame and end_time_point:
+        end_time_point = end_time_point * time_resolution
     # ABpl may appear 1 min later than ABal,we would set time 0 as ABa begin to split!
     # draw ABa, ABp, EMS, P1 only
     begin_frame = max(cell_tree.get_node('ABa').data.get_time()[-1], cell_tree.get_node('ABp').data.get_time()[-1])
     for node_id in cell_tree.expand_tree(sorting=False):
         this_cell_node = cell_tree.get_node(node_id)
+
+        # -------------draw specify range cell lineage tree--------------------
+        if len(this_cell_node.data.get_time()) == 0:
+            continue
+        time_int = this_cell_node.data.get_time()[0]
+        if end_time_point:  # the end time points for the lineage tree is set
+            if (is_frame and (time_int - begin_frame) * time_resolution > end_time_point) or time_int > end_time_point:
+                continue
+        # --------------------------------------------------------------
+
         for queue_index, time_int in enumerate(this_cell_node.data.get_time()):
             tp_and_cell_index = f'{time_int:03}' + '::' + node_id
+
+            # -------------draw specify range cell lineage tree--------------------
+            if end_time_point:  # the end time points for the lineage tree is set
+                if (is_frame and (
+                        time_int - begin_frame) * time_resolution > end_time_point) or time_int > end_time_point:
+                    continue
+            # --------------------------------------------------------------
+
             # print(values_dict)
             # print(this_cell_node.data.get_position_x(), time_int, values_dict[tp_and_cell_index])
             if tp_and_cell_index in values_dict.keys():
-                if is_frame:
+                if is_frame:  # the tree is count with frame rather than time points
                     drawing_points_array.append(
                         [this_cell_node.data.get_position_x(), -(time_int - begin_frame) * time_resolution,
                          values_dict[tp_and_cell_index]])
-                else:
+                else:  # the time is available from the frame
                     drawing_points_array.append(
                         [this_cell_node.data.get_position_x(), -time_int, values_dict[tp_and_cell_index]])
 
@@ -56,10 +78,10 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
                         else:
                             drawing_points_array.append([x, -time_int, values_dict[tp_and_cell_index]])
 
-    np_drawing_points_array = np.array(drawing_points_array)
 
     # make yellow to becom the colorbar center
     if is_abs:
+        np_drawing_points_array = np.array(drawing_points_array)
         edge_value = np.nanmax(np.abs(np_drawing_points_array[:, 2]))
         # print(np.average(np.abs(np_drawing_points_array[:, 2])))
         # print(np.nanmax(np.abs(np_drawing_points_array[:, 2])))
@@ -77,27 +99,37 @@ def draw_life_span_tree(cell_tree: Tree, values_dict: dict, embryo_name='', plot
     # plt.colorbar(sc,aspect=100,orientation="horizontal")
     plt.title(plot_title, fontsize=80)
 
-    saving_path = os.path.join(data_path + r'lineage_tree/tree_plot', embryo_name)
-    if not os.path.exists(saving_path):
-        os.mkdir(saving_path)
-    saving_path = os.path.join(saving_path, plot_title + '.pdf')
+    # saving_path = os.path.join(data_path + r'lineage_tree/tree_plot', embryo_name)
+    if not os.path.exists(path_saving):
+        os.mkdir(path_saving)
+    saving_path = os.path.join(path_saving, plot_title + '.pdf')
     print(saving_path)
 
-    cbar=plt.colorbar(location='bottom')
+    cbar = plt.colorbar(location='bottom')
     # ticklabs = cbar.ax.get_yticklabels()
     # cbar.ax.set_yticklabels(ticklabs,fontsize=40)
 
     # time axis !
-    # plt.arrow(-8500,220, 0, -100, shape='full', lw=0, length_includes_head=True, head_width=5)
-    plt.arrow(-8500, 20, 0, -230, width=20, shape='full', head_length=15)
-    plt.text(-8600, -250, 'min', fontsize=60)
-    plt.text(-8900, 0, '0', fontsize=60)
-    plt.text(-8900, -50, '50', fontsize=60)
-    plt.text(-8900, -100, '100', fontsize=60)
-    plt.text(-8900, -150, '150', fontsize=60)
-    plt.text(-8900, -200, '200', fontsize=60)
+    if not end_time_point:
+        # plt.arrow(-8500,220, 0, -100, shape='full', lw=0, length_includes_head=True, head_width=5)
+        plt.arrow(-8500, 20, 0, -230, width=20, shape='full', head_length=15)
+        plt.text(-8600, -250, 'min', fontsize=60)
+        plt.text(-8900, 0, '0', fontsize=60)
+        plt.text(-8900, -50, '50', fontsize=60)
+        plt.text(-8900, -100, '100', fontsize=60)
+        plt.text(-8900, -150, '150', fontsize=60)
+        plt.text(-8900, -200, '200', fontsize=60)
+    else:
+        plt.arrow(-8500, 20, 0, -end_time_point, width=20, shape='full', head_length=15)
+        plt.text(-8600, -(end_time_point + 20), 'min', fontsize=60)
+        plt.text(-8900, 0, '0', fontsize=60)
+        plt.text(-8900, -int(end_time_point / 5), str(int(end_time_point / 5)), fontsize=60)
+        plt.text(-8900, -int(end_time_point / 5) * 2, str(int(end_time_point / 5) * 2), fontsize=60)
+        plt.text(-8900, -int(end_time_point / 5) * 3, str(int(end_time_point / 5) * 3), fontsize=60)
+        plt.text(-8900, -int(end_time_point / 5) * 4, str(int(end_time_point / 5) * 4), fontsize=60)
 
-    # plt.show()
+    if showing:
+        plt.show()
     plt.savefig(saving_path, format='pdf')
 
 #

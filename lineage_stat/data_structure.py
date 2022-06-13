@@ -25,7 +25,7 @@ def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=da
                                        tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
     # print(begin_frame)
 
-    # use sample04 build basic tree
+    # use sample06 build basic tree
     cell_div_files_path = data_path + r"CDFilesBackup/CDSample{}.csv".format('06')
     tree_distance_num = 12
     name_dictionary_file_path = data_path + r"name_dictionary_no_name.csv"

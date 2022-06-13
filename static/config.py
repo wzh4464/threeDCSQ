@@ -1,4 +1,8 @@
-data_path = r'D:\cell_shape_quantification\DATA/'
+data_path = r'D:\cell_shape_quantification\DATA\\'
+
+data_CMAP_seg = r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\Documents\research_DATA\WebData_v7\\'
+
+data_cell_mesh_and_contact=r'D:\cell_shape_quantification\DATA\cell_mesh_contact\\'
 
 dir_segemented_tmp1 = data_path + r'Embryo04LabelUnified'
 
