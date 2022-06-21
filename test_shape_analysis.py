@@ -11,7 +11,7 @@ from time import time
 import multiprocessing as mp
 
 from scipy import ndimage
-from skimage.measure import marching_cubes, mesh_surface_area
+# from skimage.measure import marching_cubes, mesh_surface_area
 from tqdm import tqdm
 
 import static.config as my_config
@@ -36,9 +36,12 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     :return:
     """
     max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
+    # max_times = [205, 205, 255, 195, 195, 185]
+
     embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
                     '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
                     '200117plc1pop1ip3']
+    # embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1']
 
     for idx, embryo_name in enumerate(embryo_names):
         configs = []
@@ -52,7 +55,9 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
 
-        mpPool = mp.Pool(20)
+        mpPool = mp.Pool(40)
+        # mpPool = mp.Pool(9)
+
         for idx_, _ in enumerate(
             tqdm(mpPool.imap_unordered(calculate_cell_surface_and_contact_points,configs), total=max_times[idx],
                      desc="Naming {} segmentations (contact graph)".format(embryo_name))):
@@ -75,6 +80,14 @@ def calculate_cell_surface_and_contact_points(config_arg):
         # if os.path.isfile(os.path.join(path_tmp, file_name)):
     frame_this_embryo = str(time_point).zfill(3)
     file_name=embryo_name+'_'+frame_this_embryo+'_segCell.nii.gz'
+
+    # ------------if contact file exists, finish this embryo---------------
+    contact_saving_path = os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name,
+                                       file_name.split('.')[0] + '.pickle')
+    # ===============very important line===================
+    # if os.path.exists(contact_saving_path):
+    #     return 0
+    # =====================================================
 
     volume = nib.load(os.path.join(path_tmp, file_name)).get_fdata().astype(int).transpose([2, 1, 0])
     # this_img = load_nitf2_img()
@@ -103,7 +116,7 @@ def calculate_cell_surface_and_contact_points(config_arg):
         contact_mask = np.logical_and(ndimage.binary_dilation(volume == label1),
                                       ndimage.binary_dilation(volume == label2))
         contact_mask = np.logical_and(contact_mask, boundary_mask)
-        if contact_mask.sum() > 4:
+        if contact_mask.sum() > 2:
 
             cell_conatact_pair_renew.append((label1, label2))
             str_key = str(label1) + '_' + str(label2)
@@ -121,11 +134,8 @@ def calculate_cell_surface_and_contact_points(config_arg):
     contact_mesh_dict = {}
     showing_record = []
     if not is_calculate_contact_file:
-        print('loading ', my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name,
-              file_name.split('.')[0] + '.pickle')
-        with open(os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface',
-                               embryo_name, file_name.split('.')[0] + '.pickle'),
-                  'rb') as handle:
+        print('loading ', contact_saving_path)
+        with open(contact_saving_path,'rb') as handle:
             contact_mesh_dict = pickle.load(handle)
     # print(cell_list)
     for cell_key in cell_list:
@@ -144,9 +154,18 @@ def calculate_cell_surface_and_contact_points(config_arg):
                 tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_key) == 1)
                 sphere_list = np.concatenate(
                     (tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
-                sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.001,
+                sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.1,
                                                                                      (len(tuple_tmp[0]), 3))
-                m_mesh = generate_alpha_shape(sphere_list_adjusted, alpha_value=1, displaying=showCellMesh)
+                m_mesh = generate_alpha_shape(sphere_list_adjusted, displaying=showCellMesh)
+                if not m_mesh.is_watertight():
+                    for i in range(10):
+                        sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.01*(i+1),
+                                                                                             (len(tuple_tmp[0]), 3))
+                        m_mesh = generate_alpha_shape(sphere_list_adjusted, alpha_value=1+i*0.1,displaying=showCellMesh)
+                        if m_mesh.is_watertight():
+                            break
+                if not m_mesh.is_watertight():
+                    print('no watertight mesh even after 10 times generation!!!', file_name,cell_key)
                 # print('saving mesh')
                 o3d.io.write_triangle_mesh(cellMesh_file_saving_path, m_mesh)
                 # is_contact_file = True
@@ -164,6 +183,7 @@ def calculate_cell_surface_and_contact_points(config_arg):
 
                 for (cell1, cell2) in cell_conatact_pair_renew:
                     idx = str(cell1) + '_' + str(cell2)
+                    # idx_test=
                     if cell_key not in (cell1, cell2) or idx in contact_mesh_dict.keys():
                         continue
 
@@ -210,11 +230,10 @@ def calculate_cell_surface_and_contact_points(config_arg):
 
     # ------------saving contact file for an embryo------------
     if is_calculate_contact_file:
-        contact_saving_path = os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name)
-        if not os.path.exists(contact_saving_path):
-            os.mkdir(contact_saving_path)
-        with open(os.path.join(contact_saving_path, file_name.split('.')[0] + '.pickle'),
-                  'wb+') as handle:
+        # contact_saving_path = os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name)
+        if not os.path.exists(os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name)):
+            os.mkdir(os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name))
+        with open(contact_saving_path,'wb+') as handle:
             pickle.dump(contact_mesh_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # already get the contact pair and the contact points x y z
