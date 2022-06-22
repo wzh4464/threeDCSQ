@@ -55,8 +55,8 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
 
-        mpPool = mp.Pool(40)
-        # mpPool = mp.Pool(9)
+        # mpPool = mp.Pool(40)
+        mpPool = mp.Pool(9)
 
         for idx_, _ in enumerate(
             tqdm(mpPool.imap_unordered(calculate_cell_surface_and_contact_points,configs), total=max_times[idx],
@@ -85,8 +85,9 @@ def calculate_cell_surface_and_contact_points(config_arg):
     contact_saving_path = os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name,
                                        file_name.split('.')[0] + '.pickle')
     # ===============very important line===================
-    # if os.path.exists(contact_saving_path):
-    #     return 0
+    if os.path.exists(contact_saving_path):
+        print(contact_saving_path,' existed')
+        return 0
     # =====================================================
 
     volume = nib.load(os.path.join(path_tmp, file_name)).get_fdata().astype(int).transpose([2, 1, 0])
@@ -234,7 +235,7 @@ def calculate_cell_surface_and_contact_points(config_arg):
         if not os.path.exists(os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name)):
             os.mkdir(os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name))
         with open(contact_saving_path,'wb+') as handle:
-            pickle.dump(contact_mesh_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(contact_mesh_dict, handle, protocol=4)
 
     # already get the contact pair and the contact points x y z
     # return cell_conatact_pair_renew, contact_points_dict
