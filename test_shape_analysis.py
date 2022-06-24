@@ -17,7 +17,7 @@ from tqdm import tqdm
 import static.config as my_config
 from utils.cell_func import get_cell_name_affine_table
 from utils.general_func import load_nitf2_img
-from utils.shape_preprocess import get_contact_area, export_dia_cell_points_json, export_dia_cell_surface_points_json
+from utils.shape_preprocess import export_dia_cell_points_json
 from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 
 
@@ -35,13 +35,28 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     :param showCellContact:
     :return:
     """
-    max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
-    # max_times = [205, 205, 255, 195, 195, 185]
+    # max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
+    max_times = [205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
 
-    embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
-                    '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
-                    '200117plc1pop1ip3']
-    # embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1']
+    # embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
+    #                 '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
+    #                 '200117plc1pop1ip3']
+    embryo_names = ['200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
+                     '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
+                     '200117plc1pop1ip3']
+
+    # # --------TEST ONE EMBRYO-----------
+    # config_tmp = {}
+    # config_tmp["embryo_name"] = '191108plc1p1'
+    # config_tmp['is_calculate_cell_mesh'] = is_calculate_cell_mesh
+    # config_tmp['is_calculate_contact_file'] = is_calculate_contact_file
+    # config_tmp['showCellMesh'] = showCellMesh
+    # config_tmp['showCellContact'] = showCellContact
+    # config_tmp['time_point'] = 69
+    #
+    # calculate_cell_surface_and_contact_points(config_tmp)
+    # # --------------------------------
+    # input()
 
     for idx, embryo_name in enumerate(embryo_names):
         configs = []
@@ -55,8 +70,8 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
 
-        # mpPool = mp.Pool(40)
-        mpPool = mp.Pool(9)
+        mpPool = mp.Pool(30)
+        # mpPool = mp.Pool(9)
 
         for idx_, _ in enumerate(
             tqdm(mpPool.imap_unordered(calculate_cell_surface_and_contact_points,configs), total=max_times[idx],
@@ -65,7 +80,7 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
             pass
 
 
-def calculate_cell_surface_and_contact_points(config_arg):
+def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
     embryo_name=config_arg['embryo_name']
     is_calculate_cell_mesh=config_arg['is_calculate_cell_mesh']
     is_calculate_contact_file=config_arg['is_calculate_contact_file']
@@ -73,7 +88,7 @@ def calculate_cell_surface_and_contact_points(config_arg):
     showCellContact=config_arg['showCellContact']
     time_point=config_arg['time_point']
 
-    path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name, 'SegCell')
+    path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified')
 
     # ------------------------calculate surface points using dialation for each cell --------------------
     # for file_name in os.listdir(path_tmp):
@@ -82,13 +97,13 @@ def calculate_cell_surface_and_contact_points(config_arg):
     file_name=embryo_name+'_'+frame_this_embryo+'_segCell.nii.gz'
 
     # ------------if contact file exists, finish this embryo---------------
-    contact_saving_path = os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name,
-                                       file_name.split('.')[0] + '.pickle')
-    # ===============very important line===================
-    if os.path.exists(contact_saving_path):
-        print(contact_saving_path,' existed')
-        return 0
-    # =====================================================
+    # contact_saving_path = os.path.join(my_config.data_cell_mesh_and_contact, 'stat', embryo_name,
+    #                                    embryo_name+'_'+file_name.split('.')[0] + '_contact.txt')
+    # # ===============very important line===================
+    # if os.path.exists(contact_saving_path):
+    #     print(contact_saving_path,' existed')
+    #     return 0
+    # # =====================================================
 
     volume = nib.load(os.path.join(path_tmp, file_name)).get_fdata().astype(int).transpose([2, 1, 0])
     # this_img = load_nitf2_img()
@@ -130,112 +145,191 @@ def calculate_cell_surface_and_contact_points(config_arg):
                 contact_points_list.append([point_position_x[i], point_position_y[i], point_position_z[i]])
             # print(str_key)
             contact_points_dict[str_key] = contact_points_list
+            if is_debug:
+                print('contact',str_key,len(contact_points_list))
 
+    if is_debug:
+        print('volume info',np.unique(volume,return_counts=True))
     cell_list = np.unique(volume)
     contact_mesh_dict = {}
     showing_record = []
-    if not is_calculate_contact_file:
-        print('loading ', contact_saving_path)
-        with open(contact_saving_path,'rb') as handle:
-            contact_mesh_dict = pickle.load(handle)
+
+    volume_dict={}
+    surface_dict={}
+    contact_dict={}
+
+    if is_debug:
+        print('configuration',config_arg)
+        print('cell list ',cell_list)
+
+    # if not is_calculate_contact_file:
+    #     print('loading ', contact_saving_path)
+    #     with open(contact_saving_path,'rb') as handle:
+    #         contact_mesh_dict = pickle.load(handle)
+
     # print(cell_list)
+    weight_surface=1.2031
     for cell_key in cell_list:
         if cell_key != 0:
-
-            # ------------saving cell mesh---------------------
-            cellMesh_saving_path = os.path.join(my_config.data_cell_mesh_and_contact, '3DMesh',
-                                                embryo_name, frame_this_embryo)
-            if not os.path.exists(cellMesh_saving_path):
-                os.makedirs(cellMesh_saving_path)
-            cellMesh_file_saving_path = os.path.join(cellMesh_saving_path, str(cell_key) + '.ply')
-
-            # print(os.path.exists(cellMesh_file_saving_path))
-            if not os.path.exists(cellMesh_file_saving_path) or is_calculate_cell_mesh:
-                # print('calculating and saving', path_tmp, file_name,cell_key, ' surface')
-                tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_key) == 1)
-                sphere_list = np.concatenate(
-                    (tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
-                sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.1,
-                                                                                     (len(tuple_tmp[0]), 3))
-                m_mesh = generate_alpha_shape(sphere_list_adjusted, displaying=showCellMesh)
-                if not m_mesh.is_watertight():
-                    for i in range(10):
-                        sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.01*(i+1),
-                                                                                             (len(tuple_tmp[0]), 3))
-                        m_mesh = generate_alpha_shape(sphere_list_adjusted, alpha_value=1+i*0.1,displaying=showCellMesh)
-                        if m_mesh.is_watertight():
-                            break
-                if not m_mesh.is_watertight():
-                    print('no watertight mesh even after 10 times generation!!!', file_name,cell_key)
-                # print('saving mesh')
-                o3d.io.write_triangle_mesh(cellMesh_file_saving_path, m_mesh)
-                # is_contact_file = True
-            else:
-                print('reading or showing', cell_key)
-                m_mesh = o3d.io.read_triangle_mesh(cellMesh_file_saving_path)
-                if showCellMesh:
-                    o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True,
-                                                      mesh_show_wireframe=True)
-            # ============contact surface detection========================
-            cell_vertices = np.asarray(m_mesh.vertices).astype(int)
-            # ====================contact file ============================
-            if is_calculate_contact_file:
-                # ---------------saving contact file-----------------------------------
-
+            cell_mask=np.logical_xor(ndimage.binary_dilation(volume == cell_key),(volume == cell_key))
+            # if is_debug:
+            #     print('-------',cell_key,'---------')
+            #     print('surface num',(cell_mask==1).sum())
+            #     print('inside sum',(volume == cell_key).sum())
+            if (cell_mask==1).sum() > 15000:
+                volume_dict[cell_key]=(volume == cell_key).sum()
+                surface_dict[cell_key]=cell_mask.sum()*weight_surface # 1.2031... is derived by other papers
+                irregularity=surface_dict[cell_key]**(1/2)/volume_dict[cell_key]**(1/3)
+                if is_debug:
+                    print('irregularity   ',irregularity)
+                if irregularity< 2.199085:
+                    print('impossible small surface', time_point,cell_key)
                 for (cell1, cell2) in cell_conatact_pair_renew:
                     idx = str(cell1) + '_' + str(cell2)
                     # idx_test=
-                    if cell_key not in (cell1, cell2) or idx in contact_mesh_dict.keys():
+                    if cell_key not in (cell1, cell2) or idx in contact_dict.keys():
                         continue
-
                     # --------------------contact-----------------------------------------
-                    # print('calculating, saving or showing',path_tmp, file_name, idx, ' contact surface')
-
-                    # build a mask to erase not contact points
-                    # enumerate each points in contact surface
-                    contact_mask_not = [True for i in range(len(cell_vertices))]
-                    contact_vertices_loc_list = []
-                    for [x, y, z] in contact_points_dict[idx]:
-                        # print(x,y,z)
-                        contact_vertices_loc = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
-                        if len(contact_vertices_loc[0]) != 0:
-                            contact_vertices_loc_list.append(contact_vertices_loc[0][0])
-                            contact_mask_not[contact_vertices_loc[0][0]] = False
-                    contact_mesh_dict[idx] = contact_vertices_loc_list
-
-                    if showCellContact:
-                        contact_mesh = deepcopy(m_mesh)
-                        contact_mesh.remove_vertices_by_mask(contact_mask_not)
-                        o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True,
-                                                          mesh_show_wireframe=True)
-
-
+                    contact_dict[idx]=len(contact_points_dict[idx])*weight_surface
             else:
+                if is_debug:
+                    print(cell_key,'surface point num',(cell_mask == 1).sum(),' inside point num(dia)',(ndimage.binary_dilation(volume == cell_key) == 1).sum())
+                # ------------saving cell mesh---------------------
 
-                for (cell1, cell2) in cell_conatact_pair_renew:
-                    contact_mask_not = [True for i in range(len(cell_vertices))]
-                    idx = str(cell1) + '_' + str(cell2)
-                    if cell_key not in (cell1, cell2) or idx in showing_record:
-                        continue
-                    print('reading or showing', idx, ' contact surface')
-                    print(showing_record)
-                    showing_record.append(idx)
-                    for value_ in contact_mesh_dict[idx]:
-                        contact_mask_not[value_] = False
+                tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_key) == 1)
+                # print(len(tuple_tmp))
+                sphere_list = np.concatenate(
+                    (tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
+                adjusted_rate=0.01
+                sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, adjusted_rate,
+                                                                                     (len(tuple_tmp[0]), 3))
+                m_mesh = generate_alpha_shape(sphere_list_adjusted, displaying=showCellMesh)
 
-                    if showCellContact:
+                alpha_v = 1
+
+                if not m_mesh.is_watertight():
+                    for i in range(10):
+                        alpha_v = alpha_v+i*0.1
+                        sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, adjusted_rate*(i+1),
+                                                                                             (len(tuple_tmp[0]), 3))
+                        m_mesh = generate_alpha_shape(sphere_list_adjusted, alpha_value=alpha_v,displaying=showCellMesh)
+                        if is_debug:
+                            print('watertight', m_mesh.is_watertight())
+                            print(f"alpha={alpha_v:.3f}")
+                            print('edge manifold boundary', m_mesh.is_edge_manifold(allow_boundary_edges=False))
+
+                        if m_mesh.is_watertight():
+                            break
+                if is_debug:
+                    print(cell_key,'=======mesh info=========', m_mesh)
+                    print('edge manifold', m_mesh.is_edge_manifold(allow_boundary_edges=True))
+                    print('edge manifold boundary', m_mesh.is_edge_manifold(allow_boundary_edges=False))
+                    print('vertex manifold', m_mesh.is_vertex_manifold())
+                    print('watertight', m_mesh.is_watertight())
+                    print(f"alpha={alpha_v:.3f}")
+                    print('volume====>',m_mesh.get_volume(), 'using  ',(volume == cell_key).sum())
+                    print('surface area=======>',m_mesh.get_surface_area(),'weighted ', cell_mask.sum()*weight_surface)
+                    # o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True, mesh_show_wireframe=True,
+                    #                                   window_name=str(cell_key))
+                # -----------------can not get watertight cell anyway-----------------------------------
+                if not m_mesh.is_watertight():
+                    print('no watertight mesh even after 10 times generation!!!', file_name,cell_key,'use point sum')
+                    volume_dict[cell_key] = (volume == cell_key).sum()
+                    surface_dict[cell_key] = cell_mask.sum() * weight_surface  # 1.154... is derived by 2/sqrt(3)
+                    irregularity=(surface_dict[cell_key] ** (1 / 2) / volume_dict[cell_key] ** (1 / 3))
+                    if is_debug:
+                        print(irregularity)
+                    if  irregularity< 2.199085:
+                        print('impossible small surface!!!!!!!!!!!', time_point, cell_key)
+                    for (cell1, cell2) in cell_conatact_pair_renew:
+                        idx = str(cell1) + '_' + str(cell2)
+                        # idx_test=
+                        if cell_key not in (cell1, cell2) or idx in contact_dict.keys():
+                            continue
+                        # --------------------contact-----------------------------------------
+                        contact_dict[idx] = len(contact_points_dict[idx]) * weight_surface
+                    continue
+                else: # watertight mesh
+                    m_mesh = o3d.geometry.TriangleMesh(
+                        o3d.utility.Vector3dVector(np.asarray(m_mesh.vertices).astype(int)), m_mesh.triangles)
+                    volume_dict[cell_key]=(volume == cell_key).sum()
+                    surface_dict[cell_key]=m_mesh.get_surface_area()
+                    if (surface_dict[cell_key] ** (1 / 2) / volume_dict[cell_key] ** (1 / 3)) < 2.199085:
+                        print('impossible small surface', time_point, cell_key)
+
+                    # if is_debug:
+                    #     o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True,mesh_show_wireframe=True)
+                    #     print()
+                    # ============contact surface detection========================
+                    # cell_vertices = np.asarray(m_mesh.vertices).astype(int)
+                    cell_vertices = np.asarray(m_mesh.vertices)
+                    # ====================contact file ============================
+
+                    for (cell1, cell2) in cell_conatact_pair_renew:
+                        idx = str(cell1) + '_' + str(cell2)
+                        # idx_test=
+                        if cell_key not in (cell1, cell2) or idx in contact_dict.keys():
+                            continue
+                        # --------------------contact-----------------------------------------
+                        # print('calculating, saving or showing',path_tmp, file_name, idx, ' contact surface')
+
+                        # build a mask to erase not contact points
+                        # enumerate each points in contact surface
+                        contact_mask_not = [True for i in range(len(cell_vertices))]
+                        contact_vertices_loc_list = []
+                        for [x, y, z] in contact_points_dict[idx]:
+                            # print(x,y,z)
+                            contact_vertices_loc = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
+                            if len(contact_vertices_loc[0]) != 0:
+                                contact_vertices_loc_list.append(contact_vertices_loc[0][0])
+                                contact_mask_not[contact_vertices_loc[0][0]] = False
+                        contact_mesh_dict[idx] = contact_vertices_loc_list
                         contact_mesh = deepcopy(m_mesh)
                         contact_mesh.remove_vertices_by_mask(contact_mask_not)
-                        o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True,
-                                                          mesh_show_wireframe=True)
+                        alpha_surface_area = m_mesh.get_surface_area()
+                        points_surface_area =len(contact_points_dict[idx])*weight_surface
+                        contact_dict[idx]=alpha_surface_area if alpha_surface_area>points_surface_area else points_surface_area
 
-    # ------------saving contact file for an embryo------------
-    if is_calculate_contact_file:
-        # contact_saving_path = os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name)
-        if not os.path.exists(os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name)):
-            os.mkdir(os.path.join(my_config.data_cell_mesh_and_contact, 'contactSurface', embryo_name))
-        with open(contact_saving_path,'wb+') as handle:
-            pickle.dump(contact_mesh_dict, handle, protocol=4)
+
+                        if is_debug:
+                            contact_mesh = deepcopy(m_mesh)
+                            contact_mesh.remove_vertices_by_mask(contact_mask_not)
+                            print(idx, '=======mesh info=========', m_mesh)
+                            print('edge manifold', m_mesh.is_edge_manifold(allow_boundary_edges=True))
+                            print('edge manifold boundary', m_mesh.is_edge_manifold(allow_boundary_edges=False))
+                            print('vertex manifold', m_mesh.is_vertex_manifold())
+                            # print('watertight', m_mesh.is_watertight())
+                            print('surface area=======>', m_mesh.get_surface_area(),'while points num',points_surface_area)
+                            # o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True,
+                            #                                   mesh_show_wireframe=True)
+
+
+    # ------------saving volume surface and contact file for an embryo------------
+    # if is_calculate_contact_file:
+    path_tmp=os.path.join(my_config.data_cell_mesh_and_contact,'stat', embryo_name)
+    if not os.path.exists(path_tmp):
+        os.mkdir(path_tmp)
+    with open(os.path.join(path_tmp,file_name.split('.')[0] + '_volume.txt'),'wb+') as handle:
+        pickle.dump(volume_dict, handle, protocol=4)
+    with open(os.path.join(path_tmp,file_name.split('.')[0] + '_surface.txt'),'wb+') as handle:
+        pickle.dump(surface_dict, handle, protocol=4)
+    with open(os.path.join(path_tmp,file_name.split('.')[0] + '_contact.txt'),'wb+') as handle:
+        pickle.dump(contact_dict, handle, protocol=4)
+    if is_debug:
+        print('volume dict ',volume_dict)
+        print('surface dict',surface_dict)
+        print('contact dict',contact_dict)
+
+    # path_tmp=os.path.join(my_config.data_cell_mesh_and_contact,'tem', embryo_name)
+    # if not os.path.exists(path_tmp):
+    #     os.mkdir(path_tmp)
+    # with open(os.path.join(path_tmp,file_name.split('.')[0] + '_volume.json'),'wb+') as handle:
+    #     json.dump(volume_dict, handle)
+    # with open(os.path.join(path_tmp,file_name.split('.')[0] + '_surface.json'),'wb+') as handle:
+    #     json.dump(surface_dict, handle)
+    # with open(os.path.join(path_tmp,file_name.split('.')[0] + '_contact.json'),'wb+') as handle:
+    #     json.dump(contact_dict, handle)
+
 
     # already get the contact pair and the contact points x y z
     # return cell_conatact_pair_renew, contact_points_dict
@@ -345,6 +439,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
                             if showCellMesh:
                                 o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True,
                                                                   mesh_show_wireframe=True)
+
                         # ============contact surface detection========================
                         cell_vertices = np.asarray(m_mesh.vertices).astype(int)
                         # ====================contact file ============================
@@ -414,97 +509,135 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
         # -------------------------------------------------------------------------------------------------------
 
 
-def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_contact=True):
-    embryo_name, cell_name, tp = str(input()).split(',')
-    path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name, 'SegCell',
-                            '{}_{}_segCell.nii.gz'.format(embryo_name, tp))
-    this_img = load_nitf2_img(path_tmp)
-    volume = this_img.get_fdata().astype(int)
+# def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_contact=True):
+#     embryo_name, cell_name, tp = str(input()).split(',')
+#     path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name, 'SegCell',
+#                             '{}_{}_segCell.nii.gz'.format(embryo_name, tp))
+#     this_img = load_nitf2_img(path_tmp)
+#     volume = this_img.get_fdata().astype(int)
+#
+#     num_cellname, cellname_num = get_cell_name_affine_table(path=my_config.data_CMAP_seg + r'name_dictionary.csv')
+#     cell_idx = cellname_num[cell_name]
+#
+#     # -------------------
+#     cell_mask = volume != 0
+#     boundary_mask = (cell_mask == 0) & ndimage.binary_dilation(cell_mask)
+#     [x_bound, y_bound, z_bound] = np.nonzero(boundary_mask)
+#     boundary_elements = []
+#
+#     # find boundary between cells
+#     for (x, y, z) in zip(x_bound, y_bound, z_bound):
+#         neighbors = volume[np.ix_(range(x - 1, x + 2), range(y - 1, y + 2), range(z - 1, z + 2))]
+#         neighbor_labels = list(np.unique(neighbors))
+#         neighbor_labels.remove(0)
+#         if len(neighbor_labels) == 2:  # contact between two cells
+#             boundary_elements.append(neighbor_labels)
+#     # cell contact pairs
+#     cell_contact_pairs = list(np.unique(np.array(boundary_elements), axis=0))
+#     cell_conatact_pair_renew = []
+#     contact_points_dict = {}
+#     contact_area_dict = {}
+#
+#     for (label1, label2) in cell_contact_pairs:
+#         contact_mask = np.logical_and(ndimage.binary_dilation(volume == label1),
+#                                       ndimage.binary_dilation(volume == label2))
+#         contact_mask = np.logical_and(contact_mask, boundary_mask)
+#         if contact_mask.sum() > 2:
+#
+#             cell_conatact_pair_renew.append((label1, label2))
+#             str_key = str(label1) + '_' + str(label2)
+#             contact_area_dict[str_key] = 0
+#
+#             point_position_x, point_position_y, point_position_z = np.where(contact_mask == True)
+#
+#             contact_points_list = []
+#             for i in range(len(point_position_x)):
+#                 contact_points_list.append([point_position_x[i], point_position_y[i], point_position_z[i]])
+#             # print(str_key)
+#             contact_points_dict[str_key] = contact_points_list
+#
+#     cell_list = np.unique(volume)
+#     contact_mesh_dict = {}
+#     showing_record = []
+#
+#     # print(cell_list)
+#     for cell_key in cell_list:
+#         if cell_key != 0:
+#             # print(os.path.exists(cellMesh_file_saving_path))
+#             # print('calculating and saving', path_tmp, file_name,cell_key, ' surface')
+#             tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_key) == 1)
+#             sphere_list = np.concatenate(
+#                 (tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
+#             sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.01,
+#                                                                                  (len(tuple_tmp[0]), 3))
+#             m_mesh = generate_alpha_shape(sphere_list_adjusted, displaying=showCellMesh)
+#             if not m_mesh.is_watertight():
+#                 for i in range(10):
+#                     sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.01 * (i + 1),
+#                                                                                          (len(tuple_tmp[0]), 3))
+#                     m_mesh = generate_alpha_shape(sphere_list_adjusted, alpha_value=1 + i * 0.1,
+#                                                   displaying=showCellMesh)
+#                     if m_mesh.is_watertight():
+#                         break
+#             if not m_mesh.is_watertight():
+#                 print('no watertight mesh even after 10 times generation!!!', file_name, cell_key)
+#                 continue
+#             # print('saving mesh')
+#             # is_contact_file = True
+#             # ============contact surface detection========================
+#             cell_vertices = np.asarray(m_mesh.vertices).astype(int)
+#             # ====================contact file ============================
+#
+#             for (cell1, cell2) in cell_conatact_pair_renew:
+#                 idx = str(cell1) + '_' + str(cell2)
+#                 # idx_test=
+#                 if cell_key not in (cell1, cell2) or idx in contact_mesh_dict.keys():
+#                     continue
+#
+#                 # --------------------contact-----------------------------------------
+#                 # print('calculating, saving or showing',path_tmp, file_name, idx, ' contact surface')
+#
+#                 # build a mask to erase not contact points
+#                 # enumerate each points in contact surface
+#                 contact_mask_not = [True for i in range(len(cell_vertices))]
+#                 contact_vertices_loc_list = []
+#                 for [x, y, z] in contact_points_dict[idx]:
+#                     # print(x,y,z)
+#                     contact_vertices_loc = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
+#                     if len(contact_vertices_loc[0]) != 0:
+#                         contact_vertices_loc_list.append(contact_vertices_loc[0][0])
+#                         contact_mask_not[contact_vertices_loc[0][0]] = False
+#                 contact_mesh_dict[idx] = contact_vertices_loc_list
+#
+#                 if showCellContact:
+#                     contact_mesh = deepcopy(m_mesh)
+#                     contact_mesh.remove_vertices_by_mask(contact_mask_not)
+#                     o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True,
+#                                                       mesh_show_wireframe=True)
+#
+#
+#         else:
+#
+#             for (cell1, cell2) in cell_conatact_pair_renew:
+#                 contact_mask_not = [True for i in range(len(cell_vertices))]
+#                 idx = str(cell1) + '_' + str(cell2)
+#                 if cell_key not in (cell1, cell2) or idx in showing_record:
+#                     continue
+#                 print('reading or showing', idx, ' contact surface')
+#                 print(showing_record)
+#                 showing_record.append(idx)
+#                 for value_ in contact_mesh_dict[idx]:
+#                     contact_mask_not[value_] = False
+#
+#                 if showCellContact:
+#                     contact_mesh = deepcopy(m_mesh)
+#                     contact_mesh.remove_vertices_by_mask(contact_mask_not)
+#                     o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True,
+#                                                       mesh_show_wireframe=True)
+#
+#     print('sum of cell contact area', sum(contact_sur_area))
+#     print('list of cell contact area', contact_sur_area)
 
-    num_cellname, cellname_num = get_cell_name_affine_table(path=my_config.data_CMAP_seg + r'name_dictionary.csv')
-    cell_idx = cellname_num[cell_name]
-
-    # -------------------
-    cell_mask = volume != 0
-    boundary_mask = (cell_mask == 0) & ndimage.binary_dilation(cell_mask)
-    [x_bound, y_bound, z_bound] = np.nonzero(boundary_mask)
-    boundary_elements = []
-
-    # find boundary between cells
-    for (x, y, z) in zip(x_bound, y_bound, z_bound):
-        neighbors = volume[np.ix_(range(x - 1, x + 2), range(y - 1, y + 2), range(z - 1, z + 2))]
-        neighbor_labels = list(np.unique(neighbors))
-        neighbor_labels.remove(0)
-        if len(neighbor_labels) == 2:  # contact between two cells
-            boundary_elements.append(neighbor_labels)
-    # cell contact pairs
-    cell_contact_pairs = list(np.unique(np.array(boundary_elements), axis=0))
-    cell_conatact_pair_renew = []
-    contact_points_dict = {}
-    contact_area_dict = {}
-
-    for (label1, label2) in cell_contact_pairs:
-        contact_mask = np.logical_and(ndimage.binary_dilation(volume == label1),
-                                      ndimage.binary_dilation(volume == label2))
-        contact_mask = np.logical_and(contact_mask, boundary_mask)
-        if contact_mask.sum() > 4:
-
-            cell_conatact_pair_renew.append((label1, label2))
-            str_key = str(label1) + '_' + str(label2)
-            contact_area_dict[str_key] = 0
-
-            point_position_x, point_position_y, point_position_z = np.where(contact_mask == True)
-
-            contact_points_list = []
-            for i in range(len(point_position_x)):
-                contact_points_list.append([point_position_x[i], point_position_y[i], point_position_z[i]])
-            # print(str_key)
-            contact_points_dict[str_key] = contact_points_list
-
-    cell_list = np.unique(volume)
-    contact_mesh_dict = {}
-    showing_record = []
-    contact_sur_area = []
-
-    print('calculating and saving', cell_idx, ' surface')
-    tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_idx) == 1)
-    sphere_list = np.concatenate(
-        (tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
-    sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.001,
-                                                                         (len(tuple_tmp[0]), 3))
-    m_mesh = generate_alpha_shape(sphere_list_adjusted, alpha_value=1, displaying=is_showing_cell_mesh)
-    # print('saving mesh')
-    # ============contact surface detection========================
-    cell_vertices = np.asarray(m_mesh.vertices).astype(int)
-    for (cell1, cell2) in cell_conatact_pair_renew:
-        idx = str(cell1) + '_' + str(cell2)
-        if cell_idx not in (cell1, cell2):
-            continue
-
-        # --------------------contact-----------------------------------------
-
-        # build a mask to erase not contact points
-        # enumerate each points in contact surface
-        contact_mask_not = [True for i in range(len(cell_vertices))]
-        contact_vertices_loc_list = []
-        for [x, y, z] in contact_points_dict[idx]:
-            # print(x,y,z)
-            contact_vertices_loc = np.where(np.prod(cell_vertices == [x, y, z], axis=-1))
-            if len(contact_vertices_loc[0]) != 0:
-                contact_vertices_loc_list.append(contact_vertices_loc[0][0])
-                contact_mask_not[contact_vertices_loc[0][0]] = False
-        contact_mesh_dict[idx] = contact_vertices_loc_list
-
-        if is_showing_cell_contact:
-            contact_mesh = deepcopy(m_mesh)
-            contact_mesh.remove_vertices_by_mask(contact_mask_not)
-            contact_sur_area.append(contact_mesh.get_surface_area())
-            o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True,
-                                              mesh_show_wireframe=True)
-    print('cell volume', m_mesh.get_volume())
-    print('cell surface area', m_mesh.get_surface_area())
-    print('sum of cell contact area', sum(contact_sur_area))
-    print('list of cell contact area', contact_sur_area)
 
 
 def calculate_cell_points_CShaper():
@@ -657,6 +790,7 @@ def calculate_cell_points_CShaper():
 #         surface_contact_data = json.load(fp)
 #
 #     get_contact_surface_mesh(this_cell_keys, surface_data, surface_contact_data, m_mesh)
+
 
 
 if __name__ == "__main__":
