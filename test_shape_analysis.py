@@ -36,12 +36,12 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     :return:
     """
     # max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
-    max_times = [205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
+    max_times = [205,205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
 
     # embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
     #                 '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
     #                 '200117plc1pop1ip3']
-    embryo_names = ['200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
+    embryo_names = ['191108plc1p1','200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
                      '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
                      '200117plc1pop1ip3']
 
@@ -54,7 +54,7 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     # config_tmp['showCellContact'] = showCellContact
     # config_tmp['time_point'] = 69
     #
-    # calculate_cell_surface_and_contact_points(config_tmp)
+    # calculate_cell_surface_and_contact_points(config_tmp,is_debug=True)
     # # --------------------------------
     # input()
 
@@ -70,7 +70,7 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
 
-        mpPool = mp.Pool(30)
+        mpPool = mp.Pool(40)
         # mpPool = mp.Pool(9)
 
         for idx_, _ in enumerate(
@@ -169,6 +169,7 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
 
     # print(cell_list)
     weight_surface=1.2031
+    count_ratio_tmp=[]
     for cell_key in cell_list:
         if cell_key != 0:
             cell_mask=np.logical_xor(ndimage.binary_dilation(volume == cell_key),(volume == cell_key))
@@ -254,6 +255,7 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
                         o3d.utility.Vector3dVector(np.asarray(m_mesh.vertices).astype(int)), m_mesh.triangles)
                     volume_dict[cell_key]=(volume == cell_key).sum()
                     surface_dict[cell_key]=m_mesh.get_surface_area()
+
                     if (surface_dict[cell_key] ** (1 / 2) / volume_dict[cell_key] ** (1 / 3)) < 2.199085:
                         print('impossible small surface', time_point, cell_key)
 
@@ -286,7 +288,8 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
                         contact_mesh_dict[idx] = contact_vertices_loc_list
                         contact_mesh = deepcopy(m_mesh)
                         contact_mesh.remove_vertices_by_mask(contact_mask_not)
-                        alpha_surface_area = m_mesh.get_surface_area()
+                        # eodo: finished: 1. check 179 embryo,2. contact sum compare with cell surface area
+                        alpha_surface_area = contact_mesh.get_surface_area()
                         points_surface_area =len(contact_points_dict[idx])*weight_surface
                         contact_dict[idx]=alpha_surface_area if alpha_surface_area>points_surface_area else points_surface_area
 
@@ -302,23 +305,44 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
                             print('surface area=======>', m_mesh.get_surface_area(),'while points num',points_surface_area)
                             # o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True,
                             #                                   mesh_show_wireframe=True)
+                # -----------------CHECK IF THE SUM OF CONTACT SURFACE AREA-------------------------
 
+                if is_debug:
+                    this_cell_surface=surface_dict[cell_key]
+                    contact_list_tmp = []
 
-    # ------------saving volume surface and contact file for an embryo------------
-    # if is_calculate_contact_file:
-    path_tmp=os.path.join(my_config.data_cell_mesh_and_contact,'stat', embryo_name)
-    if not os.path.exists(path_tmp):
-        os.mkdir(path_tmp)
-    with open(os.path.join(path_tmp,file_name.split('.')[0] + '_volume.txt'),'wb+') as handle:
-        pickle.dump(volume_dict, handle, protocol=4)
-    with open(os.path.join(path_tmp,file_name.split('.')[0] + '_surface.txt'),'wb+') as handle:
-        pickle.dump(surface_dict, handle, protocol=4)
-    with open(os.path.join(path_tmp,file_name.split('.')[0] + '_contact.txt'),'wb+') as handle:
-        pickle.dump(contact_dict, handle, protocol=4)
+                    for (cell1, cell2) in cell_conatact_pair_renew:
+                        idx_tmp = str(cell1) + '_' + str(cell2)
+                        # idx_test=
+                        if cell_key not in (cell1, cell2):
+                            continue
+                        contact_list_tmp.append(contact_dict[idx_tmp])
+                    print('contact sum',sum(contact_list_tmp),'  surface area ' ,this_cell_surface)
+                    ratio_this_cell=sum(contact_list_tmp)/this_cell_surface
+                    if ratio_this_cell>1:
+                        count_ratio_tmp.append(ratio_this_cell)
+                        # print('impossible things!!!!')
+
     if is_debug:
+        abnormal_contact_cell_ratio=len(count_ratio_tmp)/(len(cell_list)-1)
+    # ------------saving volume surface and contact file for an embryo------------
+    if not is_debug:
+        path_tmp=os.path.join(my_config.data_cell_mesh_and_contact,'stat', embryo_name)
+        if not os.path.exists(path_tmp):
+            os.mkdir(path_tmp)
+        with open(os.path.join(path_tmp,file_name.split('.')[0] + '_volume.txt'),'wb+') as handle:
+            pickle.dump(volume_dict, handle, protocol=4)
+        with open(os.path.join(path_tmp,file_name.split('.')[0] + '_surface.txt'),'wb+') as handle:
+            pickle.dump(surface_dict, handle, protocol=4)
+        with open(os.path.join(path_tmp,file_name.split('.')[0] + '_contact.txt'),'wb+') as handle:
+            pickle.dump(contact_dict, handle, protocol=4)
+    else:
         print('volume dict ',volume_dict)
         print('surface dict',surface_dict)
         print('contact dict',contact_dict)
+        print('-------------abnormal contact cell ratio!!!!====>  ', abnormal_contact_cell_ratio)
+        #
+
 
     # path_tmp=os.path.join(my_config.data_cell_mesh_and_contact,'tem', embryo_name)
     # if not os.path.exists(path_tmp):
