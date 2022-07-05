@@ -36,14 +36,12 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     :return:
     """
     # max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
-    max_times = [205,205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
+    max_times = [195, 140, 155]
 
     # embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
     #                 '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
     #                 '200117plc1pop1ip3']
-    embryo_names = ['191108plc1p1','200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
-                     '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
-                     '200117plc1pop1ip3']
+    embryo_names = ['200122plc1lag1ip2', '200117plc1pop1ip2','200117plc1pop1ip3']
 
     # # --------TEST ONE EMBRYO-----------
     # config_tmp = {}
@@ -52,7 +50,7 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     # config_tmp['is_calculate_contact_file'] = is_calculate_contact_file
     # config_tmp['showCellMesh'] = showCellMesh
     # config_tmp['showCellContact'] = showCellContact
-    # config_tmp['time_point'] = 69
+    # config_tmp['time_point'] = 179
     #
     # calculate_cell_surface_and_contact_points(config_tmp,is_debug=True)
     # # --------------------------------
@@ -70,7 +68,7 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
 
-        mpPool = mp.Pool(40)
+        mpPool = mp.Pool(30)
         # mpPool = mp.Pool(9)
 
         for idx_, _ in enumerate(
@@ -106,6 +104,8 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
     # # =====================================================
 
     volume = nib.load(os.path.join(path_tmp, file_name)).get_fdata().astype(int).transpose([2, 1, 0])
+    if is_debug:
+        print(np.unique(volume,return_counts=True))
     # this_img = load_nitf2_img()
 
     # volume = this_img.get_fdata().astype(int)
@@ -325,8 +325,12 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
 
     if is_debug:
         abnormal_contact_cell_ratio=len(count_ratio_tmp)/(len(cell_list)-1)
+        print('volume dict ', volume_dict)
+        print('surface dict', surface_dict)
+        print('contact dict', contact_dict)
+        print('-------------abnormal contact cell ratio!!!!====>  ', abnormal_contact_cell_ratio)
     # ------------saving volume surface and contact file for an embryo------------
-    if not is_debug:
+    else:
         path_tmp=os.path.join(my_config.data_cell_mesh_and_contact,'stat', embryo_name)
         if not os.path.exists(path_tmp):
             os.mkdir(path_tmp)
@@ -336,11 +340,8 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
             pickle.dump(surface_dict, handle, protocol=4)
         with open(os.path.join(path_tmp,file_name.split('.')[0] + '_contact.txt'),'wb+') as handle:
             pickle.dump(contact_dict, handle, protocol=4)
-    else:
-        print('volume dict ',volume_dict)
-        print('surface dict',surface_dict)
-        print('contact dict',contact_dict)
-        print('-------------abnormal contact cell ratio!!!!====>  ', abnormal_contact_cell_ratio)
+    # else:
+
         #
 
 
