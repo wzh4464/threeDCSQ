@@ -76,7 +76,7 @@ def calculate_SPHARM_embryo_for_cells():
     """
 
     # ------------------------------calculate SHC for each cell ----------------------------------------------
-    path_tmp = config.data_path + r'SegmentCellUnified04-20/Sample20LabelUnified'
+    path_tmp = config.cell_shape_analysis_data_path + r'SegmentCellUnified04-20/Sample20LabelUnified'
     for file_name in os.listdir(path_tmp):
         if os.path.isfile(os.path.join(path_tmp, file_name)):
             print(path_tmp)
@@ -688,12 +688,12 @@ def Map2D_grid_csv():
     '''
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     for embryo_name in embryo_names:
-        embryo_individual_path = os.path.join(config.data_path,
+        embryo_individual_path = os.path.join(config.cell_shape_analysis_data_path,
                                               'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25_norm.csv'.format(
                                                   embryo_name))
         df_shc_norm_embryo = read_csv_to_df(embryo_individual_path)
 
-        path_norm_2D_map = os.path.join(config.data_path,
+        path_norm_2D_map = os.path.join(config.cell_shape_analysis_data_path,
                                         'my_data_csv/SH_time_domain_csv/2D_matrix_Sample{}_norm.csv'.format(
                                             embryo_name))
         print('finish reading', embryo_name)
@@ -710,7 +710,7 @@ def Map2D_grid_csv():
 
 
 def Map_2D_eigengrid():
-    df_norm_shape = read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
+    df_norm_shape = read_csv_to_df(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
     data_list = []
     data_array = None
     count = 0
@@ -744,18 +744,18 @@ def Map_2D_eigengrid():
     df_PCA_matrices = pd.DataFrame(data=matrix_2D_PCA.components_, columns=range(53 * 105))
     df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(matrix_2D_PCA.explained_variance_ratio_))
     df_PCA_matrices.loc['mean'] = [0] + list(matrix_2D_PCA.mean_)
-    df_PCA_matrices.to_csv(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/2D_matrix_norm_PCA.csv'))
+    df_PCA_matrices.to_csv(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/2D_matrix_norm_PCA.csv'))
 
     head_ptr = 0
     # USE MY ZK CALCULATION METHOD, I HAVE TEST IT , IT IS THE SAME AS PCA.TRANSFORM()
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     for embryo_name in embryo_names:
-        embryo_individual_path = os.path.join(config.data_path,
+        embryo_individual_path = os.path.join(config.cell_shape_analysis_data_path,
                                               'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25_norm.csv'.format(
                                                   embryo_name))
         embryo_index = read_csv_to_df(embryo_individual_path).index
 
-        embryo_saving_individual_path = os.path.join(config.data_path,
+        embryo_saving_individual_path = os.path.join(config.cell_shape_analysis_data_path,
                                                      'my_data_csv/norm_2DMATRIX_PCA_csv/Sample{}LabelUnified_2Dmatrix_PCA.csv'.format(
                                                          embryo_name))
         df_saving_individual = pd.DataFrame(index=embryo_index, columns=range(96),
@@ -767,7 +767,7 @@ def Map_2D_eigengrid():
 
 def display_Map_2D_eigengrid_01paper():
     pca_instance = PCA_f.read_PCA_file(
-        os.path.join(config.data_path, 'my_data_csv/PCA_file/2D_matrix_norm_PCA.csv'))
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file/2D_matrix_norm_PCA.csv'))
     plt.rcParams['text.usetex'] = True
     # plt.rc.update({'text.usetex': True})
     figure, axes = plt.subplots(nrows=2, ncols=3, figsize=(16, 10))
@@ -819,7 +819,7 @@ def display_Map_2D_eigengrid_01paper():
 
 
 def SPHARM_eigenharmonic():
-    df_norm_shape = read_csv_to_df(os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
+    df_norm_shape = read_csv_to_df(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
 
     component_number = 24
 
@@ -835,18 +835,18 @@ def SPHARM_eigenharmonic():
     df_PCA_matrices = pd.DataFrame(data=spharm_PCA.components_, columns=range(26 ** 2))
     df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(spharm_PCA.explained_variance_ratio_))
     df_PCA_matrices.loc['mean'] = [0] + list(spharm_PCA.mean_)
-    df_PCA_matrices.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_SHc_PCA_csv/SPHARM_norm_PCA.csv'))
+    df_PCA_matrices.to_csv(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/norm_SHc_PCA_csv/SPHARM_norm_PCA.csv'))
 
     head_ptr = 0
     # USE MY ZK CALCULATION METHOD, I HAVE TEST IT , IT IS THE SAME AS PCA.TRANSFORM()
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     for embryo_name in embryo_names:
-        embryo_individual_path = os.path.join(config.data_path,
+        embryo_individual_path = os.path.join(config.cell_shape_analysis_data_path,
                                               'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25_norm.csv'.format(
                                                   embryo_name))
         embryo_index = read_csv_to_df(embryo_individual_path).index
 
-        embryo_saving_individual_path = os.path.join(config.data_path,
+        embryo_saving_individual_path = os.path.join(config.cell_shape_analysis_data_path,
                                                      'my_data_csv/norm_SHc_PCA_csv/Sample{}LabelUnified_SHc_PCA.csv'.format(
                                                          embryo_name))
         df_saving_individual = pd.DataFrame(index=embryo_index, columns=range(component_number),
@@ -861,7 +861,7 @@ def construct_mean_tree_and_dynamic_eigengrid_01paper():
 
     df_pd_values_dict={}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    eigengrid_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    eigengrid_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
     for embryo_name in embryo_names:
         cell_list_dict = {}
         path_SHcPCA_csv = os.path.join(eigengrid_csv_path,
@@ -932,11 +932,11 @@ def construct_mean_tree_and_dynamic_spectrum_01paper():
 
     df_pd_values_dict={}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    path_saving_dynamic_spectrum=config.data_path + r'my_data_csv/norm_Spectrum_csv'
-    path_spectrum = config.data_path + r'my_data_csv/SH_time_domain_csv'
+    path_saving_dynamic_spectrum= config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_csv'
+    path_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
     for embryo_name in embryo_names:
         cell_list_dict = {}
-        path_spectrum_csv = os.path.join(path_spectrum,'Sample{}_Spectrum_norm.csv'.format(embryo_name))
+        path_spectrum_csv = os.path.join(path_spectrum,'Sample{}_Spectrum.csv'.format(embryo_name))
         df_pd_values_dict[embryo_name] = read_csv_to_df(path_spectrum_csv)
         for idx in df_pd_values_dict[embryo_name].index:
             cell_name = idx.split('::')[1]
@@ -999,7 +999,7 @@ def construct_mean_tree_and_dynamic_spectrum_01paper():
     df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_dynamic_spectrum.csv'))
 
 def draw_2Dmatrix_pca_linear_relationship_dynamic_01paper():
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
 
     df_avg_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path, 'Mean_cellLineageTree_dynamic_eigengrid.csv'))
 
@@ -1077,7 +1077,7 @@ def draw_2Dmatrix_pca_linear_relationship_dynamic_01paper():
     plt.show()
 
 def draw_2Dmatrix_pca_linear_relationship_static_01paper():
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
 
     df_mean_tree_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path, 'Mean_cellLineageTree_static_eigengrid.csv'))
 
@@ -1187,7 +1187,7 @@ def construct_mean_tree_and_dynamic_eigenharmonic_01paper():
 
     # cell_average_dict={}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
     df_pd_values_dict = {}
 
     for embryo_name in embryo_names:
@@ -1263,7 +1263,7 @@ def construct_mean_tree_and_dynamic_eigenharmonic_01paper():
 
 
 def draw_shcpca_linear_relationship_dynamic_01paper():
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
 
     pca_num = 12
     df_avg_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
@@ -1334,7 +1334,7 @@ def draw_shcpca_linear_relationship_dynamic_01paper():
     plt.show()
 
 def draw_shcpca_linear_relationship_static_01paper():
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
 
     df_mean_tree_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
                                                 'Mean_cellLineageTree_static_eigenharmonic.csv'))
@@ -1441,7 +1441,7 @@ from treelib import Tree
 
 def recognition_of_hyp_cells_with_eigenharmonic_01paper():
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -1449,8 +1449,8 @@ def recognition_of_hyp_cells_with_eigenharmonic_01paper():
     df_saving_skin_recognition = pd.DataFrame(columns=np.arange(start=0.5, stop=2, step=0.1))
     # print(cell_fate_dict)
     # detection using weight of first 2dmatrix pca component
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
     time_limit_minutes_start = 100  # 50 or 100 or 150 start time bigger than this
     time_limit_minutes_end = 250  # 100 or 150 or 200 the end time smaller than this
     weight_threshold_static = 1
@@ -1570,7 +1570,7 @@ def recognition_of_hyp_cells_with_eigenharmonic_01paper():
 
 def recognition_of_hyp_cells_with_eigengrid_01paper():
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -1578,8 +1578,8 @@ def recognition_of_hyp_cells_with_eigengrid_01paper():
     df_saving_skin_recognition = pd.DataFrame(columns=np.arange(start=0.5, stop=2, step=0.1))
     # print(cell_fate_dict)
     # detection using weight of first 2dmatrix pca component
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
     time_limit_minutes_start = 100  # 50 or 100 or 150 start time bigger than this
     time_limit_minutes_end = 250  # 100 or 150 or 200 the end time smaller than this
     weight_threshold_static = 1
@@ -1710,7 +1710,7 @@ def save_the_PCA_file():
 
     # ---------PCA 12 for normalized SPHARM Spectrum coefficient --------------------------
     t0 = time()
-    path_csv = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', 'SHc_norm_Spectrum.csv')
+    path_csv = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv', 'SHc_norm_Spectrum.csv')
     df_SPHARM_spectrum = read_csv_to_df(os.path.join(path_csv))
     print('read csv time done in %0.3f' % (time() - t0))
 
@@ -1722,7 +1722,7 @@ def save_the_PCA_file():
               whiten=True).fit(df_SPHARM_spectrum.values)
     print("done in %0.3fs" % (time() - t0))
 
-    PCA_f.save_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', 'SPHARM_norm_Spectrum_PCA.csv'), pca,
+    PCA_f.save_PCA_file(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', 'SPHARM_norm_Spectrum_PCA.csv'), pca,
                         feature_columns=df_SPHARM_spectrum.columns)
     # ----------------------------------------------------------------------------------
 
@@ -1819,7 +1819,7 @@ def cluster_acc_eigengrid_01paper():
     :return:
     """
     # --------------------cell fate----------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -1828,8 +1828,8 @@ def cluster_acc_eigengrid_01paper():
 
     # -------------------cluster each cell--------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_2Dgrid_pca_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    norm_2Dgrid_pca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
     pca_num = 96
@@ -2007,7 +2007,7 @@ def cluster_acc_eigenharmonic_01paper():
     :return:
     """
     # --------------------cell fate----------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -2016,8 +2016,8 @@ def cluster_acc_eigenharmonic_01paper():
 
     # -------------------cluster each cell--------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
     pca_num = 12
@@ -2196,7 +2196,7 @@ def cluster_acc_spectrum_01paper():
     :return:
     """
     # --------------------cell fate----------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -2205,10 +2205,10 @@ def cluster_acc_spectrum_01paper():
 
     # -------------------cluster each cell--------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_spectrum_dynamic_csv_path = config.data_path + r'my_data_csv/norm_Spectrum_csv'
+    norm_spectrum_dynamic_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_csv'
 
-    norm_spectrum_csv_path = config.data_path + r'my_data_csv/SH_time_domain_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    norm_spectrum_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
     spectrum_num=26
@@ -2386,7 +2386,7 @@ def SPHARM_cluster_test_with_C0_0ZERO():
     :return:
     """
     # --------------------cell fate----------------------------------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     this_cell_fate_dict = {}
     for idx in df_cell_fate.index:
         this_cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -2395,7 +2395,7 @@ def SPHARM_cluster_test_with_C0_0ZERO():
     # -----get cut c0_0 SPHARM pca transformation features-----
 
     pca_cut_c00 = PCA_f.read_PCA_file(
-        os.path.join(config.data_path, 'my_data_csv/PCA_file', 'SPHARM_cut_c0_0_PCA.csv'))
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', 'SPHARM_cut_c0_0_PCA.csv'))
     # print(pca_cut_c00.components_.shape)
 
     # # --------------------by frame clustering and SVM
@@ -2404,8 +2404,8 @@ def SPHARM_cluster_test_with_C0_0ZERO():
 
     # --------------------lifespan clustering and SVM-------------------------------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    spharm_path = config.data_path + r'my_data_csv/SH_time_domain_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    spharm_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line
     time_limit_minutes_start = 150
     dict_df_lifespan_SPAHRMPCA = {}
@@ -2610,22 +2610,22 @@ def SPHARM_cluster_test_with_C0_0ZERO():
 
 def clustering_original_and_normalized_feature_vector():
     # --------------------cell fate----------------------------------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     this_cell_fate_dict = {}
     for idx in df_cell_fate.index:
         this_cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
     print(len(this_cell_fate_dict))
 
     # -----get original 2D spherical matrix transformation features----------
-    pca_2dmatrix = PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', '2D_matrix_PCA.csv'))
+    pca_2dmatrix = PCA_f.read_PCA_file(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', '2D_matrix_PCA.csv'))
 
     # -----get original SPHARM pca transformation features-----
-    pca_spharm = PCA_f.read_PCA_file(os.path.join(config.data_path, 'my_data_csv/PCA_file', 'SPHARM_PCA.csv'))
+    pca_spharm = PCA_f.read_PCA_file(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', 'SPHARM_PCA.csv'))
 
     # --------------------lifespan clustering and SVM-------------------------------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    spharm_path = config.data_path + r'my_data_csv/SH_time_domain_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    spharm_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line
     time_limit_minutes_start = 150
 
@@ -2690,8 +2690,8 @@ def clustering_original_and_normalized_feature_vector():
     #         y_fate.append(cell_fate_map[cell_fate_dict[cell_name]])
 
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    spharm_path = config.data_path + r'my_data_csv/SH_time_domain_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    spharm_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line
     time_limit_minutes_start = 150
     dict_df_lifespan_feature_PCA = {}
@@ -2746,7 +2746,7 @@ def clustering_original_and_normalized_feature_vector():
 def cluster_silhouette_score_eigengrid_01paper():
     # calculate the silhouette score
     # --------------------cell fate----------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -2755,8 +2755,8 @@ def cluster_silhouette_score_eigengrid_01paper():
 
     # -----------cluster each cell-----------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_eigengrid_csv_path = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    norm_eigengrid_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
     pca_num = 12
@@ -2918,7 +2918,7 @@ def cluster_silhouette_score_eigengrid_01paper():
 def cluster_silhouette_score_eigenharmonic_01paper():
     # calculate the silhouette score
     # --------------------cell fate----------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -2927,8 +2927,8 @@ def cluster_silhouette_score_eigenharmonic_01paper():
 
     # -----------cluster each cell-----------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_shcpca_csv_path = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
     pca_num = 12
@@ -3088,7 +3088,7 @@ def cluster_silhouette_score_eigenharmonic_01paper():
 def cluster_silhouette_score_spectrum_01paper():
     # calculate the silhouette score
     # --------------------cell fate----------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -3097,9 +3097,9 @@ def cluster_silhouette_score_spectrum_01paper():
 
     # -----------cluster each cell-----------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_spectrum_csv_path = config.data_path + r'my_data_csv/SH_time_domain_csv'
-    norm_dynamic_spectrum_csv_path=config.data_path + r'my_data_csv/norm_Spectrum_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    norm_spectrum_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+    norm_dynamic_spectrum_csv_path= config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
     column_num = 26
@@ -3264,7 +3264,7 @@ def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
     hop=1
     df_pd_values_dict={}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    path_saving_enhanced_spectrum=config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
+    path_saving_enhanced_spectrum= config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
     for embryo_name in embryo_names:
         cell_list_dict = {}
         path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,'Sample{}_h{}_M.csv'.format(embryo_name,str(hop)))
@@ -3335,7 +3335,7 @@ def cluster_acc_and_score_enhanced_spectrum_norm():
     :return:
     """
     # --------------------cell fate----------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -3344,8 +3344,8 @@ def cluster_acc_and_score_enhanced_spectrum_norm():
 
     # -------------------cluster each cell--------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_enhanced_spectrum_csv_path = config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    norm_enhanced_spectrum_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
     spectrum_num = 26
@@ -3557,8 +3557,8 @@ def construct_mean_tree_and_dynamic_spectrum_no_C00():
 
     df_pd_values_dict={}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    path_saving_dynamic_spectrum=config.data_path + r'my_data_csv/Spectrum_no_C00_csv'
-    path_spectrum = config.data_path + r'my_data_csv/SH_time_domain_csv'
+    path_saving_dynamic_spectrum= config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_no_C00_csv'
+    path_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
     for embryo_name in embryo_names:
         cell_list_dict = {}
         path_spectrum_csv = os.path.join(path_spectrum,'Sample{}_Spectrum.csv'.format(embryo_name))
@@ -3629,7 +3629,7 @@ def cluster_acc_and_score_spectrum_no_C00():
     :return:
     """
     # --------------------cell fate----------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -3638,9 +3638,9 @@ def cluster_acc_and_score_spectrum_no_C00():
 
     # -------------------cluster each cell--------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    spectrum_no_c00_path=config.data_path + r'my_data_csv/SH_time_domain_csv'
-    norm_enhanced_spectrum_csv_path = config.data_path + r'my_data_csv/Spectrum_no_C00_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    spectrum_no_c00_path= config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+    norm_enhanced_spectrum_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_no_C00_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
     spectrum_num = 25
@@ -3852,7 +3852,7 @@ def construct_mean_tree_and_dynamic_enhanced_noC00spectrum():
     fea_num=25
     df_pd_values_dict={}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    path_saving_enhanced_spectrum=config.data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(str(hop))
+    path_saving_enhanced_spectrum= config.cell_shape_analysis_data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(str(hop))
     for embryo_name in embryo_names:
         cell_list_dict = {}
         path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,'Sample{}_h{}_M.csv'.format(embryo_name,str(hop)))
@@ -3922,4 +3922,4 @@ if __name__ == "__main__":
     # print([a[x] for x in a.keys()])
     # clustering_original_and_normalized_feature_vector()
     # cluster_with_lifespan_shape_features()
-    draw_2Dmatrix_pca_linear_relationship_static_01paper()
+    construct_mean_tree_and_dynamic_spectrum_01paper()

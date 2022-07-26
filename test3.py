@@ -9,6 +9,7 @@ import pandas as pd
 import scipy as sp
 import numpy as np
 import meshplot as mp
+import open3d as o3d
 
 # import user defined library
 from matplotlib.colors import LinearSegmentedColormap
@@ -24,41 +25,38 @@ from utils.shape_model import generate_alpha_shape
 import static.config as config
 
 
-def calculate_cell_curvature():
+def calculate_cell_curvature(showCellMesh=True):
+    # Sample04,ABpl,10
     # Sample20,ABplpapapa,150
     # Sample20,ABalaapa,078
     # Sample20,ABa,005
     # Sample20,MSp,035
-    print('waiting type you input: sample name and time points for embryogenesis')
+    print('waiting type you input: sample, cell name and time points for embryogenesis')
     embryo_name, cell_name, tp = str(input()).split(',')
 
     num_cell_name, cell_num = get_cell_name_affine_table()
-    this_cell_keys = cell_num[cell_name]
+    this_cell_key = cell_num[cell_name]
 
-    # -------getting all data points including dilation  points -- for generate alpha shape--------
-    with open(os.path.join(config.data_path + r'cell_dia_points', embryo_name + '_' + tp + '_segCell.json')) as fp:
-        cell_data = json.load(fp)
-    cell_points_building_as = []
-    # print(cell_data.keys())
-    for item_str in cell_data[str(this_cell_keys)]:
-        x, y, z = item_str.split('_')
-        x, y, z = float(x) + uniform(0, 0.001), float(y) + uniform(0, 0.001), float(
-            z) + uniform(0, 0.001)
-        cell_points_building_as.append([x, y, z])
-    cell_points_building_as = np.array(cell_points_building_as)
-    # print(cell_points_building_as)
-    m_mesh = generate_alpha_shape(cell_points_building_as, alpha_value=0.88)
+    print('reading or showing', this_cell_key)
+    cellMesh_file_saving_path = os.path.join(config.data_cell_mesh_and_contact, '3DMesh', embryo_name, tp, str(this_cell_key) + '.ply')
+    m_mesh = o3d.io.read_triangle_mesh(cellMesh_file_saving_path).filter_smooth_taubin(number_of_iterations=100)
+    if showCellMesh:
+        o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True,
+                                          mesh_show_wireframe=True)
+
     f = np.asarray(m_mesh.triangles)
     v = np.asarray(m_mesh.vertices)
     print('vertices number', v.shape, 'facet number', f.shape)
     k = igl.gaussian_curvature(v, f)
+    print(k)
+    print(np.unique(np.asarray(k*100).astype(int),return_counts=True))
 
     mp.offline()
     import matplotlib as mpl
 
     cmap = mpl.cm.coolwarm
 
-    # https: // stackoverflow.com / questions / 61585101 / create - corresponding - rgb - list - colormap - based - on - values - in -another - list
+    # https://stackoverflow.com/questions/61585101/create-corresponding-rgb-list-colormap-based-on-values-in-another-list
 
     edge_val = max(abs(k))
     modified_k = np.concatenate((k, np.array([-edge_val, edge_val])), axis=0)
@@ -92,7 +90,7 @@ def mean_embryo_2DGrid_SPHARM():
     df_SPAHRM_dict = {}
 
     for embryo_name in embryo_names:
-        path_SPHARM_csv = os.path.join(config.data_path, 'my_data_csv', 'SH_time_domain_csv',
+        path_SPHARM_csv = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv', 'SH_time_domain_csv',
                                        'Sample' + embryo_name + 'LabelUnified_l_25.csv')
         df_SPAHRM_dict[embryo_name] = read_csv_to_df(path_SPHARM_csv)
 
@@ -117,8 +115,8 @@ def mean_embryo_2DGrid_SPHARM():
                 df_static_mean_embryo.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list), axis=0)
     print(df_static_mean_embryo)
     df_static_mean_embryo.to_csv(
-        os.path.join(config.data_path, 'my_data_csv', 'SH_time_domain_csv', 'MeanSample_l_25.csv'))
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv', 'SH_time_domain_csv', 'MeanSample_l_25.csv'))
 
 
 if __name__ == "__main__":
-    mean_embryo_2DGrid_SPHARM()
+    calculate_cell_curvature()

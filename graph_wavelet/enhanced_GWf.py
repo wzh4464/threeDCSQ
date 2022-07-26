@@ -29,7 +29,6 @@ def embryo_enhanced_graph_wavelet(nei_cell_feature,cell_nei_matrix,phi_j_h_list,
 
 
 
-
 def phi_j_h_wavelet(j,h,wavelet='Haar'):
     x = sympy.symbols('x')
     # Haar function

@@ -223,7 +223,7 @@ def spherical_R_with_lat_lon(surface_points, lat_phi, lon_theta, average_points=
     # print('sampling')
     # print(surface_points)
     # print(distance_vector)
-    closest_indices=np.argsort(distance_vector)[:3]
+    closest_indices=np.argsort(distance_vector)[:average_points]
     # print(surface_points[np.argsort(distance_vector)[:3],0])
     return np.mean(surface_points[closest_indices, 0])
 

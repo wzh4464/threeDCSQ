@@ -153,7 +153,7 @@ def get_SH_coefficient_of_embryo(embryo_path, file_name, sample_N, lmax,
     #     os.makedirs(this_embryo_dir)
     print(os.path.basename(file_name))
 
-    folder_tmp = os.path.join(config.data_path, 'my_data_csv/SPHARM', os.path.basename(embryo_path))
+    folder_tmp = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SPHARM', os.path.basename(embryo_path))
     if not os.path.exists(folder_tmp):
         os.mkdir(folder_tmp)
 

@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from pyshtools import SHGrid
 from skimage.measure import marching_cubes, mesh_surface_area
-from sklearn.feature_selection import r_regression
 from sklearn.kernel_approximation import Nystroem
 from sklearn.manifold import TSNE
 from sklearn.pipeline import Pipeline
@@ -82,7 +81,7 @@ def show_cell_SPCSMs_info():
 
     print(embryo_name, cell_name, tp)
 
-    embryo_path_csv = os.path.join(config.data_path + r'my_data_csv\SH_time_domain_csv',
+    embryo_path_csv = os.path.join(config.cell_shape_analysis_data_path + r'my_data_csv\SH_time_domain_csv',
                                    embryo_name + 'LabelUnified_l_25_norm.csv')
     embryo_csv = read_csv_to_df(embryo_path_csv)
 
@@ -207,7 +206,7 @@ def calculate_spectrum():
 def transfer_2d_to_spectrum_01paer():
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     for embryo_name in embryo_names:
-        embryo_individual_path = os.path.join(config.data_path,
+        embryo_individual_path = os.path.join(config.cell_shape_analysis_data_path,
                                               'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25_norm.csv'.format(
                                                   embryo_name))
         df_shc_norm_embryo = read_csv_to_df(embryo_individual_path)
@@ -219,11 +218,11 @@ def transfer_2d_to_spectrum_01paer():
             # print(num_idx)
             # print(saving_original_csv)
         print(saving_norm_csv)
-        saving_norm_csv.to_csv(os.path.join(config.data_path,
+        saving_norm_csv.to_csv(os.path.join(config.cell_shape_analysis_data_path,
                                             'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum_norm.csv'.format(
                                                 embryo_name)))
 
-        embryo_individual_path = os.path.join(config.data_path,
+        embryo_individual_path = os.path.join(config.cell_shape_analysis_data_path,
                                               'my_data_csv/SH_time_domain_csv/Sample{}LabelUnified_l_25.csv'.format(
                                                   embryo_name))
         df_shc_embryo = read_csv_to_df(embryo_individual_path)
@@ -235,7 +234,7 @@ def transfer_2d_to_spectrum_01paer():
             # print(saving_original_csv)
         print(saving_sh_csv)
         saving_sh_csv.to_csv(
-            os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
+            os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
 
     # path_original = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc.csv')
     # path_norm = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_norm.csv')
@@ -277,7 +276,7 @@ def cluster_with_spectrum():
     df_kmeans_clustering = pd.DataFrame(index=concat_df_Spectrum.index, columns=['cluster_num'])
     df_kmeans_clustering['cluster_num'] = result_origin
     df_kmeans_clustering.to_csv(
-        os.path.join(config.data_path,
+        os.path.join(config.cell_shape_analysis_data_path,
                      'normsqrt_spectrum_cluster_k{}.csv'.format(cluster_num)))
 
 
@@ -555,7 +554,7 @@ def figure_for_science_01paper():
 
 
 def calculate_SH_PCA_coordinate():
-    PCA_matrices_saving_path = os.path.join(config.data_path, 'my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
+    PCA_matrices_saving_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
 
     path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
     df_SHc_norm = read_csv_to_df(path_saving_csv_normalized)
@@ -626,7 +625,7 @@ def plot_voxel_and_reconstructed_surface_01paper():
 
     # ==============plot reconstruction surface============================================
     # the path need to change to non-norm path
-    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     m_pcd = o3d.geometry.PointCloud()
@@ -659,7 +658,7 @@ def plot_and_save_5_type_figures_01paper():
     this_cell_keys = cell_num[cell_name]
 
     embryo_img = load_nitf2_img(
-        os.path.join(config.data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+        os.path.join(config.cell_shape_analysis_data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
                      embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
     cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
 
@@ -693,7 +692,7 @@ def plot_and_save_5_type_figures_01paper():
     axes_tmp = fig_SPCSMs_info.add_subplot(111)
 
     # the path need to change to non-norm path
-    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array', ax=axes_tmp, degree_label=r'SPAHRM degree \textit{l}',
@@ -712,7 +711,7 @@ def plot_and_save_5_type_figures_01paper():
     plt.rcParams['text.usetex'] = True
 
     # the path need to change to non-norm path
-    SHc_path = os.path.join(config.data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     print(sh_instance.spectrum())
@@ -748,8 +747,8 @@ def construct_cell_graph_each_embryo():
 
     # --------------------lifespan clustering and SVM-------------------------------------------
     embryo_names = [str(i).zfill(2) for i in range(6, 7)]
-    spharm_path = config.data_path + r'my_data_csv/SH_time_domain_csv'
-    life_span_tree_path = config.data_path + r'lineage_tree/LifeSpan'
+    spharm_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
 
     # --------------------SINGLE CELL IN EACH TIME POINTS: SPAHRM PCA and its neighborhood CLUSTERING----------------
     name_cellname, cellname_number = get_cell_name_affine_table()
@@ -771,7 +770,7 @@ def construct_cell_graph_each_embryo():
         # with open(os.path.join(config.data_path, r'cell_dia_surface',
         #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
         #     surface_data = json.load(fp)
-        with open(os.path.join(config.data_path, r'cshaper_contact_data\Sample' + embryo_name,
+        with open(os.path.join(config.cell_shape_analysis_data_path, r'cshaper_contact_data\Sample' + embryo_name,
                                'Sample' + embryo_name + '_' + current_frame + '_segCell.json'), 'rb') as fp:
             surface_contact_data = json.load(fp)
         this_graph = iGraph.Graph(directed=True)
@@ -784,14 +783,14 @@ def construct_cell_graph_each_embryo():
                 # is time to save the graph
                 this_graph.delete_vertices('INITIAL')
                 print(embryo_name, last_fame)
-                this_graph.write_graphml(os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name,
+                this_graph.write_graphml(os.path.join(config.cell_shape_analysis_data_path, 'Graph_embryo/Sample' + embryo_name,
                                                       'Sample' + embryo_name + '_' + last_fame + '.graphml'))
                 this_graph = iGraph.Graph(directed=True)
                 this_graph.add_vertex('INITIAL')
                 # with open(os.path.join(config.data_path, r'cell_dia_surface',
                 #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
                 #     surface_data = json.load(fp)
-                with open(os.path.join(config.data_path, r'cshaper_contact_data\Sample' + embryo_name,
+                with open(os.path.join(config.cell_shape_analysis_data_path, r'cshaper_contact_data\Sample' + embryo_name,
                                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'), 'rb') as fp:
                     surface_contact_data = json.load(fp)
             last_fame = current_frame
@@ -818,7 +817,7 @@ def construct_cell_graph_each_embryo():
         this_graph.delete_vertices('INITIAL')
         print(this_graph)
         this_graph.write_graphml(
-            os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name,
+            os.path.join(config.cell_shape_analysis_data_path, 'Graph_embryo/Sample' + embryo_name,
                          'Sample' + embryo_name + '_' + last_fame + '.graphml'))
         # the way to read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # iGraph.Graph.Read_GraphML('------')
@@ -832,14 +831,14 @@ def enhanced_graph_wavelet_feature():
     for embryo_name in embryo_names:
         print('embryo  ', embryo_name)
         df_embryo_cell_fea = read_csv_to_df(
-            os.path.join(config.data_path,
+            os.path.join(config.cell_shape_analysis_data_path,
                          'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum_norm.csv'.format(embryo_name)))
 
         df_enhanced_cell_fea = pd.DataFrame(index=df_embryo_cell_fea.index, columns=df_embryo_cell_fea.columns)
         # start frame!
         current_frame = '001'
         last_fame = '001'
-        this_graph = iGraph.Graph.Read_GraphML(os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name,
+        this_graph = iGraph.Graph.Read_GraphML(os.path.join(config.cell_shape_analysis_data_path, 'Graph_embryo/Sample' + embryo_name,
                                                             'Sample' + embryo_name + '_' + current_frame + '.graphml'))
         for idx in df_embryo_cell_fea.index:  # segmented successfully
             print(idx)
@@ -848,17 +847,10 @@ def enhanced_graph_wavelet_feature():
                 # is time to read a new graph, move to next frame
 
                 this_graph = iGraph.Graph.Read_GraphML(
-                    os.path.join(config.data_path, 'Graph_embryo/Sample' + embryo_name,
+                    os.path.join(config.cell_shape_analysis_data_path, 'Graph_embryo/Sample' + embryo_name,
                                  'Sample' + embryo_name + '_' + current_frame + '.graphml'))
 
             last_fame = current_frame
-
-            # this_cell_kth_neigh_dict=get_kth_neighborhood_graph(this_graph.vs(cell_name),hop,this_graph)
-            # fea_arr=[]
-            # for kth in this_cell_kth_neigh_dict.keys():
-            #     for read_cell_node in this_cell_kth_neigh_dict[kth]:
-            #         fea_arr.append()
-            # print(this_cell_kth_neigh_dict)
             star_node = this_graph.vs.find(name=cell_name)
             cellname_node_list = []
             for ith in range(hop + 1):
@@ -879,7 +871,6 @@ def enhanced_graph_wavelet_feature():
                 for node_id in ith_value:
                     idx_tmp = current_frame + '::' + this_graph.vs[node_id]['name']
                     node_fea_list.append(list(df_embryo_cell_fea.loc[idx_tmp]))
-            # print(node_fea_list)
             # enhance the feature by cell graph and graph wavelet
             phi_j_h_list = []
             tmp_C_j_vk_list = []
@@ -895,16 +886,16 @@ def enhanced_graph_wavelet_feature():
             # df_enhanced_cell_fea.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
             #                                          'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
         print(df_enhanced_cell_fea)
-        df_enhanced_cell_fea.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
+        df_enhanced_cell_fea.to_csv(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
                                                  'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
 
 
-def calculate_cell_shape_asymmetric_between_sisters():
+def calculate_cell_norm_shape_asymmetric_between_sisters():
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
 
     # EIGENGRID
     pca_num = 96
-    path_saving_dynamic_eigengrid = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    path_saving_dynamic_eigengrid = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
     df_asymmetric_eigengrid = pd.DataFrame(columns=range(pca_num))
     df_dynamic_f = read_csv_to_df(
         os.path.join(path_saving_dynamic_eigengrid, 'Mean_cellLineageTree_dynamic_eigengrid.csv'))
@@ -932,7 +923,7 @@ def calculate_cell_shape_asymmetric_between_sisters():
 
     # EIGENHARMONIC
     pca_num = 12
-    path_saving_dynamic_eigenharmonic = config.data_path + r'my_data_csv/norm_SH_PCA_csv'
+    path_saving_dynamic_eigenharmonic = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
     df_asymmetric_eigenharmonic = pd.DataFrame(columns=range(pca_num))
     df_dynamic_f = read_csv_to_df(
         os.path.join(path_saving_dynamic_eigenharmonic, 'Mean_cellLineageTree_dynamic_eigenharmonic.csv'))
@@ -960,7 +951,7 @@ def calculate_cell_shape_asymmetric_between_sisters():
 
     # energy spectrum
     f_num = 26
-    path_saving_dynamic_spectrum = config.data_path + r'my_data_csv/norm_Spectrum_csv'
+    path_saving_dynamic_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_csv'
     df_asymmetric_spectrum = pd.DataFrame(columns=range(f_num))
     df_dynamic_f = read_csv_to_df(
         os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_dynamic_spectrum.csv'))
@@ -988,7 +979,7 @@ def calculate_cell_shape_asymmetric_between_sisters():
 
     # noC00spectrum
     f_num = 25
-    path_saving_dynamic_noC00spectrum = config.data_path + r'my_data_csv/Spectrum_no_C00_csv'
+    path_saving_dynamic_noC00spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_no_C00_csv'
     df_asymmetric_noC00spectrum = pd.DataFrame(columns=range(f_num))
     df_dynamic_f = read_csv_to_df(
         os.path.join(path_saving_dynamic_noC00spectrum, 'Mean_cellLineageTree_dynamic_spectrum_no_C00.csv'))
@@ -1054,7 +1045,7 @@ def cell_shape_asymmetric_boxplot():
 
     for embryo_name in embryo_names:
         # --------------------the tree of this embryo-------------------------------------
-        cell_tree_file_path = os.path.join(config.data_path + r'lineage_tree/LifeSpan',
+        cell_tree_file_path = os.path.join(config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan',
                                            'Sample{}_cell_life_tree'.format(embryo_name))
         with open(cell_tree_file_path, 'rb') as f:
             # print(f)
@@ -1062,7 +1053,7 @@ def cell_shape_asymmetric_boxplot():
         # -------------------------------------------------------------------------------
 
         # --------------------------the feature file path-- you can modify------------------
-        eigengrid_file_path = os.path.join(config.data_path, 'my_data_csv/Spectrum_no_C00_csv',
+        eigengrid_file_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/Spectrum_no_C00_csv',
                                            'Sample{}_dynamic_spectrum_no_C00.csv'.format(embryo_name))
         df_eigengrid = read_csv_to_df(eigengrid_file_path)
         for cell_name in cells_asymmetric1_1.keys():
@@ -1109,7 +1100,7 @@ def division_time_asymmetry(frame_time_ratio=1.39):
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     for embryo_name in embryo_names:
         # --------------------the tree of this embryo-------------------------------------
-        cell_tree_file_path = os.path.join(config.data_path + r'lineage_tree/LifeSpan',
+        cell_tree_file_path = os.path.join(config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan',
                                            'Sample{}_cell_life_tree'.format(embryo_name))
         df_time_segregation_ratio = pd.DataFrame(
             columns=['cell_cycle_length', 'cell_cycle_asymmetric_ratio', 'division_time_asymmetry',
@@ -1161,146 +1152,19 @@ def division_time_asymmetry(frame_time_ratio=1.39):
                                                             division_time_asymmetry, cell_cycle_segregation_ratio,
                                                             division_time_segregation_asymmetry]
         df_time_segregation_ratio.to_csv(
-            os.path.join(config.data_path, 'my_data_csv/time_segregation_ratio', 'Sample{}.csv'.format(embryo_name)))
+            os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/time_segregation_ratio', 'Sample{}.csv'.format(embryo_name)))
     # we need to calculate ficision time asymmetric and cell cycle length
-
-
-def cell_shape_feature_final_2D_grid_base_part1():
-    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-
-    # dict_final_fea_part1={}
-    dict_index = {}
-    arr_fea = None
-    for embryo_name in embryo_names:
-        df_grid = read_csv_to_df(
-            os.path.join(config.data_path, r'my_data_csv\SH_time_domain_csv',
-                         '2D_matrix_Sample{}_norm.csv'.format(embryo_name)))
-
-        dict_index[embryo_name] = df_grid.index
-        if arr_fea is not None:
-            arr_fea = np.concatenate((arr_fea, df_grid.values), axis=0)
-        else:
-            arr_fea = df_grid.values
-    print(arr_fea.shape)
-
-    print('linear pca part')
-    pca_grid = PCA(n_components=50).fit_transform(arr_fea)
-    print('kernel pca part')
-    kernelpca_grid = KernelPCA(n_components=3, kernel='sigmoid').fit_transform(pca_grid)
-    print('tsne part')
-    tsne_grid = TSNE(n_components=3, learning_rate='auto', init='pca').fit_transform(pca_grid)
-    print('umap part')
-    umap_grid = umap.UMAP().fit_transform(arr_fea)
-    # df_norm_grid
-
-    fea_index = 0
-    print('concatenate part')
-    for embryo_name in embryo_names:
-        # features reading
-        cell_number_length = len(dict_index[embryo_name])
-        df_fea = pd.DataFrame(index=dict_index[embryo_name],
-                              columns=['eigengrid0', 'eigengrid1', 'eigengrid2',
-                                       'kernel_eigengrid0', 'kernel_eigengrid1', 'kernel_eigengrid2',
-                                       'grid_tSNEx', 'grid_tSNEy', 'grid_tSNEz',
-                                       'grid_UMAPx', 'grid_UMAPy', 'grid_UMAPz'
-                                       ],
-                              data=np.concatenate(pca_grid[fea_index:fea_index + cell_number_length, :3],
-                                                  kernelpca_grid[fea_index:fea_index + cell_number_length],
-                                                  tsne_grid[fea_index:fea_index + cell_number_length],
-                                                  umap_grid[fea_index:fea_index + cell_number_length]))
-        fea_index = fea_index + cell_number_length
-        print(df_fea)
-        df_fea.to_csv(os.path.join(config.data_path, r'cell_shape_feature\2D_grid', 'Sample{}.csv'.format(embryo_name)))
-
-
-def correlation_matrix_of_cell_shape_fea_and_time_fea():
-    X = []
-    Y = []
-
-    # --------------------cell fate----------------------------------------------
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
-    this_cell_fate_dict = {}
-    for idx in df_cell_fate.index:
-        this_cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
-    # print(this_cell_fate_dict)
-
-    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    for embryo_name in embryo_names:
-
-        # features reading
-        path_fea_csv = config.data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv/' + 'Sample{}LabelUnified_dynamic_eigengrid.csv'.format(
-            embryo_name)
-        df_eigengrid = read_csv_to_df(path_fea_csv)
-
-        path_fea_csv = config.data_path + r'my_data_csv/norm_SH_PCA_csv/' + 'Sample{}LabelUnified_dynamic_eigenharmonic12_norm.csv'.format(
-            embryo_name)
-        df_eigenharmonic = read_csv_to_df(path_fea_csv)
-
-        # ------------spectrum norm----------------------------------------
-        path_fea_csv = config.data_path + r'my_data_csv/norm_Spectrum_csv/' + 'Sample{}LabelUnified_dynamic_spectrum.csv'.format(
-            embryo_name)
-        df_spectrum = read_csv_to_df(path_fea_csv)
-
-        hop = 1
-        path_saving_enhanced_spectrum = config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
-        df_dynamic_spectrum_h1 = read_csv_to_df(
-            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
-        hop = 3
-        df_dynamic_spectrum_h3 = read_csv_to_df(
-            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
-
-        path_fea_csv = config.data_path + r'my_data_csv/Spectrum_no_C00_csv/' + 'Sample{}_dynamic_spectrum_no_C00.csv'.format(
-            embryo_name)
-        df_noC00spectrum = read_csv_to_df(path_fea_csv)
-
-        hop = 1
-        path_saving_enhanced_spectrum = config.data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(
-            str(hop))
-        df_dynamic_n00spectrum_h1 = read_csv_to_df(
-            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
-
-        hop = 3
-        path_saving_enhanced_spectrum = config.data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(
-            str(hop))
-        df_dynamic_n00spectrum_h3 = read_csv_to_df(
-            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
-
-        # -------------Y ---------biological meaning------------------------
-        df_time_segregation_ratio = read_csv_to_df(
-            os.path.join(config.data_path, 'my_data_csv/time_segregation_ratio', 'Sample{}.csv'.format(embryo_name)))
-        for idx in df_time_segregation_ratio.index:
-            print(embryo_name, idx)
-            Y.append(list(df_time_segregation_ratio.loc[idx]) + [cell_fate_map[this_cell_fate_dict[idx]]])
-            X.append(list(df_eigengrid.loc[idx][:6]) +
-                     list(df_eigenharmonic.loc[idx][:6]) +
-                     list(df_spectrum.loc[idx]) +
-                     list(df_dynamic_spectrum_h1.loc[idx]) +
-                     list(df_dynamic_spectrum_h3.loc[idx]) +
-                     list(df_noC00spectrum.loc[idx]) +
-                     list(df_dynamic_n00spectrum_h1.loc[idx]) +
-                     list(df_dynamic_n00spectrum_h3.loc[idx]))
-
-    X_arr = np.array(X)
-    Y_arr = np.array(Y)
-    print(X_arr, X_arr.shape)
-    print(Y_arr, Y_arr.shape)
-    for i in range(Y_arr.shape[1]):
-        # print(X_arr.shape)
-        # print(Y_arr[i].shape)
-        for j, value in enumerate(r_regression(X_arr, Y_arr[:, i])):
-            if value > 0.1:
-                print(i, j, value)
 
 
 def sns_pairplot_visualization():
     # get cell fate dictionary
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
 
     # eigengrid or what, just change the directory path and the file name
-    path_saving_dynamic_eigengrid = config.data_path + r'my_data_csv/norm_Spectrum_csv'
+    path_saving_dynamic_eigengrid = config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_csv'
     df_dynamic_f = read_csv_to_df(
         os.path.join(path_saving_dynamic_eigengrid, 'Mean_cellLineageTree_static_Spectrum.csv'))
 
@@ -1321,14 +1185,14 @@ def sns_pairplot_visualization():
 
 
 def t_sne_visualization():
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
 
     time_start_threshold = 150
     # eigengrid or what, just change the directory path and the file name
-    path_saving_dynamic_eigengrid = config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
+    path_saving_dynamic_eigengrid = config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
     df_dynamic_f = read_csv_to_df(
         os.path.join(path_saving_dynamic_eigengrid, 'Mean_cellLineageTree_static_enhanced_h3_M.csv'))
     # ------------different color means different cell fate ----------------
@@ -1362,14 +1226,14 @@ def t_sne_visualization():
 
 
 def umap_visualization_1():
-    df_cell_fate = pd.read_csv(os.path.join(config.data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
 
     time_start_threshold = 150
     # eigengrid or what, just change the directory path and the file name
-    path_saving_dynamic_eigengrid = config.data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
+    path_saving_dynamic_eigengrid = config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
     df_dynamic_f = read_csv_to_df(
         os.path.join(path_saving_dynamic_eigengrid, 'Mean_cellLineageTree_static_enhanced_h3_M.csv'))
 
@@ -1417,6 +1281,7 @@ def umap_visualization_1():
 
 if __name__ == "__main__":
     print('test2 run')
+    # correlation_matrix_of_original_cell_shape_fea_and_time_fea()
     # enhanced_graph_wavelet_feature()
     # division_time_asymmetry()
 

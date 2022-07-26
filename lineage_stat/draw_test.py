@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 import lineage_stat.data_structure as data_struct
 from lineage_stat.lineage_tree import draw_cell_lineage_tree
 from utils.general_func import read_csv_to_df
-from static.config import data_path
+from static.config import cell_shape_analysis_data_path
 
 
 # ---------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ def draw_static_each_embryo_cell_lineage_tree(max_frame=100,showing=False):
         print(embryo_name)
 
         # --------------read the tree with node and time list in data -----------------
-        tmp_path = data_path + r'lineage_tree/LifeSpan/Sample{}_cell_life_tree'.format(embryo_num)
+        tmp_path = cell_shape_analysis_data_path + r'lineage_tree/LifeSpan/Sample{}_cell_life_tree'.format(embryo_num)
         with open(tmp_path, 'rb') as f:
             # print(f)
             cell_life_tree = Tree(pkl.load(f))
@@ -65,7 +65,7 @@ def draw_weight_of_eigengrid(embryo_name, embryo_time_tree, print_num=1, max_fra
     pca_num = 12
 
     # ----------------read SHcPCA result first--------------------------------
-    path_SHcPCA_csv = os.path.join(data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv',
+    path_SHcPCA_csv = os.path.join(cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv',
                                    embryo_name + '_2Dmatrix_PCA.csv'.format(pca_num))
     df_SHcPCA_target = read_csv_to_df(path_SHcPCA_csv)
 
@@ -92,8 +92,8 @@ def draw_weight_of_eigengrid(embryo_name, embryo_time_tree, print_num=1, max_fra
         # print(pd.Series(index=df_SHcPCA_target.index, data=df_SHcPCA_target[str(i_PCA)]).to_dict().keys())
         draw_cell_lineage_tree(embryo_time_tree, values_dict=pd.Series(index=df_SHcPCA_target.index,
                                                                        data=df_SHcPCA_target[str(i_PCA)]).to_dict(),
-                               plot_title=embryo_name.split('L')[0] + '\'s eigengrid ' + str(i_PCA),is_abs=True,
-                               color_map=cmap1, is_frame=True, time_resolution=1.39, end_time_point=max_frame,path_saving=os.path.join(data_path,r'lineage_tree\tree_plot\eigengrid'))
+                               plot_title=embryo_name.split('L')[0] + '\'s eigengrid ' + str(i_PCA), is_abs=True,
+                               color_map=cmap1, is_frame=True, time_resolution=1.39, end_time_point=max_frame, path_saving=os.path.join(cell_shape_analysis_data_path, r'lineage_tree\tree_plot\eigengrid'))
     # =================================================================================================
 
 
@@ -106,7 +106,7 @@ def draw_static_eigengrid_meantree(print_num=2):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
 
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_2dmatrix_pca_csv_path = data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    norm_2dmatrix_pca_csv_path = cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
     df_pd_values_dict = {}
     # ----------------read SHcPCA result first--------------------------------
     for embryo_name in embryo_names:
@@ -181,7 +181,7 @@ def draw_static_eigenharmonic_meantree(print_num=2):
     pca_num = 12
 
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    norm_shcpca_csv_path = data_path + r'my_data_csv/norm_SH_PCA_csv'
+    norm_shcpca_csv_path = cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
     df_pd_values_dict = {}
     # ----------------read SHcPCA result first--------------------------------
     for embryo_name in embryo_names:
@@ -254,7 +254,7 @@ def draw_static_eigenharmonic_meantree(print_num=2):
 def draw_eigengrid_dynamic_mean_tree(print_num=2):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
     pca_num = 12
-    norm_shcpca_csv_path = data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    norm_shcpca_csv_path = cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
     # ----------------read SHcPCA result first--------------------------------
     path_SHcPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
                                             'Mean_cellLineageTree_dynamic_eigengrid.csv')
@@ -287,7 +287,7 @@ def draw_eigengrid_dynamic_mean_tree(print_num=2):
 def draw_shc_PCA_dynamic_mean_tree(print_num=2):
     # ==================drawing for PCA; multiple lineage tree pictures for one embryo========================
     pca_num = 12
-    norm_shcpca_csv_path = data_path + r'my_data_csv/norm_SH_PCA_csv'
+    norm_shcpca_csv_path = cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
     # ----------------read SHcPCA result first--------------------------------
     path_SHcPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
                                             'lifespan_avg_SHcPCA' + str(pca_num) + '_norm.csv')
@@ -322,7 +322,7 @@ def draw_cell_fate_lineage_tree_01paper():
     cell_fate_map = {'Unspecified': 0, 'Other': 1, 'Death': 2, 'Neuron': 3, 'Intestin': 4, 'Muscle': 5, 'Pharynx': 6,
                      'Skin': 7, 'Germ Cell': 8}
     cell_combine_tree, begin_frame = data_struct.get_combined_lineage_tree()
-    df_cell_fate = pd.read_excel(os.path.join(data_path, 'CellFate.xls'))
+    df_cell_fate = pd.read_excel(os.path.join(cell_shape_analysis_data_path, 'CellFate.xls'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')

@@ -1,22 +1,22 @@
-data_path = r'D:\cell_shape_quantification\DATA\\'
+cell_shape_analysis_data_path = r'D:\cell_shape_quantification\DATA\\'
 
-data_CMAP_seg = r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\Documents\research_DATA\WebData_v7\\'
+data_CMAP_seg = r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\MembraneProject\GUIData\WebData_CMap_cell_label_v1\\'
 
-data_cell_mesh_and_contact=r'D:\cell_shape_quantification\DATA\cell_mesh_contact\\'
+data_cell_mesh_and_contact=r'D:\BaiduSyncdisk\3DMeshandContact\\'
 
-dir_segemented_tmp1 = data_path + r'Embryo04LabelUnified'
+dir_segemented_tmp1 = cell_shape_analysis_data_path + r'Embryo04LabelUnified'
 
-dir_my_data = data_path + r'my_data'
+dir_my_data = cell_shape_analysis_data_path + r'my_data'
 
-dir_my_data_R_matrix_csv = data_path + r'my_data_csv/R_matrix'
+dir_my_data_R_matrix_csv = cell_shape_analysis_data_path + r'my_data_csv/R_matrix'
 
-dir_my_data_SH_PCA_csv = data_path + r'my_data_csv/SH_PCA_csv'
+dir_my_data_SH_PCA_csv = cell_shape_analysis_data_path + r'my_data_csv/SH_PCA_csv'
 
-dir_my_data_all_embryo = data_path + r'SegmentCellUnified04-20'
+dir_my_data_all_embryo = cell_shape_analysis_data_path + r'SegmentCellUnified04-20'
 
-dir_my_data_SH_time_domain_csv = data_path + r'my_data_csv/SH_time_domain_csv'
+dir_my_data_SH_time_domain_csv = cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
 
-dir_my_data_volume_surface = data_path + r'my_data_csv/volume_and_surface'
+dir_my_data_volume_surface = cell_shape_analysis_data_path + r'my_data_csv/volume_and_surface'
 
 dir_my_data_SH_clustering_csv = r'./DATA/my_data_csv/SH_clustering'
 

@@ -20,22 +20,16 @@ import utils.general_func as general_f
 
 
 
-def get_cell_name_affine_table(path=config.data_path + r'name_dictionary_no_name.csv'):
+def get_cell_name_affine_table(path=config.cell_shape_analysis_data_path + r'name_dictionary_no_name.csv'):
     """
 
     :return: a set of NO. to name LIST and name to NO. DICTIONARY:
     zero first, but actually there are no zero, remember to plus 1
     """
-    number_cell = []
-    cell_number = {}
-    with open(path, newline='') as name_table:
-        name_reader = csv.reader(name_table, delimiter=' ', quotechar='|')
-        number_cell.append('background')
-        for row in name_reader:
-            cell_number[row[0].split(',')[1]] = len(number_cell)
-            number_cell.append(row[0].split(',')[1])
+    label_name_dict = pd.read_csv(path, index_col=0).to_dict()['0']
+    name_label_dict = {value: key for key, value in label_name_dict.items()}
 
-    return number_cell, cell_number
+    return label_name_dict, name_label_dict
 
 
 def nii_get_cell_surface(img_arr, cell_key):
@@ -64,7 +58,7 @@ def nii_count_volume_surface(this_image):
 
     img_arr = this_image.get_data()
     img_arr_shape = img_arr.shape
-    img_arr_count = np.prod(img_arr_shape)
+    img_arr_count_shape = np.prod(img_arr_shape)
 
     struc_element = ndimage.generate_binary_structure(3, -1)
 
@@ -74,9 +68,9 @@ def nii_count_volume_surface(this_image):
 
     surface_data_result = img_arr - img_arr_erosion
 
-    cnt1 = Counter(np.reshape(img_arr, img_arr_count))
+    cnt1 = Counter(np.reshape(img_arr, img_arr_count_shape))
     del cnt1[0]
-    cnt2 = Counter(np.reshape(surface_data_result, img_arr_count))
+    cnt2 = Counter(np.reshape(surface_data_result, img_arr_count_shape))
     del cnt2[0]
 
     return cnt1, cnt2

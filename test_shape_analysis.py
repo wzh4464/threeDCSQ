@@ -6,9 +6,12 @@ from random import uniform
 
 import nibabel as nib
 import numpy as np
+import pandas as pd
 import open3d as o3d
 from time import time
 import multiprocessing as mp
+from tqdm import tqdm
+
 
 from scipy import ndimage
 from skimage.measure import marching_cubes, mesh_surface_area
@@ -35,10 +38,12 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     :param showCellContact:
     :return:
     """
-    max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
-    embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
-                    '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
-                    '200117plc1pop1ip3']
+    # [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
+    max_times = [205, 205, 255, 195, 195, 185]
+    # ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
+    #                     '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
+    #                     '200117plc1pop1ip3']
+    embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1']
 
     for idx, embryo_name in enumerate(embryo_names):
         configs = []
@@ -48,14 +53,14 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
         config_tmp['is_calculate_contact_file']=is_calculate_contact_file
         config_tmp['showCellMesh']=showCellMesh
         config_tmp['showCellContact']=showCellContact
-        for tp in tqdm(range(1, max_times[idx] + 1), desc="Compose configs"):
+        for tp in tqdm(range(1, max_times[idx] + 1), desc="Compose {} configs".format(embryo_name)):
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
 
-        mpPool = mp.Pool(20)
+        mpPool = mp.Pool(4)
         for idx_, _ in enumerate(
             tqdm(mpPool.imap_unordered(calculate_cell_surface_and_contact_points,configs), total=max_times[idx],
-                     desc="Naming {} segmentations (contact graph)".format(embryo_name))):
+                     desc="calculating {} segmentations (contact graph)".format(embryo_name))):
             #
             pass
 
@@ -103,7 +108,7 @@ def calculate_cell_surface_and_contact_points(config_arg):
         contact_mask = np.logical_and(ndimage.binary_dilation(volume == label1),
                                       ndimage.binary_dilation(volume == label2))
         contact_mask = np.logical_and(contact_mask, boundary_mask)
-        if contact_mask.sum() > 4:
+        if contact_mask.sum() > 2:
 
             cell_conatact_pair_renew.append((label1, label2))
             str_key = str(label1) + '_' + str(label2)
@@ -240,7 +245,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
 
     for embryo_name in embryo_names:
         # ------------------------calculate surface points using dialation for each cell --------------------
-        path_tmp = my_config.data_path + r'Segmentation Results\SegmentedCell/Sample' + embryo_name + 'LabelUnified'
+        path_tmp = my_config.cell_shape_analysis_data_path + r'Segmentation Results\SegmentedCell/Sample' + embryo_name + 'LabelUnified'
         for file_name in os.listdir(path_tmp):
             if os.path.isfile(os.path.join(path_tmp, file_name)):
                 print(path_tmp, file_name)
@@ -272,7 +277,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
                     contact_mask = np.logical_and(ndimage.binary_dilation(volume == label1),
                                                   ndimage.binary_dilation(volume == label2))
                     contact_mask = np.logical_and(contact_mask, boundary_mask)
-                    if contact_mask.sum() > 4:
+                    if contact_mask.sum() > 3:
 
                         cell_conatact_pair_renew.append((label1, label2))
                         str_key = str(label1) + '_' + str(label2)
@@ -297,7 +302,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
                               'rb') as handle:
                         contact_mesh_dict = pickle.load(handle)
                 # print(cell_list)
-                for cell_key in cell_list:
+                for cell_key in tqdm(cell_list,desc="Collecting cell mesh and contact of cshaper embryo{}".format(embryo_name)):
                     if cell_key != 0:
 
                         # ------------saving cell mesh---------------------
@@ -309,7 +314,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
 
                         # print(os.path.exists(cellMesh_file_saving_path))
                         if not os.path.exists(cellMesh_file_saving_path) or is_calculate_cell_mesh:
-                            print('calculating and saving', cell_key, ' surface')
+                            # print('calculating and saving', cell_key, ' surface')
                             tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_key) == 1)
                             sphere_list = np.concatenate(
                                 (tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
@@ -337,7 +342,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
                                     continue
 
                                 # --------------------contact-----------------------------------------
-                                print('calculating, saving or showing', idx, ' contact surface')
+                                # print('calculating, saving or showing', idx, ' contact surface')
 
                                 # build a mask to erase not contact points
                                 # enumerate each points in contact surface
@@ -395,14 +400,16 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
 
 
 def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_contact=True):
+    # 200109plc1p1,ABalpppppap,181
     embryo_name, cell_name, tp = str(input()).split(',')
     path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name, 'SegCell',
                             '{}_{}_segCell.nii.gz'.format(embryo_name, tp))
     this_img = load_nitf2_img(path_tmp)
     volume = this_img.get_fdata().astype(int)
+    # print(np.unique(volume))
 
-    num_cellname, cellname_num = get_cell_name_affine_table(path=my_config.data_CMAP_seg + r'name_dictionary.csv')
-    cell_idx = cellname_num[cell_name]
+    _, name_label_dict = get_cell_name_affine_table(path=my_config.data_CMAP_seg + r'name_dictionary.csv')
+    cell_idx = name_label_dict[cell_name]
 
     # -------------------
     cell_mask = volume != 0
@@ -423,31 +430,36 @@ def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_c
     contact_points_dict = {}
     contact_area_dict = {}
 
+    # print(cell_contact_pairs)
+
+
     for (label1, label2) in cell_contact_pairs:
-        contact_mask = np.logical_and(ndimage.binary_dilation(volume == label1),
-                                      ndimage.binary_dilation(volume == label2))
-        contact_mask = np.logical_and(contact_mask, boundary_mask)
-        if contact_mask.sum() > 4:
+        # print(cell_idx,label1,label2)
+        if cell_idx in (label1, label2):
+            print('calculating ',(label1, label2),' contact ')
+            contact_mask = np.logical_and(ndimage.binary_dilation(volume == label1),
+                                          ndimage.binary_dilation(volume == label2))
+            contact_mask = np.logical_and(contact_mask, boundary_mask)
+            if contact_mask.sum() > 2:
 
-            cell_conatact_pair_renew.append((label1, label2))
-            str_key = str(label1) + '_' + str(label2)
-            contact_area_dict[str_key] = 0
+                cell_conatact_pair_renew.append((label1, label2))
+                str_key = str(label1) + '_' + str(label2)
+                contact_area_dict[str_key] = 0
 
-            point_position_x, point_position_y, point_position_z = np.where(contact_mask == True)
+                point_position_x, point_position_y, point_position_z = np.where(contact_mask == True)
 
-            contact_points_list = []
-            for i in range(len(point_position_x)):
-                contact_points_list.append([point_position_x[i], point_position_y[i], point_position_z[i]])
-            # print(str_key)
-            contact_points_dict[str_key] = contact_points_list
+                contact_points_list = []
+                for i in range(len(point_position_x)):
+                    contact_points_list.append([point_position_x[i], point_position_y[i], point_position_z[i]])
+                # print(str_key)
+                contact_points_dict[str_key] = contact_points_list
 
-    cell_list = np.unique(volume)
     contact_mesh_dict = {}
-    showing_record = []
     contact_sur_area = []
 
     print('calculating and saving', cell_idx, ' surface')
     tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_idx) == 1)
+    print(tuple_tmp)
     sphere_list = np.concatenate(
         (tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
     sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, 0.001,
@@ -474,15 +486,16 @@ def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_c
                 contact_vertices_loc_list.append(contact_vertices_loc[0][0])
                 contact_mask_not[contact_vertices_loc[0][0]] = False
         contact_mesh_dict[idx] = contact_vertices_loc_list
+        contact_mesh = deepcopy(m_mesh)
+        contact_mesh.remove_vertices_by_mask(contact_mask_not)
+        contact_sur_area.append(contact_mesh.get_surface_area())
 
         if is_showing_cell_contact:
-            contact_mesh = deepcopy(m_mesh)
-            contact_mesh.remove_vertices_by_mask(contact_mask_not)
-            contact_sur_area.append(contact_mesh.get_surface_area())
+
             o3d.visualization.draw_geometries([contact_mesh], mesh_show_back_face=True,
                                               mesh_show_wireframe=True)
-    print('cell volume', m_mesh.get_volume())
-    print('cell surface area', m_mesh.get_surface_area())
+    print('cell volume', (volume == cell_idx).sum()*0.25**3)
+    print('cell surface area', m_mesh.get_surface_area()*0.25**2)
     print('sum of cell contact area', sum(contact_sur_area))
     print('list of cell contact area', contact_sur_area)
 
@@ -492,7 +505,7 @@ def calculate_cell_points_CShaper():
 
     for embryo_name in embryo_names:
         # ------------------------calculate surface points using dialation for each cell --------------------
-        path_tmp = my_config.data_path + r'Segmentation Results\SegmentedCell/Sample' + embryo_name + 'LabelUnified'
+        path_tmp = my_config.cell_shape_analysis_data_path + r'Segmentation Results\SegmentedCell/Sample' + embryo_name + 'LabelUnified'
         for file_name in os.listdir(path_tmp):
             if os.path.isfile(os.path.join(path_tmp, file_name)):
                 t0 = time()
@@ -502,7 +515,7 @@ def calculate_cell_points_CShaper():
 
                 cell_points = export_dia_cell_points_json(img_arr)
 
-                dia_cell_saving = os.path.join(my_config.data_path + r'cell_dia_points', 'Sample' + embryo_name)
+                dia_cell_saving = os.path.join(my_config.cell_shape_analysis_data_path + r'cell_dia_points', 'Sample' + embryo_name)
                 if not os.path.exists(dia_cell_saving):
                     os.mkdir(dia_cell_saving)
 
@@ -642,6 +655,5 @@ def calculate_cell_points_CShaper():
 if __name__ == "__main__":
     # calculate_cell_surface_and_contact_points(is_calculate_cell_mesh=False, is_calculate_contact_file=False,
     #                                           showCellMesh=True, showCellContact=True)
-    # display_cell_mesh_contact_CMap()
-
-    calculate_cell_surface_and_contact_points_CMap()
+    display_cell_mesh_contact_CMap(is_showing_cell_mesh=False,is_showing_cell_contact=False)
+    # calculate_cell_surface_and_contact_points_CMap()
