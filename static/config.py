@@ -1,6 +1,6 @@
 cell_shape_analysis_data_path = r'D:\cell_shape_quantification\DATA\\'
 
-data_CMAP_seg = r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\MembraneProject\GUIData\WebData_CMap_cell_label_v1\\'
+data_CMAP_seg = r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\MembraneProjectData\GUIData\WebData_CMap_cell_label_v1\\'
 
 data_cell_mesh_and_contact=r'D:\BaiduSyncdisk\3DMeshandContact\\'
 
