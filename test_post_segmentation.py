@@ -32,6 +32,10 @@ def combine_wrong_dividing_cell_CMap():
                                                     '{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
             post_seg_by_zelin=os.path.join(path_tmp,'{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
 
+            with open(os.path.join(my_config.data_CMAP_seg,embryo_name,'DivisionCell','{}_{}_division.txt'.format(embryo_name,str(tp_current).zfill(3)))) as f:
+                dividing_information = f.readlines()
+            print(dividing_information)
+
             volume = nib.load(combined_unified_seg_by_jf).get_fdata().astype(int)
             cell_list = np.unique(volume)
             for cell_key in cell_list:
@@ -46,11 +50,11 @@ def combine_wrong_dividing_cell_CMap():
                                                                                          (len(tuple_tmp[0]), 3))
                     alpha_v = 1
                     m_mesh = generate_alpha_shape(sphere_list_adjusted,alpha_value=alpha_v)
-                    print(m_mesh.cluster_connected_triangles())
+                    # print(len(m_mesh.cluster_connected_triangles()[2]))
 
                     # alpha_v = 1
 
-                    if not m_mesh.is_watertight():
+                    if len(m_mesh.cluster_connected_triangles()[2])>1:
                         o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True, mesh_show_wireframe=True,
                                                           window_name=label_name_dict[cell_key]+' {}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
 

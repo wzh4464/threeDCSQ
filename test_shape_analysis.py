@@ -460,7 +460,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
         config_tmp['showCellMesh'] = showCellMesh
         config_tmp['showCellContact'] = showCellContact
         config_tmp['path_embryo'] = os.path.join(my_config.cell_shape_analysis_data_path,
-                                                 'Segmentation Results','SegmentedCell', embryo_name + 'LabelUnified')
+                                                 'Segmentation Results', 'SegmentedCell', embryo_name + 'LabelUnified')
         for tp in tqdm(range(1, max_times[idx] + 1), desc="Compose configs"):
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
@@ -486,7 +486,7 @@ def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_c
     volume = this_img.get_fdata().astype(int)
     # print(np.unique(volume))
 
-    _, name_label_dict = get_cell_name_affine_table(path=my_config.data_CMAP_seg + r'name_dictionary.csv')
+    _, name_label_dict = get_cell_name_affine_table(path=os.path.join(my_config.data_CMAP_seg, 'name_dictionary.csv'))
     cell_idx = name_label_dict[cell_name]
 
     # -------------------
@@ -543,6 +543,8 @@ def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_c
                                                                          (len(tuple_tmp[0]), 3))
     # print(np.unique(volume == cell_idx),tuple_tmp,sphere_list_adjusted)
     m_mesh = generate_alpha_shape(sphere_list_adjusted, alpha_value=1, displaying=is_showing_cell_mesh)
+    print(len(m_mesh.cluster_connected_triangles()[2]))
+
     # print('saving mesh')
     # ============contact surface detection========================
     cell_vertices = np.asarray(m_mesh.vertices).astype(int)
@@ -580,9 +582,13 @@ def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_c
     # 200109plc1p1,ABalpppppap,181   (normal part of it no contact)
     # 200117plc1pop1ip2,Dap,122     (segmenation as two cell)
 
+    # wrong dividing cells
+    #
+
 
 if __name__ == "__main__":
-    calculate_cell_surface_and_contact_points_CShaper()
+    display_cell_mesh_contact_CMap(is_showing_cell_contact=True, is_showing_cell_mesh=True)
+    # calculate_cell_surface_and_contact_points_CShaper()
     # detect_outer_cells()
     # calculate_cell_surface_and_contact_points(is_calculate_cell_mesh=False, is_calculate_contact_file=False,
     #                                           showCellMesh=True, showCellContact=True)
