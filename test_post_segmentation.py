@@ -26,20 +26,27 @@ def combine_wrong_dividing_cell_CMap():
         path_tmp = os.path.join(my_config.segmentation_by_jf, embryo_name,'SegCellTimeCombinedLabelUnifiedPost1')
         if not os.path.exists(path_tmp):
             os.mkdir(path_tmp)
-        for tp_current in range(50,max_times[embyro_idx]+1):
+        for tp_current in range(100,max_times[embyro_idx]+1):
             combined_unified_seg_by_jf=os.path.join(my_config.segmentation_by_jf,embryo_name,
                                                     'SegCellTimeCombinedLabelUnified',
                                                     '{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
             post_seg_by_zelin=os.path.join(path_tmp,'{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
 
-            with open(os.path.join(my_config.data_CMAP_seg,embryo_name,'DivisionCell','{}_{}_division.txt'.format(embryo_name,str(tp_current).zfill(3)))) as f:
+            with open(os.path.join(my_config.data_CMAP_seg_gui,embryo_name,'DivisionCell','{}_{}_division.txt'.format(embryo_name,str(tp_current).zfill(3)))) as f:
                 dividing_information = f.readlines()
-            print(dividing_information)
+            division_cell_list=dividing_information[0].split(',')
+            if division_cell_list[0]=='\n':
+                continue
+            division_cell_list_int=np.array(division_cell_list).astype(int)
+            print('{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)),division_cell_list_int)
 
             volume = nib.load(combined_unified_seg_by_jf).get_fdata().astype(int)
             cell_list = np.unique(volume)
             for cell_key in cell_list:
-                if cell_key != 0:
+                if (volume==cell_key).sum()>4096:
+                    continue
+
+                if cell_key != 0 and cell_key in division_cell_list_int:
 
                     tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_key) == 1)
                     # print(len(tuple_tmp))
@@ -55,8 +62,15 @@ def combine_wrong_dividing_cell_CMap():
                     # alpha_v = 1
 
                     if len(m_mesh.cluster_connected_triangles()[2])>1:
+                        print('wrong dividing ',cell_key,label_name_dict[cell_key]+' {}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
                         o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True, mesh_show_wireframe=True,
                                                           window_name=label_name_dict[cell_key]+' {}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
+                    else:
+                        print('correct dividing ',cell_key, label_name_dict[cell_key] + ' {}_{}_segCell.nii.gz'.format(embryo_name, str(tp_current).zfill(3)))
+                        o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True, mesh_show_wireframe=True,
+                                                          window_name=label_name_dict[
+                                                                          cell_key] + ' {}_{}_segCell.nii.gz'.format(
+                                                              embryo_name, str(tp_current).zfill(3)))
 
 if __name__ == "__main__":
     combine_wrong_dividing_cell_CMap()
