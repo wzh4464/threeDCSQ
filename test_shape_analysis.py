@@ -445,7 +445,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
     # config_tmp['showCellContact'] = showCellContact
     # config_tmp['time_point'] = 100
     # config_tmp['path_embryo'] = os.path.join(my_config.cell_shape_analysis_data_path,
-    #                                          r'Segmentation Results\SegmentedCell\Sample04LabelUnified')
+    #                                              'Segmentation Results','SegmentedCell', 'Sample04LabelUnified')
     #
     # calculate_cell_surface_and_contact_points(config_tmp, is_debug=True)
     # # --------------------------------
@@ -460,13 +460,13 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
         config_tmp['showCellMesh'] = showCellMesh
         config_tmp['showCellContact'] = showCellContact
         config_tmp['path_embryo'] = os.path.join(my_config.cell_shape_analysis_data_path,
-                                                 r'Segmentation Results\SegmentedCell\\', embryo_name + 'LabelUnified')
+                                                 'Segmentation Results','SegmentedCell', embryo_name + 'LabelUnified')
         for tp in tqdm(range(1, max_times[idx] + 1), desc="Compose configs"):
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
 
-        # mpPool = mp.Pool(30)
-        mpPool = mp.Pool(4)
+        mpPool = mp.Pool(30)
+        # mpPool = mp.Pool(4)
 
         for idx_, _ in enumerate(
                 tqdm(mpPool.imap_unordered(calculate_cell_surface_and_contact_points, configs),
