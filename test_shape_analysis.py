@@ -533,9 +533,11 @@ def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_c
 
     contact_mesh_dict = {}
     contact_sur_area = []
+    print((volume == cell_idx).sum())
 
     print('calculating and saving', cell_idx, ' surface')
     tuple_tmp = np.where(ndimage.binary_dilation(volume == cell_idx) == 1)
+
     print(tuple_tmp)
     sphere_list = np.concatenate(
         (tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
@@ -583,7 +585,7 @@ def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_c
     # 200117plc1pop1ip2,Dap,122     (segmenation as two cell)
 
     # wrong dividing cells
-    #
+    # 200322plc1p2,Caaaa,181
 
 
 if __name__ == "__main__":
