@@ -1,33 +1,22 @@
-cell_shape_analysis_data_path = r'D:\cell_shape_quantification\DATA\\'
+data_path = r'D:\cell_shape_quantification\DATA\\'
 
-data_CMAP_seg = r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\MembraneProjectData\GUIData\WebData_CMap_cell_label_v1\\'
+# ----------LINUXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX---------------
 
-data_cell_mesh_and_contact=r'D:\BaiduSyncdisk\3DMeshandContact\\'
+data_linux_CMAP_seg = r'/home/home/ProjectCode/LearningCell/MembProjectCode/output/'
 
-dir_segemented_tmp1 = cell_shape_analysis_data_path + r'Embryo04LabelUnified'
+data_linux_CMAP_seg_gui= r'/home/home/ProjectCode/LearningCell/MembProjectCode/gui'
 
-dir_my_data = cell_shape_analysis_data_path + r'my_data'
+data_linux_cell_mesh_and_contact= r'/home/home/ProjectCode/LearningCell/CellShapeAnalysis/DATA/cell_mesh_contact/'
 
-dir_my_data_R_matrix_csv = cell_shape_analysis_data_path + r'my_data_csv/R_matrix'
+data_label_name_dictionary= r"/home/home/ProjectCode/LearningCell/MembProjectCode/gui/name_dictionary.csv"
 
-dir_my_data_SH_PCA_csv = cell_shape_analysis_data_path + r'my_data_csv/SH_PCA_csv'
+data_stat_tem=r'/home/home/ProjectCode/LearningCell/CellShapeAnalysis/DATA/cell_mesh_contact/tem/'
 
-dir_my_data_all_embryo = cell_shape_analysis_data_path + r'SegmentCellUnified04-20'
+cell_shape_analysis_data_path=r'/home/jeff/ProjectCode/LearningCell/CellShapeAnalysis/DATA'
 
-dir_my_data_SH_time_domain_csv = cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+data_stat=r"/home/home/ProjectCode/LearningCell/MembProjectCode/statistics/"
 
-dir_my_data_volume_surface = cell_shape_analysis_data_path + r'my_data_csv/volume_and_surface'
+segmentation_by_jf=r'/home/jeff/ProjectCode/LearningCell/MembProjectCode/output/'
 
-dir_my_data_SH_clustering_csv = r'./DATA/my_data_csv/SH_clustering'
+cmap_data_original=r'/home/jeff/ProjectCode/LearningCell/MembProjectCode/dataset/test'
 
-dir_my_data_SHcPCA_ratio = r'./DATA/my_data_csv/SHcPCA_ratio'
-
-dir_my_regular_shape_path = r'./DATA\my_data_csv\regular_shape'
-
-dir_my_data_err_est_dir = r'./DATA\my_data_csv\err_estimation'
-
-shcpca_norm_path = r'./DATA/my_data_csv/SH_time_domain_csv/SHc_norm_PCA.csv'
-
-shcpca_path = r'./DATA/my_data_csv/SH_time_domain_csv/SHc_PCA.csv'
-
-cell_fate_path = r'./DATA/CellFate.xls'
