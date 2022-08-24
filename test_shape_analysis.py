@@ -8,7 +8,6 @@ import pandas as pd
 import open3d as o3d
 from time import time
 import multiprocessing as mp
-from tqdm import tqdm
 
 from scipy import ndimage
 from tqdm import tqdm
@@ -39,7 +38,7 @@ def detect_outer_cells():
         for tp in range(1, max_times[idx] + 1):
 
             summary_tmp = {}
-            path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified')
+            path_tmp = os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified')
             frame_this_embryo = str(tp).zfill(3)
             file_name = embryo_name + '_' + frame_this_embryo + '_segCell.nii.gz'
             volume = nib.load(os.path.join(path_tmp, file_name)).get_fdata().astype(int).transpose([2, 1, 0])
@@ -134,15 +133,17 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
 
 def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
     embryo_name = config_arg['embryo_name']
-    is_calculate_cell_mesh = config_arg['is_calculate_cell_mesh']
-    is_calculate_contact_file = config_arg['is_calculate_contact_file']
+    is_calculate_cell_mesh = config_arg.get('is_calculate_cell_mesh',None)
+    is_calculate_contact_file = config_arg.get('is_calculate_contact_file',None)
     showCellMesh = config_arg['showCellMesh']
-    showCellContact = config_arg['showCellContact']
+    showCellContact = config_arg.get('showCellContact',None)
     time_point = config_arg['time_point']
     path_embryo = config_arg.get('path_embryo', None)
 
     if not path_embryo:
-        path_embryo = os.path.join(my_config.data_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified')
+        path_embryo = os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified')
+    else:
+        print('calculating ', path_embryo, embryo_name, time_point, ' embryo stat')
 
     # ------------------------calculate surface points using dialation for each cell --------------------
     # for file_name in os.listdir(path_tmp):
@@ -391,7 +392,7 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
         print('-------------abnormal contact cell ratio!!!!====>  ', abnormal_contact_cell_ratio)
     # ------------saving volume surface and contact file for an embryo------------
     else:
-        path_tmp = os.path.join(my_config.data_cell_mesh_and_contact, 'stat', embryo_name)
+        path_tmp = os.path.join(my_config.data_linux_cell_mesh_and_contact, 'stat', embryo_name)
         if not os.path.exists(path_tmp):
             os.mkdir(path_tmp)
         with open(os.path.join(path_tmp, file_name.split('.')[0] + '_volume.txt'), 'wb+') as handle:
@@ -480,13 +481,13 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
 def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_contact=True):
     # 200109plc1p1,ABalpppppap,181
     embryo_name, cell_name, tp = str(input()).split(',')
-    path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name, 'SegCell',
+    path_tmp = os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCell',
                             '{}_{}_segCell.nii.gz'.format(embryo_name, tp))
     this_img = load_nitf2_img(path_tmp)
     volume = this_img.get_fdata().astype(int)
     # print(np.unique(volume))
 
-    _, name_label_dict = get_cell_name_affine_table(path=os.path.join(my_config.data_CMAP_seg, 'name_dictionary.csv'))
+    _, name_label_dict = get_cell_name_affine_table(path=os.path.join(my_config.data_linux_CMAP_seg, 'name_dictionary.csv'))
     cell_idx = name_label_dict[cell_name]
 
     # -------------------

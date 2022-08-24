@@ -20,70 +20,92 @@ from utils.cell_func import get_cell_name_affine_table
 from utils.general_func import load_nitf2_img
 from utils.shape_preprocess import export_dia_cell_points_json
 from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
+embryo_name='191108plc1p1'
+
+embryo_path="/home/home/ProjectCode/LearningCell/MembProjectCode/output/{}/SegCell/{}_179_segCell.nii.gz".format(embryo_name,embryo_name)
+embryo_volume=nib.load(embryo_path).get_fdata().astype(int)
+print(np.unique(embryo_volume))
 
 
-contact_path=r"/home/home/ProjectCode/LearningCell/MembProjectCode/statistics/191108plc1p1/191108plc1p1_contact.csv"
-volume_path=r"/home/home/ProjectCode/LearningCell/MembProjectCode/statistics/191108plc1p1/191108plc1p1_volume.csv"
-surface_path=r"/home/home/ProjectCode/LearningCell/MembProjectCode/statistics/191108plc1p1/191108plc1p1_surface.csv"
+embryo_segtimecellcombined_path="/home/home/ProjectCode/LearningCell/MembProjectCode/output/{}/SegCellTimeCombined/{}_179_segCell.nii.gz".format(embryo_name,embryo_name)
+embryo_segtimecellcombined_volume=nib.load(embryo_segtimecellcombined_path).get_fdata().astype(int)
+print(np.unique(embryo_segtimecellcombined_volume))
+
+embryo_segtimecellcombinedlabelunified_path="/home/home/ProjectCode/LearningCell/MembProjectCode/output/{}/SegCellTimeCombinedLabelUnified/{}_179_segCell.nii.gz".format(embryo_name,embryo_name)
+embryo_segtimecellcombinedlabelunified_volume=nib.load(embryo_segtimecellcombinedlabelunified_path).get_fdata().astype(int)
+print(np.unique(embryo_segtimecellcombinedlabelunified_volume))
+
+
+embryo_nuc_path="/home/home/ProjectCode/LearningCell/MembProjectCode/dataset/test/191108plc1p1/SegNuc/191108plc1p1_179_segNuc.nii.gz"
+embryo_nuc_nii=nib.load(embryo_nuc_path).get_fdata().astype(int)
+print(np.unique(embryo_nuc_nii,return_counts=True))
 
 
 
-df_contact=pd.read_csv(contact_path,header=[0,1],index_col=0)
-df_volume=pd.read_csv(volume_path,header=0,index_col=0)
-df_surface=pd.read_csv(surface_path,header=0,index_col=0)
+# ===============================================================================================================
 
-pd_number = pd.read_csv(r"/home/home/ProjectCode/LearningCell/MembProjectCode/dataset/number_dictionary.csv", names=["name", "label"])
-number_dict = pd.Series(pd_number.label.values, index=pd_number.name).to_dict()
-
-# print(df_volume)
-# print(df_surface)
-# print(df_contact)
-# print(number_dict)
-
-irregularity_list=[]
-ratio_list=[]
-# for tp in df_volume.index:
-#     for cell_name in df_volume.columns:
+# contact_path=r"/home/home/ProjectCode/LearningCell/MembProjectCode/statistics/191108plc1p1/191108plc1p1_contact.csv"
+# volume_path=r"/home/home/ProjectCode/LearningCell/MembProjectCode/statistics/191108plc1p1/191108plc1p1_volume.csv"
+# surface_path=r"/home/home/ProjectCode/LearningCell/MembProjectCode/statistics/191108plc1p1/191108plc1p1_surface.csv"
+#
+#
+#
+# df_contact=pd.read_csv(contact_path,header=[0,1],index_col=0)
+# df_volume=pd.read_csv(volume_path,header=0,index_col=0)
+# df_surface=pd.read_csv(surface_path,header=0,index_col=0)
+#
+# pd_number = pd.read_csv(r"/home/home/ProjectCode/LearningCell/MembProjectCode/dataset/number_dictionary.csv", names=["name", "label"])
+# number_dict = pd.Series(pd_number.label.values, index=pd_number.name).to_dict()
+#
+# # print(df_volume)
+# # print(df_surface)
+# # print(df_contact)
+# # print(number_dict)
+#
+# irregularity_list=[]
+# ratio_list=[]
+# # for tp in df_volume.index:
+# #     for cell_name in df_volume.columns:
+# #         # print()
+# #
+# #         if df_volume[cell_name].notnull().loc[tp]:
+# #             # print(df_volume.at[tp, cell_name])
+# #             irre=df_surface.at[tp,cell_name]**(1/2)/df_volume.at[tp,cell_name]**(1/3)
+# #             if irre<2.199999:
+# #                 print('impossible irregulartiy', tp, cell_name,irre)
+# #             elif irre>3:
+# #                 print('strange irregulartiy', tp, cell_name,irre)
+#
+# contact_dict={}
+#
+# for tp in df_contact.index:
+#     for (cell_name1,cell_name2) in df_contact.columns:
+#         # print(cell_name1,cell_name2)
+#         if df_contact[(cell_name1,cell_name2)].notnull().loc[tp]:
+#             contact_value_tmp=df_contact.at[tp,(cell_name1,cell_name2)]
+#             if (tp,cell_name1) in contact_dict.keys():
+#                 contact_dict[(tp,cell_name1)].append(contact_value_tmp)
+#             else:
+#                 contact_dict[(tp, cell_name1)]=[contact_value_tmp]
+#
+#             if (tp,cell_name2) in contact_dict.keys():
+#                 contact_dict[(tp,cell_name2)].append(contact_value_tmp)
+#             else:
+#                 contact_dict[(tp, cell_name2)]=[contact_value_tmp]
+# print(contact_dict)
+# for tp in df_surface.index:
+#     for cell_name in df_surface.columns:
 #         # print()
 #
-#         if df_volume[cell_name].notnull().loc[tp]:
-#             # print(df_volume.at[tp, cell_name])
-#             irre=df_surface.at[tp,cell_name]**(1/2)/df_volume.at[tp,cell_name]**(1/3)
-#             if irre<2.199999:
-#                 print('impossible irregulartiy', tp, cell_name,irre)
-#             elif irre>3:
-#                 print('strange irregulartiy', tp, cell_name,irre)
+#         if df_surface[cell_name].notnull().loc[tp]:
+#             ratio_tmp=round(sum(contact_dict[(tp, cell_name)])/df_surface.at[tp, cell_name],2)
+#             ratio_list.append(ratio_tmp)
+#             if ratio_tmp>1:
+#                 print(tp,cell_name,ratio_tmp)
+#
+# print(np.unique(np.array(ratio_list),return_counts=True))
 
-contact_dict={}
-
-for tp in df_contact.index:
-    for (cell_name1,cell_name2) in df_contact.columns:
-        # print(cell_name1,cell_name2)
-        if df_contact[(cell_name1,cell_name2)].notnull().loc[tp]:
-            contact_value_tmp=df_contact.at[tp,(cell_name1,cell_name2)]
-            if (tp,cell_name1) in contact_dict.keys():
-                contact_dict[(tp,cell_name1)].append(contact_value_tmp)
-            else:
-                contact_dict[(tp, cell_name1)]=[contact_value_tmp]
-
-            if (tp,cell_name2) in contact_dict.keys():
-                contact_dict[(tp,cell_name2)].append(contact_value_tmp)
-            else:
-                contact_dict[(tp, cell_name2)]=[contact_value_tmp]
-print(contact_dict)
-for tp in df_surface.index:
-    for cell_name in df_surface.columns:
-        # print()
-
-        if df_surface[cell_name].notnull().loc[tp]:
-            ratio_tmp=round(sum(contact_dict[(tp, cell_name)])/df_surface.at[tp, cell_name],2)
-            ratio_list.append(ratio_tmp)
-            if ratio_tmp>1:
-                print(tp,cell_name,ratio_tmp)
-
-print(np.unique(np.array(ratio_list),return_counts=True))
-
-
+ # =======================================================================================
 # try:
 #     with open(volume_path, 'rb') as handle:
 #         volume = pickle.load(handle)
