@@ -16,12 +16,12 @@ import numpy as np
 
 # import user defined library
 
-from static.config import cell_shape_analysis_data_path
+from static.config import win_cell_shape_analysis_data_path
 
 
 def draw_cell_lineage_tree(cell_tree: Tree, values_dict, plot_title='', color_map='seismic',
                            is_frame=False, time_resolution=1, is_abs=True, end_time_point=None, showing=False,
-                           path_saving=os.path.join(cell_shape_analysis_data_path, r'lineage_tree\tree_plot')):
+                           path_saving=os.path.join(win_cell_shape_analysis_data_path, r'lineage_tree\tree_plot')):
     """
 
     :param cell_tree:

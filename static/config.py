@@ -8,7 +8,7 @@ data_linux_cell_mesh_and_contact= r'/home/home/ProjectCode/LearningCell/CellShap
 
 data_label_name_dictionary= r"/home/home/ProjectCode/LearningCell/MembProjectCode/gui/name_dictionary.csv"
 
-data_stat_tem=r'/home/home/ProjectCode/LearningCell/CellShapeAnalysis/DATA/cell_mesh_contact/tem/'
+data_stat_tem_linux=r'/home/home/ProjectCode/LearningCell/CellShapeAnalysis/DATA/cell_mesh_contact/tem/'
 
 linux_cell_shape_analysis_data_path=r'/home/jeff/ProjectCode/LearningCell/CellShapeAnalysis/DATA'
 
@@ -27,6 +27,9 @@ data_win_CShaper_seg= r'D:\cell_shape_quantification\DATA\Segmentation Results'
 data_CMAP_seg = r'D:\MembraneProjectData\GUIData\WebData_CMap_cell_label_v1'
 
 data_cell_mesh_and_contact=r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\DATA\cell_mesh_contact'
+
+data_stat_tem_windows=r'D:\MembraneProjectData\GUIData\tem'
+
 
 dir_segemented_tmp1 = win_cell_shape_analysis_data_path + r'Embryo04LabelUnified'
 

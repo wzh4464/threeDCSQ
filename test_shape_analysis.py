@@ -23,17 +23,19 @@ from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 
 
 def detect_outer_cells():
+
+    gui_data_path=r'D:\MembraneProjectData\GUIData\WebData_CMap_cell_label_v2'
     max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
     embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
                     '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
                     '200117plc1pop1ip3']
 
-    label_name_dict = pd.read_csv(os.path.join(my_config.data_label_name_dictionary), header=0, index_col=0).to_dict()[
+    label_name_dict = pd.read_csv(os.path.join(gui_data_path,'name_dictionary.csv'), header=0, index_col=0).to_dict()[
         '0']
     name_label_dict = {label: name for name, label in label_name_dict.items()}
 
     for idx, embryo_name in enumerate(embryo_names):
-        df_volume_data = pd.read_csv(os.path.join(my_config.data_stat, embryo_name, embryo_name + '_volume.csv'),
+        df_volume_data = pd.read_csv(os.path.join(gui_data_path, embryo_name, embryo_name + '_volume.csv'),
                                      header=0, index_col=0)
         # df_volume_data.loc[:, :] = 0
         print(df_volume_data)
@@ -41,13 +43,13 @@ def detect_outer_cells():
         for tp in range(1, max_times[idx] + 1):
 
             summary_tmp = {}
-            path_tmp = os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified')
+            path_tmp = os.path.join(r'D:\MembraneProjectData\GUIData\WebData_CMap_cell_label_v2', embryo_name,'SegCell')
             frame_this_embryo = str(tp).zfill(3)
             file_name = embryo_name + '_' + frame_this_embryo + '_segCell.nii.gz'
-            volume = nib.load(os.path.join(path_tmp, file_name)).get_fdata().astype(int).transpose([2, 1, 0])
+            volume = nib.load(os.path.join(path_tmp, file_name)).get_fdata().astype(int)
             for label_tmp in np.unique(volume)[1:]:
                 summary_tmp[label_tmp] = 1
-            volume_closing = ndimage.binary_closing((volume != 0), iterations=5)
+            volume_closing = ndimage.binary_closing((volume != 0), iterations=2)
             volume_outer = np.logical_xor(volume_closing, ndimage.binary_erosion(volume_closing))
             # print(np.unique(volume_outer,return_counts=True))
             outer_arr_tmp = np.where(volume_outer)
@@ -74,7 +76,7 @@ def detect_outer_cells():
                     df_volume_data.loc[tp][label_name_dict[int(tmp_key)]] = 1  # inner is 1
 
         print(df_volume_data)
-        df_volume_data.to_csv(os.path.join(my_config.data_stat_tem, embryo_name + '_outerCell.csv'))
+        df_volume_data.to_csv(os.path.join(my_config.data_stat_tem_windows, embryo_name + '_outerCell.csv'))
 
 
 def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
@@ -705,10 +707,10 @@ def display_cell_mesh_contact_CShaper(is_show_original_points=False,is_showing_c
 
 
 if __name__ == "__main__":
-    display_cell_mesh_contact_CShaper(is_show_original_points=True,is_showing_cell_contact=True, is_showing_cell_mesh=True)
+    # display_cell_mesh_contact_CShaper(is_show_original_points=True,is_showing_cell_contact=True, is_showing_cell_mesh=True)
     # display_cell_mesh_contact_CMap(is_showing_cell_contact=True, is_showing_cell_mesh=True)
     # calculate_cell_surface_and_contact_points_CShaper()
-    # detect_outer_cells()
+    detect_outer_cells()
     # calculate_cell_surface_and_contact_points(is_calculate_cell_mesh=False, is_calculate_contact_file=False,
     #                                           showCellMesh=True, showCellContact=True)
     # display_cell_mesh_contact_CMap(is_showing_cell_mesh=False,is_showing_cell_contact=False)
