@@ -22,7 +22,7 @@ from utils.shape_preprocess import export_dia_cell_points_json
 from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 
 
-def detect_outer_cells():
+def detect_outer_cells_win():
 
     gui_data_path=r'D:\MembraneProjectData\GUIData\WebData_CMap_cell_label_v2'
     max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
