@@ -461,7 +461,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
         config_tmp['showCellMesh'] = showCellMesh
         config_tmp['showCellContact'] = showCellContact
         config_tmp['path_embryo'] = os.path.join(my_config.cell_shape_analysis_data_path,
-                                                 'Segmentation Results', 'SegmentedCell', embryo_name + 'LabelUnified')
+                                                 'Segmentation Results', 'UpdatedSegmentedCell', embryo_name)
         for tp in tqdm(range(1, max_times[idx] + 1), desc="Compose configs"):
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
@@ -590,8 +590,8 @@ def display_cell_mesh_contact_CMap(is_showing_cell_mesh=False, is_showing_cell_c
 
 
 if __name__ == "__main__":
-    display_cell_mesh_contact_CMap(is_showing_cell_contact=True, is_showing_cell_mesh=True)
-    # calculate_cell_surface_and_contact_points_CShaper()
+    # display_cell_mesh_contact_CMap(is_showing_cell_contact=True, is_showing_cell_mesh=True)
+    calculate_cell_surface_and_contact_points_CShaper()
     # detect_outer_cells()
     # calculate_cell_surface_and_contact_points(is_calculate_cell_mesh=False, is_calculate_contact_file=False,
     #                                           showCellMesh=True, showCellContact=True)

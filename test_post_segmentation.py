@@ -19,6 +19,51 @@ from test_shape_analysis import calculate_cell_surface_and_contact_points
 from utils.shape_model import generate_alpha_shape
 import utils.data_io as data_io
 
+def re_assign_CMap_wrong_dividing_cell():
+
+    label_name_dict = pd.read_csv(my_config.data_label_name_dictionary, header=0, index_col=0).to_dict()['0']
+    name_label_dict = {label: name for name, label in label_name_dict.items()}
+
+    with open(os.path.join('tem_files', 'SegCellTimeCombinedLabelUnified_'+'wrong_division_cells.pikcle'), 'rb') as fp:
+        wrong_divison_file = pickle.load(fp)
+
+    current_tp=1
+    # step_folder_name = 'SegCellTimeCombinedLabelUnifiedPost1'
+
+    # print(wrong_divison_file)
+    reassign_dict={}
+    for [embryo_name,cell_name,tp_current] in wrong_divison_file:
+        origin_seg_embryo=nib.load(os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCell',
+                                                  '{}_{}_segCell.nii.gz'.format(embryo_name, str(tp_current).zfill(3)))).get_data()
+        combine_embryo_path=os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified',
+                     '{}_{}_segCell.nii.gz'.format(embryo_name, str(tp_current).zfill(3)))
+
+        if (embryo_name,tp_current) in reassign_dict.keys():
+            combine_embryo_path = os.path.join(my_config.data_linux_CMAP_seg, embryo_name,
+                                               'SegCellTimeCombinedLabelUnifiedPost1',
+                                               '{}_{}_segCell.nii.gz'.format(embryo_name, str(tp_current).zfill(3)))
+        reassign_dict[(embryo_name,tp_current)]=1
+
+        combined_unified_seg_embryo = nib.load(combine_embryo_path).get_data()
+        cell_label=name_label_dict[cell_name]
+        cell1_label=name_label_dict[cell_name+'a']
+        cell2_label=name_label_dict[cell_name+'p']
+        output_seg_cell = combined_unified_seg_embryo.copy()
+
+        output_seg_cell[output_seg_cell==cell_label]=0
+        cell1_pos_mask=(origin_seg_embryo == cell1_label)
+        output_seg_cell[cell1_pos_mask]=cell1_label
+        cell2_pos_mask = (origin_seg_embryo == cell2_label)
+        output_seg_cell[cell2_pos_mask] = cell2_label
+        print(origin_seg_embryo.shape,combined_unified_seg_embryo.shape,np.unique(combined_unified_seg_embryo==cell_label,return_counts=True),
+              np.unique(cell1_pos_mask,return_counts=True),np.unique(cell2_pos_mask,return_counts=True))
+
+        save_combine_embryo_path = os.path.join(my_config.data_linux_CMAP_seg, embryo_name,
+                                           'SegCellTimeCombinedLabelUnifiedPost1',
+                                           '{}_{}_segCell.nii.gz'.format(embryo_name, str(tp_current).zfill(3)))
+        print(embryo_name,tp_current,cell_name,' ------> ', cell1_label, cell2_label)
+        data_io.nib_save(output_seg_cell,save_combine_embryo_path)
+
 
 def pre_combine_wrong_dividing_cell_CMap():
     max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
@@ -30,12 +75,14 @@ def pre_combine_wrong_dividing_cell_CMap():
     label_name_dict = pd.read_csv(my_config.data_label_name_dictionary, header=0, index_col=0).to_dict()['0']
     name_label_dict = {label: name for name, label in label_name_dict.items()}
     list_wrong_division=[]
+    step_folder_name = 'SegCellTimeCombinedLabelUnifiedPost1'
+
     for embyro_idx, embryo_name in enumerate(embryo_names):
         # path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name,'SegCellTimeCombinedLabelUnifiedPost1')
         # if not os.path.exists(path_tmp):
         #     os.mkdir(path_tmp)
         for tp_current in range(100,max_times[embyro_idx]+1):
-            combined_unified_seg_by_jf=os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified',
+            combined_unified_seg_by_jf=os.path.join(my_config.data_linux_CMAP_seg, embryo_name,step_folder_name ,
                                                     '{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
             # post_seg_by_zelin=os.path.join(path_tmp,'{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
 
@@ -45,7 +92,7 @@ def pre_combine_wrong_dividing_cell_CMap():
             if division_cell_list[0]=='\n':
                 continue
             division_cell_list_int=np.array(division_cell_list).astype(int)
-            print('{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)),division_cell_list_int)
+            # print('{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)),division_cell_list_int)
 
             volume = nib.load(combined_unified_seg_by_jf).get_fdata().astype(int)
             cell_list = np.unique(volume)
@@ -71,8 +118,8 @@ def pre_combine_wrong_dividing_cell_CMap():
                     if len(m_mesh.cluster_connected_triangles()[2])>1:
                         print('wrong dividing ',cell_key,label_name_dict[cell_key]+' {}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
                         list_wrong_division.append([embryo_name,label_name_dict[cell_key],tp_current])
-                        o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True, mesh_show_wireframe=True,
-                                                          window_name=label_name_dict[cell_key]+' {}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
+                        # o3d.visualization.draw_geometries([m_mesh], mesh_show_back_face=True, mesh_show_wireframe=True,
+                        #                                   window_name=label_name_dict[cell_key]+' {}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
 
                     # else:
                     #     print('correct dividing ',cell_key, label_name_dict[cell_key] + ' {}_{}_segCell.nii.gz'.format(embryo_name, str(tp_current).zfill(3)))
@@ -81,28 +128,28 @@ def pre_combine_wrong_dividing_cell_CMap():
                     #                                                       cell_key] + ' {}_{}_segCell.nii.gz'.format(
                     #                                           embryo_name, str(tp_current).zfill(3)))
         print(list_wrong_division)
-    with open(os.path.join('tem_files','wrong_division_cells.pikcle'), 'wb') as fp:
+    with open(os.path.join('tem_files',step_folder_name+'_wrong_division_cells.pikcle'), 'wb') as fp:
         pickle.dump(list_wrong_division, fp)
 
-def pre_wrong_dividing_cell_CMap_label_generation():
-    label_name_dict = pd.read_csv(os.path.join(my_config.data_linux_CMAP_seg_gui, 'name_dictionary.csv'), header=0,
-                                  index_col=0).to_dict()['0']
-    name_label_dict = {label: name for name, label in label_name_dict.items()}
-
-    with open(os.path.join('tem_files','wrong_division_cells.pikcle'), "rb") as fp:  # Unpickling
-        list_wrong_division = pickle.load(fp)
-
-    label_wrong_division_list=[]
-    for value_item in list_wrong_division:
-        this_embryo_name = value_item[0]
-        cell_name_list = value_item[1]
-        this_embryo_tp = value_item[2]
-
-        cell_label=name_label_dict[cell_name_list]
-        label_wrong_division_list.append([this_embryo_name,cell_label,this_embryo_tp])
-    print(list_wrong_division)
-    with open(os.path.join('tem_files','wrong_division_cells_label.pikcle'), 'wb') as fp:
-        pickle.dump(label_wrong_division_list, fp)
+# def pre_wrong_dividing_cell_CMap_label_generation():
+#     label_name_dict = pd.read_csv(os.path.join(my_config.data_linux_CMAP_seg_gui, 'name_dictionary.csv'), header=0,
+#                                   index_col=0).to_dict()['0']
+#     name_label_dict = {label: name for name, label in label_name_dict.items()}
+#
+#     with open(os.path.join('tem_files','wrong_division_cells.pikcle'), "rb") as fp:  # Unpickling
+#         list_wrong_division = pickle.load(fp)
+#
+#     label_wrong_division_list=[]
+#     for value_item in list_wrong_division:
+#         this_embryo_name = value_item[0]
+#         cell_name_list = value_item[1]
+#         this_embryo_tp = value_item[2]
+#
+#         cell_label=name_label_dict[cell_name_list]
+#         label_wrong_division_list.append([this_embryo_name,cell_label,this_embryo_tp])
+#     print(list_wrong_division)
+#     with open(os.path.join('tem_files','wrong_division_cells_label.pikcle'), 'wb') as fp:
+#         pickle.dump(label_wrong_division_list, fp)
 
 
 def combine_wrong_dividing_cell_CMap():
@@ -182,7 +229,7 @@ def update_wrong_dividing_cell_stat_CMap():
                                   index_col=0).to_dict()['0']
     name_label_dict = {label: name for name, label in label_name_dict.items()}
 
-    with open(os.path.join('tem_files', 'wrong_division_cells.pikcle'), "rb") as fp:  # Unpickling
+    with open(os.path.join('tem_files', 'SegCellTimeCombinedLabelUnified_'+'wrong_division_cells.pikcle'), "rb") as fp:  # Unpickling
         list_wrong_division = pickle.load(fp)
 
     last_embryo_name = 'starttt'
@@ -216,11 +263,11 @@ def update_wrong_dividing_cell_stat_CMap():
         config_tmp = {}
         config_tmp['time_point'] = this_embryo_tp
         config_tmp["embryo_name"] = this_embryo_name
-        config_tmp['path_embryo']= os.path.join(my_config.data_linux_CMAP_seg, this_embryo_name, 'SegCellTimeCombined')
+        config_tmp['path_embryo']= os.path.join(my_config.data_linux_CMAP_seg, this_embryo_name, 'SegCellTimeCombinedLabelUnifiedPost1')
         config_tmp['showCellMesh'] = False
         configs.append(config_tmp)
 
-    mpPool = mp.Pool(30)
+    mpPool = mp.Pool(15)
     print(configs)
     # mpPool = mp.Pool(9)
 
@@ -235,3 +282,4 @@ if __name__ == "__main__":
     # pre_wrong_dividing_cell_CMap_label_generation()
     # pre_combine_wrong_dividing_cell_CMap()
     update_wrong_dividing_cell_stat_CMap()
+    # re_assign_CMap_wrong_dividing_cell()
