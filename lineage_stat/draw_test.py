@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 import lineage_stat.data_structure as data_struct
 from lineage_stat.lineage_tree import draw_cell_lineage_tree
 from utils.general_func import read_csv_to_df
-from static.config import cell_shape_analysis_data_path
+from static.config import win_cell_shape_analysis_data_path
 
 
 # ---------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ def draw_weight_of_eigengrid(embryo_name, embryo_time_tree, print_num=1, max_fra
     pca_num = 12
 
     # ----------------read SHcPCA result first--------------------------------
-    path_SHcPCA_csv = os.path.join(cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv',
+    path_SHcPCA_csv = os.path.join(win_cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv',
                                    embryo_name + '_2Dmatrix_PCA.csv'.format(pca_num))
     df_SHcPCA_target = read_csv_to_df(path_SHcPCA_csv)
 
@@ -322,7 +322,7 @@ def draw_cell_fate_lineage_tree_01paper():
     cell_fate_map = {'Unspecified': 0, 'Other': 1, 'Death': 2, 'Neuron': 3, 'Intestin': 4, 'Muscle': 5, 'Pharynx': 6,
                      'Skin': 7, 'Germ Cell': 8}
     cell_combine_tree, begin_frame = data_struct.get_combined_lineage_tree()
-    df_cell_fate = pd.read_excel(os.path.join(cell_shape_analysis_data_path, 'CellFate.xls'))
+    df_cell_fate = pd.read_excel(os.path.join(win_cell_shape_analysis_data_path, 'CellFate.xls'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -338,13 +338,13 @@ def draw_cell_fate_lineage_tree_01paper():
 
     cmap = ListedColormap(colors)
     draw_cell_lineage_tree(cell_combine_tree, values_dict=values_dict,
-                           embryo_name='combine_tree',
-                           plot_title='Cell Fate Lineage Tree',
+                           plot_title='Cell Fate Lineage Tree',end_time_point=67,
                            color_map=cmap, is_abs=False)
 
 
 if __name__ == "__main__":
-    draw_static_each_embryo_cell_lineage_tree(max_frame=150)
+    draw_cell_fate_lineage_tree_01paper()
+    # draw_static_each_embryo_cell_lineage_tree(max_frame=150)
     # draw_2Dmatrix_PCA_combined()
     # draw_PCA_combined(print_num=12)
     # draw_eigengrid_dynamic_mean_tree(print_num=1)

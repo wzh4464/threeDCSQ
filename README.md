@@ -3,6 +3,12 @@
 
 the code is built in hierarchical structure, one sub-dict is a package, the higher packages can use functions in lower packages.
 
+## Documents
+
+### Lineage Tree Draw
+* use ./lineage_stat/draw_test.py -> 
+  * cell fate label tree -> draw_cell_fate_lineage_tree_01paper()
+
 ## Project directory file tree
 
 Brief introduction on code directory.

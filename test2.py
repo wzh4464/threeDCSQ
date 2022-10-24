@@ -8,7 +8,6 @@ from random import uniform
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from pyshtools import SHGrid
-from skimage.measure import marching_cubes, mesh_surface_area
 from sklearn.kernel_approximation import Nystroem
 from sklearn.manifold import TSNE
 from sklearn.pipeline import Pipeline
@@ -59,11 +58,8 @@ from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
 from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
-from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 
-from utils.shape_preprocess import get_contact_area, export_dia_cell_points_json, export_dia_cell_surface_points_json
 
-import transformation.PCA as PCA_f
 import static.config as config
 
 """
@@ -1045,7 +1041,7 @@ def cell_shape_asymmetric_boxplot():
 
     for embryo_name in embryo_names:
         # --------------------the tree of this embryo-------------------------------------
-        cell_tree_file_path = os.path.join(config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan',
+        cell_tree_file_path = os.path.join(config.win_cell_shape_analysis_data_path + r'lineage_tree/LifeSpan',
                                            'Sample{}_cell_life_tree'.format(embryo_name))
         with open(cell_tree_file_path, 'rb') as f:
             # print(f)
@@ -1053,7 +1049,7 @@ def cell_shape_asymmetric_boxplot():
         # -------------------------------------------------------------------------------
 
         # --------------------------the feature file path-- you can modify------------------
-        eigengrid_file_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/Spectrum_no_C00_csv',
+        eigengrid_file_path = os.path.join(config.win_cell_shape_analysis_data_path, 'my_data_csv/Spectrum_no_C00_csv',
                                            'Sample{}_dynamic_spectrum_no_C00.csv'.format(embryo_name))
         df_eigengrid = read_csv_to_df(eigengrid_file_path)
         for cell_name in cells_asymmetric1_1.keys():

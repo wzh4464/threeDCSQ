@@ -6,10 +6,10 @@ from treelib import Tree
 import numpy as np
 
 from utils.cell_func import get_cell_name_affine_table
-from static.config import cell_shape_analysis_data_path
+from static.config import win_cell_shape_analysis_data_path
 
 
-def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'):
+def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=os.path.join(win_cell_shape_analysis_data_path , r'lineage_tree/LifeSpan')):
     # same as f'{time_int:03}'
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     # embryo_cell_trees_path=sorted(glob.glob(os.path.join(life_span_tree_path, "*")))
@@ -26,9 +26,9 @@ def get_combined_lineage_tree(time_frame_resolution=1.39, life_span_tree_path=ce
     # print(begin_frame)
 
     # use sample06 build basic tree
-    cell_div_files_path = cell_shape_analysis_data_path + r"CDFilesBackup/CDSample{}.csv".format('06')
+    cell_div_files_path = os.path.join(win_cell_shape_analysis_data_path , r"CDFilesBackup/CDSample{}.csv".format('06'))
     tree_distance_num = 12
-    name_dictionary_file_path = cell_shape_analysis_data_path + r"name_dictionary_no_name.csv"
+    name_dictionary_file_path = os.path.join(win_cell_shape_analysis_data_path , r"name_dictionary_no_name.csv")
     max_time = 160
     cell_tree_final = construct_basic_cell_name_tree(cell_div_files_path=cell_div_files_path, max_time=max_time,
                                                      tree_distance_num=tree_distance_num,
@@ -292,7 +292,7 @@ def construct_celltree(nucleus_file, max_time):
 
     if len(add_cell_list) != 0:
         assert len(add_cell_list) == 0, "Name dictionary should be updated"
-        print(colored("Name dictionary updated", "red"))
+        # print(colored("Name dictionary updated", "red"))
 
         # ================================= cancel dynamic updating ============
         # add_cell_list.sort()
