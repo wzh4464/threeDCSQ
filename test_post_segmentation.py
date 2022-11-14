@@ -65,7 +65,7 @@ def re_assign_CMap_wrong_dividing_cell():
         data_io.nib_save(output_seg_cell,save_combine_embryo_path)
 
 
-def pre_combine_wrong_dividing_cell_CMap():
+def save_combine_wrong_dividing_cell_CMap():
     max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
     # max_times = [195, 140, 155]
 
@@ -81,12 +81,13 @@ def pre_combine_wrong_dividing_cell_CMap():
         # path_tmp = os.path.join(my_config.data_CMAP_seg, embryo_name,'SegCellTimeCombinedLabelUnifiedPost1')
         # if not os.path.exists(path_tmp):
         #     os.mkdir(path_tmp)
-        for tp_current in range(100,max_times[embyro_idx]+1):
+        for tp_current in tqdm(range(100,max_times[embyro_idx]+1),desc='working on CMap {} seperate region {}'.format(step_folder_name,embryo_name)):
             combined_unified_seg_by_jf=os.path.join(my_config.data_linux_CMAP_seg, embryo_name,step_folder_name ,
                                                     '{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
             # post_seg_by_zelin=os.path.join(path_tmp,'{}_{}_segCell.nii.gz'.format(embryo_name,str(tp_current).zfill(3)))
 
-            with open(os.path.join(my_config.data_linux_CMAP_seg_gui, embryo_name, 'DivisionCell', '{}_{}_division.txt'.format(embryo_name, str(tp_current).zfill(3)))) as f:
+            with open(os.path.join(my_config.data_linux_frozen_tem_data, 'tem_division_folder',embryo_name, 'DivisionCell',
+                                   '{}_{}_division.txt'.format(embryo_name, str(tp_current).zfill(3)))) as f:
                 dividing_information = f.readlines()
             division_cell_list=dividing_information[0].split(',')
             if division_cell_list[0]=='\n':
@@ -109,7 +110,7 @@ def pre_combine_wrong_dividing_cell_CMap():
                     adjusted_rate = 0.01
                     sphere_list_adjusted = sphere_list.astype(float) + np.random.uniform(0, adjusted_rate,
                                                                                          (len(tuple_tmp[0]), 3))
-                    alpha_v = 1
+                    alpha_v = 1.5
                     m_mesh = generate_alpha_shape(sphere_list_adjusted,alpha_value=alpha_v)
                     # print(len(m_mesh.cluster_connected_triangles()[2]))
 
@@ -127,7 +128,7 @@ def pre_combine_wrong_dividing_cell_CMap():
                     #                                       window_name=label_name_dict[
                     #                                                       cell_key] + ' {}_{}_segCell.nii.gz'.format(
                     #                                           embryo_name, str(tp_current).zfill(3)))
-        print(list_wrong_division)
+    print(list_wrong_division)
     with open(os.path.join('tem_files',step_folder_name+'_wrong_division_cells.pikcle'), 'wb') as fp:
         pickle.dump(list_wrong_division, fp)
 
@@ -152,76 +153,6 @@ def pre_combine_wrong_dividing_cell_CMap():
 #         pickle.dump(label_wrong_division_list, fp)
 
 
-def combine_wrong_dividing_cell_CMap():
-    label_name_dict = pd.read_csv(os.path.join(my_config.data_linux_CMAP_seg_gui, 'name_dictionary.csv'), header=0, index_col=0).to_dict()['0']
-    name_label_dict = {label: name for name, label in label_name_dict.items()}
-
-
-    with open(os.path.join('tem_files','wrong_division_cells.pikcle'), "rb") as fp:  # Unpickling
-        list_wrong_division = pickle.load(fp)
-
-    last_embryo_name='starttt'
-    for idx_item,value_item in enumerate(list_wrong_division):
-        this_embryo_name=value_item[0]
-        cell_name_list=[value_item[1]]
-        this_embryo_tp=value_item[2]
-        if this_embryo_tp==list_wrong_division[idx_item-1][2]:
-            continue
-
-        for i in range(1,10):
-            # print(list_wrong_division[idx_item + i])
-            if idx_item + i< len(list_wrong_division) and this_embryo_tp == list_wrong_division[idx_item +i][2]:
-                cell_name_list.append(list_wrong_division[idx_item +i][1])
-            else:
-                break
-        if this_embryo_name != last_embryo_name:
-            ace_file_path = os.path.join(my_config.cmap_data_original, this_embryo_name, "CD" + this_embryo_name + ".csv")  # pixel x y z
-            cd_file=data_io.read_new_cd(ace_file_path)
-            df_cd_file=pd.DataFrame(data=cd_file.values[:,1:],index=cd_file['Cell & Time'],columns=cd_file.columns[1:])
-            # print(df_cd_file)
-
-            last_embryo_name=this_embryo_name
-        print('working on ',this_embryo_name,cell_name_list,this_embryo_tp)
-        combined_unified_seg_by_jf = os.path.join(my_config.data_linux_CMAP_seg, this_embryo_name,
-                                                  'SegCellTimeCombinedLabelUnified',
-                                                  '{}_{}_segCell.nii.gz'.format(this_embryo_name, str(this_embryo_tp).zfill(3)))
-        combined_embryo=nib.load(combined_unified_seg_by_jf).get_fdata().astype(int)
-
-        for dealing_cell_name in cell_name_list:
-            dealing_cell_label=name_label_dict[dealing_cell_name]
-            # daughter_cell1,daughter_cell2=dealing_cell_label+1,dealing_cell_label+2
-            # daughter_cell1_name=label_name_dict[daughter_cell1]
-            # daughter_cell2_name=label_name_dict[daughter_cell2]
-            print(dealing_cell_name,dealing_cell_name+'a',dealing_cell_name+'p')
-
-            tuple_tmp=np.where(ndimage.binary_dilation(combined_embryo == dealing_cell_label) == 1)
-            numpy_pos=np.concatenate((tuple_tmp[0][:, None], tuple_tmp[1][:, None], tuple_tmp[2][:, None]), axis=1)
-            kmean_cluster_pos = KMeans(n_clusters=2,init='random').fit(numpy_pos)
-            # center_cell = np.mean(numpy_pos,axis=0)
-            # print(numpy_pos,center_cell)
-            # print(numpy_pos-center_cell)
-
-            # ==========plotting testtttttttttttttttttttttt====================
-            fig = plt.figure()
-            ax = plt.axes(projection='3d')
-            ax.scatter3D(numpy_pos[:,0], numpy_pos[:,1], numpy_pos[:,2],c=kmean_cluster_pos.labels_)
-            plt.show()
-            #
-            # daughter_cell1_label=name_label_dict[dealing_cell_name+'a']
-            # tuple_tmp1 = np.where(ndimage.binary_dilation(combined_embryo == daughter_cell1_label) == 1)
-            # # print(len(tuple_tmp))
-            # print(np.concatenate(
-            #     (tuple_tmp1[0][:, None], tuple_tmp1[1][:, None], tuple_tmp1[2][:, None]), axis=1))
-            # cell1_center = np.mean(np.concatenate(
-            #     (tuple_tmp1[0][:, None], tuple_tmp1[1][:, None], tuple_tmp1[2][:, None]), axis=1),axis=0)
-            # print(cell1_center,df_cd_file.loc[dealing_cell_name+'a'+':'+str(this_embryo_tp)][:3])
-            #
-            # daughter_cell2_label = name_label_dict[dealing_cell_name + 'p']
-            # tuple_tmp2 = np.where(ndimage.binary_dilation(combined_embryo == daughter_cell2_label) == 1)
-            # # print(len(tuple_tmp))
-            # cell2_center = np.mean(np.concatenate(
-            #     (tuple_tmp2[0][:, None], tuple_tmp2[1][:, None], tuple_tmp2[2][:, None]), axis=1), axis=0)
-            # print(cell2_center, df_cd_file.loc[dealing_cell_name + 'p' + ':' + str(this_embryo_tp)][:3])
 
 def update_wrong_dividing_cell_stat_CMap():
     # todo : carefully, after this, all stat for CMAP will be update
@@ -280,6 +211,6 @@ def update_wrong_dividing_cell_stat_CMap():
 
 if __name__ == "__main__":
     # pre_wrong_dividing_cell_CMap_label_generation()
-    # pre_combine_wrong_dividing_cell_CMap()
+    # save_combine_wrong_dividing_cell_CMap()
     update_wrong_dividing_cell_stat_CMap()
     # re_assign_CMap_wrong_dividing_cell()

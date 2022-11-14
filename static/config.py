@@ -2,6 +2,8 @@
 
 data_linux_CMAP_seg = r'/home/home/ProjectCode/LearningCell/MembProjectCode/output/'
 
+data_linux_frozen_tem_data = r'/home/home/ProjectCode/LearningCell/MembProjectCode/tem_files/'
+
 data_linux_CMAP_seg_gui= r'/home/home/ProjectCode/LearningCell/MembProjectCode/gui'
 
 data_linux_cell_mesh_and_contact= r'/home/home/ProjectCode/LearningCell/CellShapeAnalysis/DATA/cell_mesh_contact/'

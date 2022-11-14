@@ -89,7 +89,7 @@ def calculate_cell_surface_and_contact_points(config_arg, is_debug=False):
     path_embryo = config_arg.get('path_embryo', None)
 
     if not path_embryo:
-        path_embryo = os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnified')
+        path_embryo = os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnifiedPost1')
     else:
         print('calculating ', path_embryo, embryo_name, time_point, ' embryo stat')
 
@@ -384,13 +384,13 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     :param showCellContact:
     :return:
     """
-    # max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
-    max_times = [195, 140, 155]
+    max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
+    # max_times = [195, 140, 155]
 
-    # embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
-    #                 '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
-    #                 '200117plc1pop1ip3']
-    embryo_names = ['200122plc1lag1ip2', '200117plc1pop1ip2', '200117plc1pop1ip3']
+    embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
+                    '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
+                    '200117plc1pop1ip3']
+    # embryo_names = ['200122plc1lag1ip2', '200117plc1pop1ip2', '200117plc1pop1ip3']
 
     # # --------TEST ONE EMBRYO-----------
     # config_tmp = {}
@@ -413,16 +413,17 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
         config_tmp['is_calculate_contact_file'] = is_calculate_contact_file
         config_tmp['showCellMesh'] = showCellMesh
         config_tmp['showCellContact'] = showCellContact
+        config_tmp['path_embryo'] =os.path.join(my_config.data_linux_CMAP_seg, embryo_name, 'SegCellTimeCombinedLabelUnifiedPost1')
         for tp in tqdm(range(1, max_times[idx] + 1), desc="Compose configs"):
             config_tmp['time_point'] = tp
             configs.append(config_tmp.copy())
 
-        mpPool = mp.Pool(30)
-        # mpPool = mp.Pool(9)
+        # mpPool = mp.Pool(30)
+        mpPool = mp.Pool(14)
 
         for idx_, _ in enumerate(
                 tqdm(mpPool.imap_unordered(calculate_cell_surface_and_contact_points, configs), total=max_times[idx],
-                     desc="calculating {} segmentations (contact graph)".format(embryo_name))):
+                     desc="calculating {} segmentations (contact, surface, volume)".format(embryo_name))):
             #
             pass
 
@@ -465,7 +466,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
         config_tmp['is_calculate_contact_file'] = is_calculate_contact_file
         config_tmp['showCellMesh'] = showCellMesh
         config_tmp['showCellContact'] = showCellContact
-        config_tmp['path_embryo'] = os.path.join(my_config.cell_shape_analysis_data_path,
+        config_tmp['path_embryo'] = os.path.join(my_config.linux_cell_shape_analysis_data_path,
                                                  'Segmentation Results', 'UpdatedSegmentedCell', embryo_name)
         for tp in tqdm(range(1, max_times[idx] + 1), desc="Compose configs"):
             config_tmp['time_point'] = tp
@@ -477,7 +478,7 @@ def calculate_cell_surface_and_contact_points_CShaper(is_calculate_cell_mesh=Tru
         for idx_, _ in enumerate(
                 tqdm(mpPool.imap_unordered(calculate_cell_surface_and_contact_points, configs),
                      total=max_times[idx],
-                     desc="calculating {} segmentations (contact graph)".format(embryo_name))):
+                     desc="calculating {} segmentations (contact, surface, volume)".format(embryo_name))):
             #
             pass
         # -------------------------------------------------------------------------------------------------------
@@ -707,7 +708,7 @@ def display_cell_mesh_contact_CShaper(is_show_original_points=False,is_showing_c
 
 
 if __name__ == "__main__":
-    display_cell_mesh_contact_CMap(is_showing_cell_contact=True, is_showing_cell_mesh=True)
+    # display_cell_mesh_contact_CMap(is_showing_cell_contact=True, is_showing_cell_mesh=True)
     # calculate_cell_surface_and_contact_points_CShaper()
     # detect_outer_cells()
     # calculate_cell_surface_and_contact_points(is_calculate_cell_mesh=False, is_calculate_contact_file=False,
@@ -716,4 +717,4 @@ if __name__ == "__main__":
     # calculate_cell_surface_and_contact_points_CMap()
     # display_cell_mesh_contact_CMap()
 
-    # calculate_cell_surface_and_contact_points_CMap()
+    calculate_cell_surface_and_contact_points_CMap()
