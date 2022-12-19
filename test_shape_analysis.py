@@ -384,10 +384,13 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
     :param showCellContact:
     :return:
     """
-    max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
+    max_times = [205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
     # max_times = [195, 140, 155]
-
-    embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
+    # [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
+# ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
+    #                     '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
+    #                     '200117plc1pop1ip3']
+    embryo_names = ['200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
                     '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
                     '200117plc1pop1ip3']
     # embryo_names = ['200122plc1lag1ip2', '200117plc1pop1ip2', '200117plc1pop1ip3']
@@ -419,7 +422,7 @@ def calculate_cell_surface_and_contact_points_CMap(is_calculate_cell_mesh=True, 
             configs.append(config_tmp.copy())
 
         # mpPool = mp.Pool(30)
-        mpPool = mp.Pool(14)
+        mpPool = mp.Pool(12)
 
         for idx_, _ in enumerate(
                 tqdm(mpPool.imap_unordered(calculate_cell_surface_and_contact_points, configs), total=max_times[idx],
