@@ -1,4 +1,5 @@
 # import dependency library
+import pickle
 from pickle import load
 
 import open3d as o3d
@@ -58,7 +59,7 @@ from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
 from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
-
+from utils.data_io import check_folder
 
 import static.config as config
 
@@ -230,7 +231,8 @@ def transfer_2d_to_spectrum_01paer():
             # print(saving_original_csv)
         print(saving_sh_csv)
         saving_sh_csv.to_csv(
-            os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
+            os.path.join(config.cell_shape_analysis_data_path,
+                         'my_data_csv/SH_time_domain_csv/Sample{}_Spectrum.csv'.format(embryo_name)))
 
     # path_original = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc.csv')
     # path_norm = os.path.join('D:/cell_shape_quantification/DATA/my_data_csv/SH_time_domain_csv', 'SHc_norm.csv')
@@ -550,7 +552,8 @@ def figure_for_science_01paper():
 
 
 def calculate_SH_PCA_coordinate():
-    PCA_matrices_saving_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv\SH_PCA_coordinate', 'SHc_norm_PCA.csv')
+    PCA_matrices_saving_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv\SH_PCA_coordinate',
+                                            'SHc_norm_PCA.csv')
 
     path_saving_csv_normalized = os.path.join(config.dir_my_data_SH_time_domain_csv, 'SHc_norm.csv')
     df_SHc_norm = read_csv_to_df(path_saving_csv_normalized)
@@ -621,7 +624,8 @@ def plot_voxel_and_reconstructed_surface_01paper():
 
     # ==============plot reconstruction surface============================================
     # the path need to change to non-norm path
-    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv',
+                            embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     m_pcd = o3d.geometry.PointCloud()
@@ -654,7 +658,8 @@ def plot_and_save_5_type_figures_01paper():
     this_cell_keys = cell_num[cell_name]
 
     embryo_img = load_nitf2_img(
-        os.path.join(config.cell_shape_analysis_data_path, 'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
+        os.path.join(config.cell_shape_analysis_data_path,
+                     'Segmentation Results/SegmentedCell/' + embryo_name + 'LabelUnified',
                      embryo_name + '_' + tp + '_segCell.nii.gz')).get_fdata().astype(float)
     cell_surface_points, center = nii_get_cell_surface(embryo_img, this_cell_keys)
 
@@ -688,7 +693,8 @@ def plot_and_save_5_type_figures_01paper():
     axes_tmp = fig_SPCSMs_info.add_subplot(111)
 
     # the path need to change to non-norm path
-    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv',
+                            embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     sh_instance.plot_spectrum2d(title='SPHARM Coefficient Array', ax=axes_tmp, degree_label=r'SPAHRM degree \textit{l}',
@@ -707,7 +713,8 @@ def plot_and_save_5_type_figures_01paper():
     plt.rcParams['text.usetex'] = True
 
     # the path need to change to non-norm path
-    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv', embryo_name + 'LabelUnified_l_25.csv')
+    SHc_path = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv',
+                            embryo_name + 'LabelUnified_l_25.csv')
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     print(sh_instance.spectrum())
@@ -742,81 +749,113 @@ def construct_cell_graph_each_embryo():
     # -----get original SPHARM pca transformation features-----
 
     # --------------------lifespan clustering and SVM-------------------------------------------
-    embryo_names = [str(i).zfill(2) for i in range(6, 7)]
-    spharm_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
-    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
+    max_times = [
+        # 205, 205,
+        # 255, 195,
+        # 195, 185,
+        # 220, 195,
+        # 195, 195,
+        140, 155
+    ]
+    embryo_names = [
+        # '191108plc1p1', '200109plc1p1',
+        #             '200113plc1p2', '200113plc1p3',
+        #             '200322plc1p2', '200323plc1p1',
+        #             '200326plc1p3', '200326plc1p4',
+        #             '200122plc1lag1ip1', '200122plc1lag1ip2',
+                    '200117plc1pop1ip2','200117plc1pop1ip3'
+    ]
+    nucLoc_path_middle=r'CMap_nucLocFile_20221223'
+    columns_names=['x_256', 'y_356', 'z_214', 'volume', 'surface']
+    resolution_this_one=0.18
+
+
+    # embryo_names = ['Sample' + str(i).zfill(2) for i in range(19, 21)]
+    # max_times = [
+    #     # 150, 170,
+    #     #          210, 165,
+    #     # 160, 160,
+    #     # 160, 170, 165,
+    #     # 150, 155, 170,
+    #     # 160, 160, 160,
+    #     160, 170]
+    # columns_names=['x_184', 'y_256', 'z_114', 'volume', 'surface']
+    # resolution_this_one=0.25
+
+    life_span_tree_path = os.path.join(config.win_cell_shape_analysis_data_path, r'lineage_tree/LifeSpan')
 
     # --------------------SINGLE CELL IN EACH TIME POINTS: SPAHRM PCA and its neighborhood CLUSTERING----------------
-    name_cellname, cellname_number = get_cell_name_affine_table()
-    for embryo_name in embryo_names:
-        cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
-        with open(cell_tree_file_path, 'rb') as f:
-            tree_this_embryo = Tree(load(f))
-        begin_frame = max(tree_this_embryo.get_node('ABa').data.get_time()[-1],
-                          tree_this_embryo.get_node('ABp').data.get_time()[-1])
-
-        path_SHc_csv = os.path.join(spharm_path, 'Sample' + embryo_name + 'LabelUnified_l_25.csv')
-        df_SPAHRM = read_csv_to_df(path_SHc_csv)
-
+    label_name_csv_path=os.path.join(config.win_cell_shape_analysis_data_path, 'cmap_name_dictionary.csv')
+    label2name_dict = pd.read_csv(label_name_csv_path, index_col=0).to_dict()['0']
+    name2label_dict = {value: key for key, value in label2name_dict.items()}
+    # label2name_dict, name2label_dict = get_cell_name_affine_table()
+    for embryo_idx,embryo_name in enumerate(embryo_names):
         print('-----', embryo_name, '-----')
-
-        # start frame!
-        current_frame = '001'
-        last_fame = '001'
-        # with open(os.path.join(config.data_path, r'cell_dia_surface',
-        #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
-        #     surface_data = json.load(fp)
-        with open(os.path.join(config.cell_shape_analysis_data_path, r'cshaper_contact_data\Sample' + embryo_name,
-                               'Sample' + embryo_name + '_' + current_frame + '_segCell.json'), 'rb') as fp:
-            surface_contact_data = json.load(fp)
-        this_graph = iGraph.Graph(directed=True)
-        this_graph.add_vertex('INITIAL')
-        for index, value in enumerate(df_SPAHRM.index):  # segmented successfully
-            cell_name, current_frame = value.split('::')[1], value.split('::')[0]
-            cell_number = str(cellname_number[cell_name])
-            # --------------------next embryo-------------------------------------------
-            if current_frame != last_fame:  # frame by frame to read the contact file
-                # is time to save the graph
-                this_graph.delete_vertices('INITIAL')
-                print(embryo_name, last_fame)
-                this_graph.write_graphml(os.path.join(config.cell_shape_analysis_data_path, 'Graph_embryo/Sample' + embryo_name,
-                                                      'Sample' + embryo_name + '_' + last_fame + '.graphml'))
-                this_graph = iGraph.Graph(directed=True)
-                this_graph.add_vertex('INITIAL')
-                # with open(os.path.join(config.data_path, r'cell_dia_surface',
-                #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
-                #     surface_data = json.load(fp)
-                with open(os.path.join(config.cell_shape_analysis_data_path, r'cshaper_contact_data\Sample' + embryo_name,
-                                       'Sample' + embryo_name + '_' + current_frame + '_segCell.json'), 'rb') as fp:
-                    surface_contact_data = json.load(fp)
-            last_fame = current_frame
-            # --------------------------------------------------------------------------
-            if not cell_name in this_graph.vs['name']:
-                # print('========',cell_name)
-                this_graph.add_vertex(cell_name)
-
-            if int(current_frame) in tree_this_embryo.get_node(cell_name).data.get_time():  # reasonable in cell lineage
-                # build a contact pair dictionary/csv
-                for item in surface_contact_data.keys():
+        # cell_tree_file_path = os.path.join(life_span_tree_path, '{}_cell_life_tree'.format(embryo_name))
+        # with open(cell_tree_file_path, 'rb') as f:
+        #     tree_this_embryo = Tree(load(f))
+        for tp_i in range(1,max_times[embryo_idx]+1):
+            tp_frame=str(tp_i).zfill(3)
+            print(embryo_name,tp_frame)
+            # with open(os.path.join(config.data_path, r'cell_dia_surface',
+            #                        'Sample' + embryo_name + '_' + current_frame + '_segCell.json'),'rb') as fp:
+            #     surface_data = json.load(fp)
+            with open(os.path.join(config.win_cell_shape_analysis_data_path, r'cell_mesh_contact\stat', embryo_name,
+                                   embryo_name + '_' + tp_frame + '_segCell_contact.txt'), 'rb') as fp:
+                contact_data = pickle.load(fp)
+            with open(os.path.join(config.win_cell_shape_analysis_data_path, r'cell_mesh_contact\stat', embryo_name,
+                                   embryo_name + '_' + tp_frame + '_segCell_volume.txt'), 'rb') as fp:
+                volume_data = pickle.load(fp)
+            # print(contact_data)
+            pd_nucLoc = pd.read_csv(
+                os.path.join(config.win_cell_shape_analysis_data_path, nucLoc_path_middle, embryo_name,
+                             embryo_name + '_' + tp_frame + '_nucLoc.csv'))
+            this_graph = iGraph.Graph(directed=True)
+            this_graph.add_vertex('INITIAL')
+            for cell_key, _ in volume_data.items():  # segmented successfully
+                cell_name = str(label2name_dict[cell_key])
+                # --------------------------------------------------------------------------
+                if not cell_name in this_graph.vs['name']:
+                    # print('========',cell_name)
+                    this_vertex = this_graph.add_vertex(cell_name)
+                    target_row=pd_nucLoc.loc[pd_nucLoc['nucleus_name'] == cell_name][columns_names]
+                    # print(target_row)
+                    x, y, z, volume_size, surface_area = target_row.iloc[0]
+                    this_vertex['x'] = x
+                    this_vertex['y'] = y
+                    this_vertex['z'] = z
+                    this_vertex['volume'] = volume_size * resolution_this_one * resolution_this_one * resolution_this_one
+                    this_vertex['surface'] = surface_area * 1.2 * resolution_this_one * resolution_this_one
+                    # build a contact pair dictionary/csv
+                for item in contact_data.keys():
                     contact_cell_number = item.split('_')
-                    if cell_number in contact_cell_number:
+                    if str(cell_key) in contact_cell_number:
                         # print('adding edges')
-                        contact_cell_number.remove(cell_number)
-                        tmp_contact_name = name_cellname[int(contact_cell_number[0])]
+                        contact_cell_number.remove(str(cell_key))
+                        tmp_contact_name = label2name_dict[int(contact_cell_number[0])]
                         # print(tmp_contact_name)
                         if not tmp_contact_name in this_graph.vs['name']:
                             # print('========', tmp_contact_name)
-                            this_graph.add_vertex(tmp_contact_name)
-                        this_graph.add_edge(tmp_contact_name, cell_name, weight=len(surface_contact_data[item]))
-                        # print(tmp)
-                # print(surface_data)
-        this_graph.delete_vertices('INITIAL')
-        print(this_graph)
-        this_graph.write_graphml(
-            os.path.join(config.cell_shape_analysis_data_path, 'Graph_embryo/Sample' + embryo_name,
-                         'Sample' + embryo_name + '_' + last_fame + '.graphml'))
-        # the way to read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # iGraph.Graph.Read_GraphML('------')
+                            # this_graph.add_vertex(tmp_contact_name)
+                            this_vertex = this_graph.add_vertex(tmp_contact_name)
+                            target_row = pd_nucLoc.loc[pd_nucLoc['nucleus_name'] == tmp_contact_name][columns_names]
+                            # print(target_row)
+                            x, y, z, volume_size, surface_area = target_row.iloc[0]
+                            this_vertex['x'] = x
+                            this_vertex['y'] = y
+                            this_vertex['z'] = z
+                            this_vertex['volume'] = volume_size * resolution_this_one * resolution_this_one * resolution_this_one
+                            this_vertex['surface'] = surface_area * 1.2 * resolution_this_one * resolution_this_one
+                        this_graph.add_edge(tmp_contact_name, cell_name,
+                                            weight=contact_data[item] * 1.2 * resolution_this_one * resolution_this_one)
+            this_graph.delete_vertices('INITIAL')
+            # print(this_graph)
+            saving_graph_path=os.path.join(config.win_cell_shape_analysis_data_path, 'Graph_embryo', embryo_name,
+                             embryo_name + '_' + tp_frame + '.graphml')
+            check_folder(saving_graph_path)
+            this_graph.write_graphml(saving_graph_path)
+            # the way to read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # iGraph.Graph.Read_GraphML('------')
 
 
 def enhanced_graph_wavelet_feature():
@@ -834,8 +873,9 @@ def enhanced_graph_wavelet_feature():
         # start frame!
         current_frame = '001'
         last_fame = '001'
-        this_graph = iGraph.Graph.Read_GraphML(os.path.join(config.cell_shape_analysis_data_path, 'Graph_embryo/Sample' + embryo_name,
-                                                            'Sample' + embryo_name + '_' + current_frame + '.graphml'))
+        this_graph = iGraph.Graph.Read_GraphML(
+            os.path.join(config.cell_shape_analysis_data_path, 'Graph_embryo/Sample' + embryo_name,
+                         'Sample' + embryo_name + '_' + current_frame + '.graphml'))
         for idx in df_embryo_cell_fea.index:  # segmented successfully
             print(idx)
             cell_name, current_frame = idx.split('::')[1], idx.split('::')[0]
@@ -882,8 +922,9 @@ def enhanced_graph_wavelet_feature():
             # df_enhanced_cell_fea.to_csv(os.path.join(config.data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
             #                                          'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
         print(df_enhanced_cell_fea)
-        df_enhanced_cell_fea.to_csv(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
-                                                 'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
+        df_enhanced_cell_fea.to_csv(
+            os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/norm_Spectrum_graph_enhanced_csv',
+                         'Sample' + embryo_name + '_h{}_M.csv'.format(hop)))
 
 
 def calculate_cell_norm_shape_asymmetric_between_sisters():
@@ -1148,7 +1189,8 @@ def division_time_asymmetry(frame_time_ratio=1.39):
                                                             division_time_asymmetry, cell_cycle_segregation_ratio,
                                                             division_time_segregation_asymmetry]
         df_time_segregation_ratio.to_csv(
-            os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/time_segregation_ratio', 'Sample{}.csv'.format(embryo_name)))
+            os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/time_segregation_ratio',
+                         'Sample{}.csv'.format(embryo_name)))
     # we need to calculate ficision time asymmetric and cell cycle length
 
 
@@ -1277,6 +1319,7 @@ def umap_visualization_1():
 
 if __name__ == "__main__":
     print('test2 run')
+    construct_cell_graph_each_embryo()
     # correlation_matrix_of_original_cell_shape_fea_and_time_fea()
     # enhanced_graph_wavelet_feature()
     # division_time_asymmetry()
@@ -1285,4 +1328,3 @@ if __name__ == "__main__":
     # figure_for_science_01paper()
     # while (True):
     #     plot_voxel_and_reconstructed_surface_01paper()
-
