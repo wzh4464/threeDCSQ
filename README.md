@@ -87,10 +87,8 @@ Please update conda by running
 $ conda activate CellShapeAnalysis
 ```
 
-# 01paper
 ## TODO List
 
-### 01paper
 - [x] FIGURE01 workflow figure 
     - [x] replace array with matrix in figure: 2D Spherical matrix, SPHARM coefficient matrix
 
