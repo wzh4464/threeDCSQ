@@ -1,9 +1,15 @@
-# CellShapeAnalysis
+# 3DCSQ: An effective method for quantification, visualization and analysis of 3D cell shape during early embryogenesis 
+
+Zelin Li, Jianfeng Cao, Guoye Guan, Chao Tang, Zhongying Zhao, and Hong Yan
 
 
-the code is built in hierarchical structure, one sub-dict is a package, the higher packages can use functions in lower packages.
+Embryogenesis, inherently three-dimensional, poses significant challenges in quantification when approached through 3D fluorescence imaging. Traditional descriptors such as volume, surface, and mean curvature often fall short, providing only a global view and lacking in local detail and reconstruction capability. Addressing this, we introduce an effective integrated method, 3D Cell Shape Quantification (3DCSQ), for transforming digitized 3D cell shapes into analytical feature vectors. This method uniquely combines spherical grids, spherical harmonics, and principal component analysis for a comprehensive approach to cell shape quantification, analysis, and visualization. We demonstrate 3DCSQ's effectiveness in recognizing cellular morphological phenotypes and clustering cells, utilizing feature vectors that are rigorously tested. Applied to Caenorhabditis elegans embryos, from 4- to 350-cell stages, 3DCSQ reliably identifies and quantifies biologically reproducible cellular patterns, including distinct skin cell deformations. By integrating cellular surface extraction, feature vector development, and cell shape clustering, 3DCSQ offers a robust platform for exploring cell shape's relationship with cell fate, enhancing our understanding of embryogenesis. This method not only systematizes cell shape description and evaluation but also monitors cell differentiation through shape changes, presenting a significant advancement in biological imaging and analysis.
+
+Keywords: spherical harmonics (SPHARM), cell shape quantification, morphological reproducibility, lineage analysis, Caenorhabditis elegans (C. elegans)
+
 
 ## Documents
+The code is built in hierarchical structure, one sub-dict is a package, the higher packages can use functions in lower packages.
 
 ### Lineage Tree Draw
 * use ./lineage_stat/draw_test.py -> 
