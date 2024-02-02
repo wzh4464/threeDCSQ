@@ -24,7 +24,7 @@ from utils.shape_model import generate_alpha_shape, get_contact_surface_mesh
 
 def detect_outer_cells_win():
 
-    gui_data_path=r'D:\MembraneProjectData\GUIData\WebData_CMap_cell_label_v2'
+    gui_data_path=r'D:\MembraneProjectData\GUIData\WebData_CMap_cell_label_v3'
     max_times = [205, 205, 255, 195, 195, 185, 220, 195, 195, 195, 140, 155]
     embryo_names = ['191108plc1p1', '200109plc1p1', '200113plc1p2', '200113plc1p3', '200322plc1p2', '200323plc1p1',
                     '200326plc1p3', '200326plc1p4', '200122plc1lag1ip1', '200122plc1lag1ip2', '200117plc1pop1ip2',
@@ -40,7 +40,7 @@ def detect_outer_cells_win():
         # df_volume_data.loc[:, :] = 0
         print(df_volume_data)
 
-        for tp in range(1, max_times[idx] + 1):
+        for tp in tqdm(range(1, max_times[idx] + 1),desc=' detecting outer cells of {}'.format(embryo_name)):
 
             summary_tmp = {}
             path_tmp = os.path.join(r'D:\MembraneProjectData\GUIData\WebData_CMap_cell_label_v2', embryo_name,'SegCell')
@@ -67,7 +67,7 @@ def detect_outer_cells_win():
                     #     summary_tmp[label]=1
                 else:
                     continue
-            print(embryo_name, tp, summary_tmp)
+            # print(embryo_name, tp, summary_tmp)
             for tmp_key, tmp_value in summary_tmp.items():
                 if tmp_value > 3:
                     # print(tp,label_name_dict[int(tmp_key)],tmp_value)
@@ -720,4 +720,5 @@ if __name__ == "__main__":
     # calculate_cell_surface_and_contact_points_CMap()
     # display_cell_mesh_contact_CMap()
 
-    calculate_cell_surface_and_contact_points_CMap()
+    # calculate_cell_surface_and_contact_points_CMap()
+    detect_outer_cells_win()

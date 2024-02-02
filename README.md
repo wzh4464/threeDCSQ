@@ -7,6 +7,15 @@ Embryogenesis, inherently three-dimensional, poses significant challenges in qua
 
 Keywords: spherical harmonics (SPHARM), cell shape quantification, morphological reproducibility, lineage analysis, Caenorhabditis elegans (C. elegans)
 
+## Function Usages Introduction
+### test1.py/calculate_SPHARM_embryo_for_cells: calculate the spherical harmonics (transform) coefficient, *eigenharmonic*, for 1 embryo (3D+T) data.
+### test1.py/SPHARM_eigenharmonic: calculate every cell's *Eigenharmonic Weight Vector*
+
+### test1.py/Map2D_grid_csv: calculate the spherical grid coefficient, *eigengrid*, for 1 embryo (3D+T) data.
+### test1.py/Map_2D_eigengrid: calculate every cell's *Eigengrid Weight Vector*
+
+### transformation/test1.py/do_sampling_with_interval: do sampling on the cell objects one by one for spherical grid.
+
 
 ## Documents
 The code is built in hierarchical structure, one sub-dict is a package, the higher packages can use functions in lower packages.
@@ -45,7 +54,7 @@ root/: work directory environment
      |--spherical_func.py: sample for spherical harmonics transformation
   |--
 ```
-## Files and Function usages
+
 
 ## Scientific Concepts
 
