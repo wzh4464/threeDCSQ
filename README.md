@@ -1,11 +1,12 @@
 # 3DCSQ: An effective method for quantification, visualization and analysis of 3D cell shape during early embryogenesis 
 
-Zelin Li, Jianfeng Cao, Guoye Guan, Chao Tang, Zhongying Zhao, and Hong Yan
+Zelin Li\*, Jianfeng Cao, Guoye Guan\*, Chao Tang, Zhongying Zhao, and Hong Yan
 
+\* Corresponding author. 
 
-Embryogenesis, inherently three-dimensional, poses significant challenges in quantification when approached through 3D fluorescence imaging. Traditional descriptors such as volume, surface, and mean curvature often fall short, providing only a global view and lacking in local detail and reconstruction capability. Addressing this, we introduce an effective integrated method, 3D Cell Shape Quantification (3DCSQ), for transforming digitized 3D cell shapes into analytical feature vectors. This method uniquely combines spherical grids, spherical harmonics, and principal component analysis for a comprehensive approach to cell shape quantification, analysis, and visualization. We demonstrate 3DCSQ's effectiveness in recognizing cellular morphological phenotypes and clustering cells, utilizing feature vectors that are rigorously tested. Applied to Caenorhabditis elegans embryos, from 4- to 350-cell stages, 3DCSQ reliably identifies and quantifies biologically reproducible cellular patterns, including distinct skin cell deformations. By integrating cellular surface extraction, feature vector development, and cell shape clustering, 3DCSQ offers a robust platform for exploring cell shape's relationship with cell fate, enhancing our understanding of embryogenesis. This method not only systematizes cell shape description and evaluation but also monitors cell differentiation through shape changes, presenting a significant advancement in biological imaging and analysis.
+## Introduction
 
-Keywords: spherical harmonics (SPHARM), cell shape quantification, morphological reproducibility, lineage analysis, Caenorhabditis elegans (C. elegans)
+This is the implementation of the above paper. We develop 3 shape features to quantify cell morphology. We also conduct multiple experiments and evaluations on real living biological worm's embryos, *C. elegans*. 
 
 ## Function Usages Introduction
 ### test1.py/calculate_SPHARM_embryo_for_cells: calculate the spherical harmonics (transform) coefficient, *eigenharmonic*, for 1 embryo (3D+T) data.
@@ -54,7 +55,10 @@ root/: work directory environment
      |--spherical_func.py: sample for spherical harmonics transformation
   |--
 ```
+## Abstract
+Embryogenesis, inherently three-dimensional, poses significant challenges in quantification when approached through 3D fluorescence imaging. Traditional descriptors such as volume, surface, and mean curvature often fall short, providing only a global view and lacking in local detail and reconstruction capability. Addressing this, we introduce an effective integrated method, 3D Cell Shape Quantification (3DCSQ), for transforming digitized 3D cell shapes into analytical feature vectors. This method uniquely combines spherical grids, spherical harmonics, and principal component analysis for a comprehensive approach to cell shape quantification, analysis, and visualization. We demonstrate 3DCSQ's effectiveness in recognizing cellular morphological phenotypes and clustering cells, utilizing feature vectors that are rigorously tested. Applied to Caenorhabditis elegans embryos, from 4- to 350-cell stages, 3DCSQ reliably identifies and quantifies biologically reproducible cellular patterns, including distinct skin cell deformations. By integrating cellular surface extraction, feature vector development, and cell shape clustering, 3DCSQ offers a robust platform for exploring cell shape's relationship with cell fate, enhancing our understanding of embryogenesis. This method not only systematizes cell shape description and evaluation but also monitors cell differentiation through shape changes, presenting a significant advancement in biological imaging and analysis.
 
+Keywords: spherical harmonics (SPHARM), cell shape quantification, morphological reproducibility, lineage analysis, Caenorhabditis elegans (C. elegans)
 
 ## Scientific Concepts
 
@@ -102,46 +106,4 @@ Please update conda by running
 $ conda activate CellShapeAnalysis
 ```
 
-## TODO List
-
-- [x] FIGURE01 workflow figure 
-    - [x] replace array with matrix in figure: 2D Spherical matrix, SPHARM coefficient matrix
-
-- [x] FIGURE02 the figure help reader understand 2D Spherical matrix.
-
-- [x] FIGURE03 confirm point distance unit, use correct distance, volume and surface in 2DMAP feature array.
-  - [x] calculate 2DMap PCA.
-  - [ ] draw 2DMap PCA and SPAHRM PCA in histogram.
-  - [x] combine five feature schematic diagram.
-
-- [x] FIGURE04 average lineage tree.
-
-- [x] FIGURE05 shape reproducibility. (linear relation)
-
-- [x] FIGURE06 skin cell recognize.
-
-- [x] FIGURE07 cluster result (internal error and external error)
-
-### opend3d: points surface display 
-
-o3d configuration:
-{
-	"class_name" : "ViewTrajectory",
-	"interval" : 29,
-	"is_loop" : false,
-	"trajectory" : 
-	[
-		{
-			"boundingbox_max" : [ 58.949796990685456, 73.062096966802002, 17.53928827322666 ],
-			"boundingbox_min" : [ -58.050203009314544, -64.937903033197998, -32.46071172677334 ],
-			"field_of_view" : 60.0,
-			"front" : [ -0.022170625825107981, 0.031107593735803508, -0.9992701241218469 ],
-			"lookat" : [ 0.44979699068545642, 4.0620969668020024, -7.46071172677334 ],
-			"up" : [ 0.039903629142300223, 0.99874686470810126, 0.030205969890268435 ],
-			"zoom" : 0.69999999999999996
-		}
-	],
-	"version_major" : 1,
-	"version_minor" : 0
-}
 
