@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import proj3d
 # import user defined library
 
 from utils.general_func import read_csv_to_df
-from utils.sh_cooperation import do_reconstruction_for_SH, collapse_flatten_clim
+from utils.sh_cooperation import do_reconstruction_from_SH, collapse_flatten_clim
 
 
 def generate_2D_Z_ARRAY(x, y, z):
@@ -136,13 +136,13 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
             fig = plt.figure()
 
             shc_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp])))
-            shc_reconstruction = do_reconstruction_for_SH(30, shc_instance)
+            shc_reconstruction = do_reconstruction_from_SH(30, shc_instance)
             axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
             draw_3D_points(shc_reconstruction, fig_name='original sh coefficient', ax=axes_tmp)
 
             shcPCA_shc_list = list(mean_PCA + np.dot(df_PCA_matrix.values[:12, :].T, df_SHcPCA_coeffs.loc[index_tmp]))
             shcPCA_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(shcPCA_shc_list))
-            shcPCA_reconstruction = do_reconstruction_for_SH(30, shcPCA_instance)
+            shcPCA_reconstruction = do_reconstruction_from_SH(30, shcPCA_instance)
             axes_tmp = fig.add_subplot(1, 2, 2, projection='3d')
             draw_3D_points(shcPCA_reconstruction, fig_name=' sh coefficient PCA', ax=axes_tmp)
             plt.show()
@@ -154,7 +154,7 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
             # SHc representation
             shc_instance = pysh.SHCoeffs.from_array(
                 collapse_flatten_clim(list(df_embryo_time_slices.loc[index_tmp][:PCA_NUM])))
-            shc_reconstruction = do_reconstruction_for_SH(30, shc_instance)
+            shc_reconstruction = do_reconstruction_from_SH(30, shc_instance)
             axes_tmp = fig.add_subplot(1, 2, 1, projection='3d')
             draw_3D_points(shc_reconstruction, fig_name=index_tmp + '  original SHc', ax=axes_tmp)
 
@@ -163,7 +163,7 @@ def draw_comparison_SHcPCA_SH(embryo_path, l_degree=25, cell_name='NONE', used_d
                 mean_PCA + np.dot(df_PCA_matrix.values[:used_PCA_num, :].T,
                                   df_SHcPCA_coeffs.loc[index_tmp][:used_PCA_num]))
             shcPCA_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(shcPCA_shc_list))
-            shcPCA_reconstruction = do_reconstruction_for_SH(30, shcPCA_instance)
+            shcPCA_reconstruction = do_reconstruction_from_SH(30, shcPCA_instance)
 
             print('SHc--->', list(df_embryo_time_slices.loc[index_tmp][:20]))
             print('SHcPCA--->', shcPCA_shc_list[:20])

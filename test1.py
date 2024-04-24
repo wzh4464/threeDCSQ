@@ -46,7 +46,7 @@ from static import config
 from utils.draw_func import draw_3D_points
 from utils.general_func import read_csv_to_df, \
     combine_all_embryo_SHc_in_df, sph2descartes, descartes2spherical, sph2descartes2, descartes2spherical2
-from utils.sh_cooperation import do_reconstruction_for_SH, get_flatten_ldegree_morder, \
+from utils.sh_cooperation import do_reconstruction_from_SH, get_flatten_ldegree_morder, \
     collapse_flatten_clim
 from utils.spherical_func import fibonacci_sphere, average_lat_lon_sphere
 from static.dict import cell_fate_map, cell_fate_num, cell_fate_dict
@@ -69,19 +69,17 @@ def compare_fibonacci_sample_and_average_sample():
     p2.start()
 
 
-def calculate_SPHARM_embryo_for_cells():
+def calculate_SPHARM_embryos():
     """
     **time cost**
     :return:
     """
 
     # ------------------------------calculate SHC for each cell ----------------------------------------------
-    path_tmp = config.cell_shape_analysis_data_path + r'SegmentCellUnified04-20/Sample20LabelUnified'
-    for file_name in os.listdir(path_tmp):
-        if os.path.isfile(os.path.join(path_tmp, file_name)):
-            print(path_tmp)
-            sh_represent.get_SH_coefficient_of_embryo(embryo_path=path_tmp, sample_N=50, lmax=24,
-                                                      file_name=file_name)
+    path_niigz_input_root = r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\MembraneProjectData\GUIData\WebData_CMap_cell_label_v3\200109plc1p1\SegCell'
+    saving_spharm = r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\Documents\01paper avearage shape fea\supplementary\spharm'
+    sh_represent.get_SH_coefficient_of_embryo(path_niigz_input_root, saving_spharm, sample_N=30, lmax=14,
+                                              name_dictionary_path=r'C:\Users\zelinli6\OneDrive - City University of Hong Kong - Student\MembraneProjectData\GUIData\WebData_CMap_cell_label_v3\name_dictionary.csv')
     # -------------------------------------------------------------------------------------------------------
 
 
@@ -221,7 +219,7 @@ def test_2021_7_8():
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 1)
     instance.plot_spectrum2d(ax=axes_tmp)
     axes_tmp = fig_points.add_subplot(2, 3, 1, projection='3d')
-    draw_3D_points(do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance),
+    draw_3D_points(do_reconstruction_from_SH(sample_N=100, sh_coefficient_instance=instance),
                    ax=axes_tmp)
 
     # p1 = Process(target=  draw_3D_points,
@@ -242,7 +240,7 @@ def test_2021_7_8():
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 2)
     instance1.plot_spectrum2d(ax=axes_tmp)
     axes_tmp = fig_points.add_subplot(2, 3, 2, projection='3d')
-    draw_3D_points(do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance1),
+    draw_3D_points(do_reconstruction_from_SH(sample_N=100, sh_coefficient_instance=instance1),
                    ax=axes_tmp)
 
     instance2 = instance.rotate(alpha=-(math.pi / 8) * 2,
@@ -255,7 +253,7 @@ def test_2021_7_8():
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 3)
     instance2.plot_spectrum2d(ax=axes_tmp)
     axes_tmp = fig_points.add_subplot(2, 3, 3, projection='3d')
-    draw_3D_points(do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance2),
+    draw_3D_points(do_reconstruction_from_SH(sample_N=100, sh_coefficient_instance=instance2),
                    ax=axes_tmp)
 
     instance3 = instance.rotate(alpha=-(math.pi / 8) * 3,
@@ -268,7 +266,7 @@ def test_2021_7_8():
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 4)
     instance3.plot_spectrum2d(ax=axes_tmp)
     axes_tmp = fig_points.add_subplot(2, 3, 4, projection='3d')
-    draw_3D_points(do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance3),
+    draw_3D_points(do_reconstruction_from_SH(sample_N=100, sh_coefficient_instance=instance3),
                    ax=axes_tmp)
 
     instance4 = instance.rotate(alpha=-(math.pi / 8) * 4,
@@ -281,7 +279,7 @@ def test_2021_7_8():
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 5)
     instance4.plot_spectrum2d(ax=axes_tmp)
     axes_tmp = fig_points.add_subplot(2, 3, 5, projection='3d')
-    draw_3D_points(do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance4),
+    draw_3D_points(do_reconstruction_from_SH(sample_N=100, sh_coefficient_instance=instance4),
                    ax=axes_tmp)
 
     instance5 = instance.rotate(alpha=-(math.pi / 8) * 5,
@@ -294,7 +292,7 @@ def test_2021_7_8():
     axes_tmp = fig_2d_spectrum.add_subplot(2, 3, 6)
     instance5.plot_spectrum2d(ax=axes_tmp)
     axes_tmp = fig_points.add_subplot(2, 3, 6, projection='3d')
-    draw_3D_points(do_reconstruction_for_SH(sample_N=100, sh_coefficient_instance=instance5),
+    draw_3D_points(do_reconstruction_from_SH(sample_N=100, sh_coefficient_instance=instance5),
                    ax=axes_tmp)
     plt.show()
 
@@ -673,7 +671,7 @@ def display_SPAHRM_PCA_24_eigenharmonic_01paper():
         print('components  ', idx)
         component = df_pca.loc[idx]
         shc_instance = SHCoeffs.from_array(collapse_flatten_clim(list(component)))
-        sh_reconstruction_points = do_reconstruction_for_SH(200, shc_instance)
+        sh_reconstruction_points = do_reconstruction_from_SH(200, shc_instance)
         m_pcd = o3d.geometry.PointCloud()
         m_pcd.points = o3d.utility.Vector3dVector(sh_reconstruction_points)
         m_pcd.estimate_normals()
@@ -710,7 +708,8 @@ def Map2D_grid_csv():
 
 
 def Map_2D_eigengrid():
-    df_norm_shape = read_csv_to_df(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
+    df_norm_shape = read_csv_to_df(
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
     data_list = []
     data_array = None
     count = 0
@@ -744,7 +743,8 @@ def Map_2D_eigengrid():
     df_PCA_matrices = pd.DataFrame(data=matrix_2D_PCA.components_, columns=range(53 * 105))
     df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(matrix_2D_PCA.explained_variance_ratio_))
     df_PCA_matrices.loc['mean'] = [0] + list(matrix_2D_PCA.mean_)
-    df_PCA_matrices.to_csv(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/2D_matrix_norm_PCA.csv'))
+    df_PCA_matrices.to_csv(
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/2D_matrix_norm_PCA.csv'))
 
     head_ptr = 0
     # USE MY ZK CALCULATION METHOD, I HAVE TEST IT , IT IS THE SAME AS PCA.TRANSFORM()
@@ -778,34 +778,36 @@ def display_Map_2D_eigengrid_01paper():
         print(grid_tmp)
         x, y = int(i / 3), i % 3
         if i == 0:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i + 1),
                           xlabel=r'',
-                          ylabel=r'Latitude (\textit{degree} \textdegree)', axes_labelsize=22,tick_labelsize=12,titlesize=22,
+                          ylabel=r'Latitude (\textit{degree} \textdegree)', axes_labelsize=22, tick_labelsize=12,
+                          titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
         elif i == 3:  # from 12 figures to 6 figures
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i + 1),
                           xlabel=r'Longitude (\textit{degree} \textdegree)',
-                          ylabel=r'Latitude (\textit{degree} \textdegree)', axes_labelsize=22,tick_labelsize=12,titlesize=22,
+                          ylabel=r'Latitude (\textit{degree} \textdegree)', axes_labelsize=22, tick_labelsize=12,
+                          titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
         elif i == 4:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i + 1),
                           xlabel=r'Longitude (\textit{degree} \textdegree)',
-                          ylabel=r'', axes_labelsize=22,tick_labelsize=12,titlesize=22,
+                          ylabel=r'', axes_labelsize=22, tick_labelsize=12, titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
         elif i == 2:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i + 1),
                           xlabel='',
-                          ylabel='',axes_labelsize=22,tick_labelsize=12,titlesize=22,
+                          ylabel='', axes_labelsize=22, tick_labelsize=12, titlesize=22,
                           tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
         elif i == 5:  # from 12 figures to 6 figures
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i + 1),
                           xlabel=r'Longitude (\textit{degree} \textdegree)',
-                          ylabel='', axes_labelsize=22,tick_labelsize=12,titlesize=22,
+                          ylabel='', axes_labelsize=22, tick_labelsize=12, titlesize=22,
                           tick_interval=[60, 60], colorbar='right', cb_label='Distance / 0.015625 $\mu M$ ')
         elif i == 1:
-            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i+1),
+            grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigengrid {}'.format(i + 1),
                           xlabel='',
-                          ylabel='',axes_labelsize=22,tick_labelsize=12,titlesize=22,
+                          ylabel='', axes_labelsize=22, tick_labelsize=12, titlesize=22,
                           tick_interval=[60, 60], colorbar='right')
         # grid_tmp.plot(ax=axes[x, y], cmap='RdBu', cmap_reverse=True, title='eigenmatrix {}'.format(i),
         #               xlabel=r'Longitude (degree \textdegree)',
@@ -819,7 +821,8 @@ def display_Map_2D_eigengrid_01paper():
 
 
 def SPHARM_eigenharmonic():
-    df_norm_shape = read_csv_to_df(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
+    df_norm_shape = read_csv_to_df(
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv/SHc_norm.csv'))
 
     component_number = 24
 
@@ -835,7 +838,8 @@ def SPHARM_eigenharmonic():
     df_PCA_matrices = pd.DataFrame(data=spharm_PCA.components_, columns=range(26 ** 2))
     df_PCA_matrices.insert(loc=0, column='explained_variation', value=list(spharm_PCA.explained_variance_ratio_))
     df_PCA_matrices.loc['mean'] = [0] + list(spharm_PCA.mean_)
-    df_PCA_matrices.to_csv(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/norm_SHc_PCA_csv/SPHARM_norm_PCA.csv'))
+    df_PCA_matrices.to_csv(
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/norm_SHc_PCA_csv/SPHARM_norm_PCA.csv'))
 
     head_ptr = 0
     # USE MY ZK CALCULATION METHOD, I HAVE TEST IT , IT IS THE SAME AS PCA.TRANSFORM()
@@ -859,7 +863,7 @@ def SPHARM_eigenharmonic():
 def construct_mean_tree_and_dynamic_eigengrid_01paper():
     pca_num = 96
 
-    df_pd_values_dict={}
+    df_pd_values_dict = {}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     eigengrid_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
     for embryo_name in embryo_names:
@@ -928,15 +932,15 @@ def construct_mean_tree_and_dynamic_eigengrid_01paper():
     print('avg:', df_average_shcpca)
     df_average_shcpca.to_csv(os.path.join(eigengrid_csv_path, 'Mean_cellLineageTree_dynamic_eigengrid.csv'))
 
-def construct_mean_tree_and_dynamic_spectrum_01paper():
 
-    df_pd_values_dict={}
+def construct_mean_tree_and_dynamic_spectrum_01paper():
+    df_pd_values_dict = {}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    path_saving_dynamic_spectrum= config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_csv'
+    path_saving_dynamic_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_csv'
     path_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
     for embryo_name in embryo_names:
         cell_list_dict = {}
-        path_spectrum_csv = os.path.join(path_spectrum,'Sample{}_Spectrum.csv'.format(embryo_name))
+        path_spectrum_csv = os.path.join(path_spectrum, 'Sample{}_Spectrum.csv'.format(embryo_name))
         df_pd_values_dict[embryo_name] = read_csv_to_df(path_spectrum_csv)
         for idx in df_pd_values_dict[embryo_name].index:
             cell_name = idx.split('::')[1]
@@ -952,7 +956,8 @@ def construct_mean_tree_and_dynamic_spectrum_01paper():
             # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
             df_dynamci_f.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
         print(embryo_name, df_dynamci_f)
-        df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum,'Sample' + embryo_name + 'LabelUnified_dynamic_spectrum.csv'))
+        df_dynamci_f.to_csv(
+            os.path.join(path_saving_dynamic_spectrum, 'Sample' + embryo_name + 'LabelUnified_dynamic_spectrum.csv'))
 
     # ====================calculate average of 17 embryos==============================
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
@@ -980,7 +985,8 @@ def construct_mean_tree_and_dynamic_spectrum_01paper():
 
     embryo_list_dict = {}
     for embryo_name in embryo_names:
-        df_dynamic_spectrum = read_csv_to_df(os.path.join(path_saving_dynamic_spectrum,'Sample' + embryo_name + 'LabelUnified_dynamic_spectrum.csv'))
+        df_dynamic_spectrum = read_csv_to_df(
+            os.path.join(path_saving_dynamic_spectrum, 'Sample' + embryo_name + 'LabelUnified_dynamic_spectrum.csv'))
         for cell_name in df_dynamic_spectrum.index:
             # cell_name = idx.split('::')[1]
             if cell_name in embryo_list_dict.keys():
@@ -998,6 +1004,7 @@ def construct_mean_tree_and_dynamic_spectrum_01paper():
     # 看一下效果，如果和其他一個吊樣就把c0_0去掉
     df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_dynamic_spectrum.csv'))
 
+
 def draw_2Dmatrix_pca_linear_relationship_dynamic_01paper():
     norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
 
@@ -1013,8 +1020,8 @@ def draw_2Dmatrix_pca_linear_relationship_dynamic_01paper():
     stop = 250
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-    dict_var1={}
-    dict_var2={}
+    dict_var1 = {}
+    dict_var2 = {}
     for embryo_name in embryo_names:
         x1, x2 = [], []
         y1, y2 = [], []
@@ -1023,27 +1030,27 @@ def draw_2Dmatrix_pca_linear_relationship_dynamic_01paper():
         df_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
                                                 'Sample' + embryo_name + 'LabelUnified_dynamic_eigengrid.csv'))
         for cell_name in df_shcpca.index:
-            value1_this=df_shcpca.at[cell_name, column1]
-            value1_avg=df_avg_shcpca.at[cell_name, column1]
-            value2_this=df_shcpca.at[cell_name, column2]
-            value2_avg=df_avg_shcpca.at[cell_name, column2]
+            value1_this = df_shcpca.at[cell_name, column1]
+            value1_avg = df_avg_shcpca.at[cell_name, column1]
+            value2_this = df_shcpca.at[cell_name, column2]
+            value2_avg = df_avg_shcpca.at[cell_name, column2]
             x1.append(value1_avg)
             y1.append(value1_this)
             x2.append(value2_avg)
             y2.append(value2_this)
 
             if cell_name in dict_var1.keys():
-                dict_var1[cell_name].append(value1_avg-value1_this)
+                dict_var1[cell_name].append(value1_avg - value1_this)
             else:
-                dict_var1[cell_name]=[value1_avg-value1_this]
+                dict_var1[cell_name] = [value1_avg - value1_this]
 
             if cell_name in dict_var2.keys():
-                dict_var2[cell_name].append(value2_avg-value2_this)
+                dict_var2[cell_name].append(value2_avg - value2_this)
             else:
-                dict_var2[cell_name]=[value2_avg-value2_this]
+                dict_var2[cell_name] = [value2_avg - value2_this]
         c = color_list[color_num]
-        axes[0].scatter(x=x1, y=y1, c=c,s=.1)
-        axes[1].scatter(x=x2, y=y2, c=c,s=.1)
+        axes[0].scatter(x=x1, y=y1, c=c, s=.1)
+        axes[1].scatter(x=x2, y=y2, c=c, s=.1)
 
         # tmp = np.abs(np.array(x1) - np.array(y1))
         # print(np.histogram(tmp,bins=[0,50,100,800]))
@@ -1057,10 +1064,10 @@ def draw_2Dmatrix_pca_linear_relationship_dynamic_01paper():
 
         # plt.show()
 
-    mean_embryo_1218_value1=[]
+    mean_embryo_1218_value1 = []
     for cell_idx in dict_var1.keys():
-        mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]),2))**(1/2))
-    print(np.histogram(np.array(mean_embryo_1218_value1),bins=[0,10,20,30,40,50,100]))
+        mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]), 2)) ** (1 / 2))
+    print(np.histogram(np.array(mean_embryo_1218_value1), bins=[0, 10, 20, 30, 40, 50, 100]))
 
     axes[0].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
     axes[0].set_xlim((start, stop))
@@ -1076,6 +1083,7 @@ def draw_2Dmatrix_pca_linear_relationship_dynamic_01paper():
     figure_tmp.suptitle("(Dynamic) Eigengrid 1 & 3 weights' reproducibility", fontsize=28)
     plt.show()
 
+
 def draw_2Dmatrix_pca_linear_relationship_static_01paper():
     norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
 
@@ -1090,58 +1098,57 @@ def draw_2Dmatrix_pca_linear_relationship_static_01paper():
     start = -350
     stop = 350
 
-    time_frame_ratio=1.39
+    time_frame_ratio = 1.39
     # color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-    dict_var1={}
-    dict_var2={}
+    dict_var1 = {}
+    dict_var2 = {}
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
 
-    X1=[]
-    Y1=[]
-    Color1=[]
-    X2=[]
-    Y2=[]
-    Color2=[]
+    X1 = []
+    Y1 = []
+    Color1 = []
+    X2 = []
+    Y2 = []
+    Color2 = []
     for embryo_name in embryo_names:
         x1, x2 = [], []
         y1, y2 = [], []
         embryo_num = int(embryo_name)
         color_num = embryo_num
         df_individual_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
-                                                'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv'))
+                                                        'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv'))
         for idx in df_individual_fea.index:
-            [frame,cell_name]=idx.split('::')
-            time_point=str(int((int(frame)-begin_frame[embryo_name])*time_frame_ratio)).zfill(3)
+            [frame, cell_name] = idx.split('::')
+            time_point = str(int((int(frame) - begin_frame[embryo_name]) * time_frame_ratio)).zfill(3)
 
-            if time_point+'::'+cell_name not in df_mean_tree_fea.index:
+            if time_point + '::' + cell_name not in df_mean_tree_fea.index:
                 continue
 
-            value1_this=df_individual_fea.at[idx, column1]
-            value1_avg=df_mean_tree_fea.at[time_point+'::'+cell_name, column1]
-            value2_this=df_individual_fea.at[idx, column2]
-            value2_avg=df_mean_tree_fea.at[time_point+'::'+cell_name, column2]
+            value1_this = df_individual_fea.at[idx, column1]
+            value1_avg = df_mean_tree_fea.at[time_point + '::' + cell_name, column1]
+            value2_this = df_individual_fea.at[idx, column2]
+            value2_avg = df_mean_tree_fea.at[time_point + '::' + cell_name, column2]
             x1.append(value1_avg)
             y1.append(value1_this)
             x2.append(value2_avg)
             y2.append(value2_this)
 
             if cell_name in dict_var1.keys():
-                dict_var1[cell_name].append(value1_avg-value1_this)
+                dict_var1[cell_name].append(value1_avg - value1_this)
             else:
-                dict_var1[cell_name]=[value1_avg-value1_this]
+                dict_var1[cell_name] = [value1_avg - value1_this]
 
             if cell_name in dict_var2.keys():
-                dict_var2[cell_name].append(value2_avg-value2_this)
+                dict_var2[cell_name].append(value2_avg - value2_this)
             else:
-                dict_var2[cell_name]=[value2_avg-value2_this]
-        X1=X1+x1
-        Y1=Y1+y1
-        X2=X2+x2
-        Y2=Y2+y2
-        Color1=Color1+[color_num] * len(x1)
+                dict_var2[cell_name] = [value2_avg - value2_this]
+        X1 = X1 + x1
+        Y1 = Y1 + y1
+        X2 = X2 + x2
+        Y2 = Y2 + y2
+        Color1 = Color1 + [color_num] * len(x1)
         Color2 = Color2 + [color_num] * len(x2)
-
 
         # tmp = np.abs(np.array(x1) - np.array(y1))
         # print(np.histogram(tmp,bins=[0,50,100,800]))
@@ -1155,10 +1162,10 @@ def draw_2Dmatrix_pca_linear_relationship_static_01paper():
 
         # plt.show()
 
-    mean_embryo_1218_value1=[]
+    mean_embryo_1218_value1 = []
     for cell_idx in dict_var1.keys():
-        mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]),2))**(1/2))
-    print(np.histogram(np.array(mean_embryo_1218_value1),bins=[0,10,20,30,40,50,100]))
+        mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]), 2)) ** (1 / 2))
+    print(np.histogram(np.array(mean_embryo_1218_value1), bins=[0, 10, 20, 30, 40, 50, 100]))
 
     axes[0].scatter(x=X1, y=Y1, c=Color1, cmap='tab20', s=.1)
     axes[1].scatter(x=X2, y=Y2, c=Color2, cmap='tab20', s=.1)
@@ -1216,7 +1223,7 @@ def construct_mean_tree_and_dynamic_eigenharmonic_01paper():
     # ====================calculate average of 17 embryos==============================
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
     # ------static eigenharmonic weight in mean cell lineage tree-----------------------
-    df_static_mean_tree=pd.DataFrame(columns=range(12))
+    df_static_mean_tree = pd.DataFrame(columns=range(12))
     for node_id in cell_combine_tree.expand_tree(sorting=False):
         for time_int in cell_combine_tree.get_node(node_id).data.get_time():
             # if time_int > 0:
@@ -1231,18 +1238,18 @@ def construct_mean_tree_and_dynamic_eigenharmonic_01paper():
             # we have already got all values at this time from all(17) embryos, we just need to draw its average
             tp_and_cell_index = f'{time_int:03}' + '::' + node_id
             if len(tp_value_list) == 0:  # need to do interpolation
-                print('lost cell even in mean cell lineage tree',tp_and_cell_index, tp_value_list)
+                print('lost cell even in mean cell lineage tree', tp_and_cell_index, tp_value_list)
             else:
-                df_static_mean_tree.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list),axis=0)
+                df_static_mean_tree.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list), axis=0)
     print(df_static_mean_tree)
-    df_static_mean_tree.to_csv(os.path.join(norm_shcpca_csv_path,'Mean_cellLineageTree_static_eigenharmonic.csv'))
+    df_static_mean_tree.to_csv(os.path.join(norm_shcpca_csv_path, 'Mean_cellLineageTree_static_eigenharmonic.csv'))
 
     # ------dynamic eigenharmonic weight in mean cell lineage tree---------------------------
     embryo_list_dict = {}
     for embryo_name in embryo_names:
         df_shcpca = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
                                                 'Sample' + embryo_name + 'LabelUnified_dynamic_eigenharmonic' + str(
-                                                  pca_num) + '_norm.csv'))
+                                                    pca_num) + '_norm.csv'))
         for cell_name in df_shcpca.index:
             # cell_name = idx.split('::')[1]
             if cell_name in embryo_list_dict.keys():
@@ -1308,14 +1315,14 @@ def draw_shcpca_linear_relationship_dynamic_01paper():
             else:
                 dict_var2[cell_name] = [value2_avg - value2_this]
         c = color_list[color_num]
-        axes[0].scatter(x=x1, y=y1, c=c,s=.1)
-        axes[1].scatter(x=x2, y=y2, c=c,s=.1)
+        axes[0].scatter(x=x1, y=y1, c=c, s=.1)
+        axes[1].scatter(x=x2, y=y2, c=c, s=.1)
         # plt.show()
 
     mean_embryo_1218_value1 = []
     for cell_idx in dict_var1.keys():
         mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]), 2)) ** (1 / 2))
-    print(np.histogram(np.array(mean_embryo_1218_value1), bins=[0, 0.5,0.8,1,  5]))
+    print(np.histogram(np.array(mean_embryo_1218_value1), bins=[0, 0.5, 0.8, 1, 5]))
 
     axes[0].plot(np.arange(start=start, stop=(stop + 1), step=1), np.arange(start=start, stop=(stop + 1), step=1))
     axes[0].set_xlim((start, stop))
@@ -1333,11 +1340,12 @@ def draw_shcpca_linear_relationship_dynamic_01paper():
     figure_tmp.suptitle("(Dynamic) Eigenharmonic 1 & 2 weights' reproducibility", fontsize=28)
     plt.show()
 
+
 def draw_shcpca_linear_relationship_static_01paper():
     norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
 
     df_mean_tree_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
-                                                'Mean_cellLineageTree_static_eigenharmonic.csv'))
+                                                   'Mean_cellLineageTree_static_eigenharmonic.csv'))
 
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
 
@@ -1348,58 +1356,57 @@ def draw_shcpca_linear_relationship_static_01paper():
     start = -5
     stop = 5
 
-    time_frame_ratio=1.39
+    time_frame_ratio = 1.39
     # color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-    dict_var1={}
-    dict_var2={}
+    dict_var1 = {}
+    dict_var2 = {}
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
 
-    X1=[]
-    Y1=[]
-    Color1=[]
-    X2=[]
-    Y2=[]
-    Color2=[]
+    X1 = []
+    Y1 = []
+    Color1 = []
+    X2 = []
+    Y2 = []
+    Color2 = []
     for embryo_name in embryo_names:
         x1, x2 = [], []
         y1, y2 = [], []
         embryo_num = int(embryo_name)
         color_num = embryo_num
         df_individual_fea = read_csv_to_df(os.path.join(norm_shcpca_csv_path,
-                                                'Sample' + embryo_name + 'LabelUnified_SHcPCA12_norm.csv'))
+                                                        'Sample' + embryo_name + 'LabelUnified_SHcPCA12_norm.csv'))
         for idx in df_individual_fea.index:
-            [frame,cell_name]=idx.split('::')
-            time_point=str(int((int(frame)-begin_frame[embryo_name])*time_frame_ratio)).zfill(3)
+            [frame, cell_name] = idx.split('::')
+            time_point = str(int((int(frame) - begin_frame[embryo_name]) * time_frame_ratio)).zfill(3)
 
-            if time_point+'::'+cell_name not in df_mean_tree_fea.index:
+            if time_point + '::' + cell_name not in df_mean_tree_fea.index:
                 continue
 
-            value1_this=df_individual_fea.at[idx, column1]
-            value1_avg=df_mean_tree_fea.at[time_point+'::'+cell_name, column1]
-            value2_this=df_individual_fea.at[idx, column2]
-            value2_avg=df_mean_tree_fea.at[time_point+'::'+cell_name, column2]
+            value1_this = df_individual_fea.at[idx, column1]
+            value1_avg = df_mean_tree_fea.at[time_point + '::' + cell_name, column1]
+            value2_this = df_individual_fea.at[idx, column2]
+            value2_avg = df_mean_tree_fea.at[time_point + '::' + cell_name, column2]
             x1.append(value1_avg)
             y1.append(value1_this)
             x2.append(value2_avg)
             y2.append(value2_this)
 
             if cell_name in dict_var1.keys():
-                dict_var1[cell_name].append(value1_avg-value1_this)
+                dict_var1[cell_name].append(value1_avg - value1_this)
             else:
-                dict_var1[cell_name]=[value1_avg-value1_this]
+                dict_var1[cell_name] = [value1_avg - value1_this]
 
             if cell_name in dict_var2.keys():
-                dict_var2[cell_name].append(value2_avg-value2_this)
+                dict_var2[cell_name].append(value2_avg - value2_this)
             else:
-                dict_var2[cell_name]=[value2_avg-value2_this]
-        X1=X1+x1
-        Y1=Y1+y1
-        X2=X2+x2
-        Y2=Y2+y2
-        Color1=Color1+[color_num] * len(x1)
+                dict_var2[cell_name] = [value2_avg - value2_this]
+        X1 = X1 + x1
+        Y1 = Y1 + y1
+        X2 = X2 + x2
+        Y2 = Y2 + y2
+        Color1 = Color1 + [color_num] * len(x1)
         Color2 = Color2 + [color_num] * len(x2)
-
 
         # tmp = np.abs(np.array(x1) - np.array(y1))
         # print(np.histogram(tmp,bins=[0,50,100,800]))
@@ -1413,10 +1420,10 @@ def draw_shcpca_linear_relationship_static_01paper():
 
         # plt.show()
 
-    mean_embryo_1218_value1=[]
+    mean_embryo_1218_value1 = []
     for cell_idx in dict_var1.keys():
-        mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]),2))**(1/2))
-    print(np.histogram(np.array(mean_embryo_1218_value1),bins=[0,10,20,30,40,50,100]))
+        mean_embryo_1218_value1.append(np.mean(np.power(np.array(dict_var1[cell_idx]), 2)) ** (1 / 2))
+    print(np.histogram(np.array(mean_embryo_1218_value1), bins=[0, 10, 20, 30, 40, 50, 100]))
 
     axes[0].scatter(x=X1, y=Y1, c=Color1, cmap='tab20', s=.01)
     axes[1].scatter(x=X2, y=Y2, c=Color2, cmap='tab20', s=.01)
@@ -1434,6 +1441,7 @@ def draw_shcpca_linear_relationship_static_01paper():
 
     figure_tmp.suptitle("(Static) Eigenharmonic 1 & 2 weights' reproducibility", fontsize=28)
     plt.show()
+
 
 from pickle import load
 from treelib import Tree
@@ -1568,6 +1576,7 @@ def recognition_of_hyp_cells_with_eigenharmonic_01paper():
 
     # https: // en.wikipedia.org / wiki / Precision_and_recall
 
+
 def recognition_of_hyp_cells_with_eigengrid_01paper():
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
@@ -1588,9 +1597,9 @@ def recognition_of_hyp_cells_with_eigengrid_01paper():
     begin_frame = {}
     column = 0
 
-    threshold_start=100
-    threshold_end=140
-    threshold_step=5
+    threshold_start = 100
+    threshold_end = 140
+    threshold_step = 5
 
     for embryo_name in embryo_names:
         cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
@@ -1608,7 +1617,7 @@ def recognition_of_hyp_cells_with_eigengrid_01paper():
         cell_list_dict = {}
         cell_frame_list_dict = {}
         path_2DMATRIXPCA_csv = os.path.join(norm_shcpca_csv_path,
-                                       'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
+                                            'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
         df_values_dict = read_csv_to_df(path_2DMATRIXPCA_csv)
         for idx in df_values_dict.index:
             cell_name = idx.split('::')[1]
@@ -1660,7 +1669,7 @@ def recognition_of_hyp_cells_with_eigengrid_01paper():
     cell_combine_tree, _ = get_combined_lineage_tree()
     # ----------------read embryos' average SHcPCA result first--------------------------------
     path_2dmatrixPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
-                                            'Mean_cellLineageTree_dynamic_eigengrid.csv')
+                                                 'Mean_cellLineageTree_dynamic_eigengrid.csv')
     df_pd_spharmpca_lifespan = read_csv_to_df(path_2dmatrixPCA_lifespan_csv)
 
     for weight_threshold in np.arange(start=threshold_start, stop=threshold_end, step=threshold_step):
@@ -1700,6 +1709,7 @@ def recognition_of_hyp_cells_with_eigengrid_01paper():
 
     # https: // en.wikipedia.org / wiki / Precision_and_recall
 
+
 def save_the_PCA_file():
     """
     Why do i need to save this?
@@ -1710,7 +1720,8 @@ def save_the_PCA_file():
 
     # ---------PCA 12 for normalized SPHARM Spectrum coefficient --------------------------
     t0 = time()
-    path_csv = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv', 'SHc_norm_Spectrum.csv')
+    path_csv = os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/SH_time_domain_csv',
+                            'SHc_norm_Spectrum.csv')
     df_SPHARM_spectrum = read_csv_to_df(os.path.join(path_csv))
     print('read csv time done in %0.3f' % (time() - t0))
 
@@ -1722,8 +1733,9 @@ def save_the_PCA_file():
               whiten=True).fit(df_SPHARM_spectrum.values)
     print("done in %0.3fs" % (time() - t0))
 
-    PCA_f.save_PCA_file(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', 'SPHARM_norm_Spectrum_PCA.csv'), pca,
-                        feature_columns=df_SPHARM_spectrum.columns)
+    PCA_f.save_PCA_file(
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', 'SPHARM_norm_Spectrum_PCA.csv'), pca,
+        feature_columns=df_SPHARM_spectrum.columns)
     # ----------------------------------------------------------------------------------
 
     # # ---------PCA 12 for SPHARM Spectrum coefficient --------------------------
@@ -1813,6 +1825,7 @@ def save_the_PCA_file():
     #                     feature_columns=df_SPHARM.columns[1:])
     # # -------------------------------------------------------------------
 
+
 def cluster_acc_eigengrid_01paper():
     """
     do clustering with norm SPAHRM PCA feature vector using the first three coefficient avoiding "dimensional curse"
@@ -1857,10 +1870,11 @@ def cluster_acc_eigengrid_01paper():
 
         cell_list_dict = {}
         cell_frame_list_dict = {}
-        cell_static_f_list=[]
-        cell_static_Y_fate=[]
+        cell_static_f_list = []
+        cell_static_Y_fate = []
 
-        path_SHcPCA_csv = os.path.join(norm_2Dgrid_pca_csv_path,'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
+        path_SHcPCA_csv = os.path.join(norm_2Dgrid_pca_csv_path,
+                                       'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
         df_values_dict = read_csv_to_df(path_SHcPCA_csv)
         print('-----', embryo_name, '-----')
         for idx in df_values_dict.index:
@@ -1880,7 +1894,7 @@ def cluster_acc_eigengrid_01paper():
                 cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
                 cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
         # ------------------static cell feature cluster acc----------------------------
-        cell_static_Y_fate=np.array(cell_static_Y_fate)
+        cell_static_Y_fate = np.array(cell_static_Y_fate)
         cluster_arr = np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list_static.append(cluster_acc(y_kmeans_estimation, cell_static_Y_fate, cluster_num_predict))
@@ -1973,14 +1987,13 @@ def cluster_acc_eigengrid_01paper():
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('static single', cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
 
-
     # -------------dynamic features start cluster----------------------------
 
     path_mean_tree_dynamic_csv = os.path.join(norm_2Dgrid_pca_csv_path,
                                               'Mean_cellLineageTree_dynamic_eigengrid.csv')
     df_mean_tree_dynamic_fea = read_csv_to_df(path_mean_tree_dynamic_csv)
     cluster_arr = []
-    y_fate=[]
+    y_fate = []
     for cell_name in cell_combine_tree.expand_tree(sorting=False):
         if cell_name in cell_fate_dict.keys() and \
                 cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
@@ -2000,6 +2013,7 @@ def cluster_acc_eigengrid_01paper():
     print('dynamic maximum', cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('dynamic single', cluster_acc(y_agglo, y_fate, cluster_num_predict))
+
 
 def cluster_acc_eigenharmonic_01paper():
     """
@@ -2045,8 +2059,8 @@ def cluster_acc_eigenharmonic_01paper():
 
         cell_list_dict = {}
         cell_frame_list_dict = {}
-        cell_static_f_list=[]
-        cell_static_Y_fate=[]
+        cell_static_f_list = []
+        cell_static_Y_fate = []
 
         path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
                                        'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
@@ -2069,7 +2083,7 @@ def cluster_acc_eigenharmonic_01paper():
                 cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
                 cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
         # ------------------static cell feature cluster acc----------------------------
-        cell_static_Y_fate=np.array(cell_static_Y_fate)
+        cell_static_Y_fate = np.array(cell_static_Y_fate)
         cluster_arr = np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list_static.append(cluster_acc(y_kmeans_estimation, cell_static_Y_fate, cluster_num_predict))
@@ -2162,14 +2176,13 @@ def cluster_acc_eigenharmonic_01paper():
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('static single', cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
 
-
     # -------------dynamic features start cluster----------------------------
 
     path_mean_tree_dynamic_csv = os.path.join(norm_shcpca_csv_path,
                                               'Mean_cellLineageTree_dynamic_eigenharmonic.csv')
     df_mean_tree_dynamic_fea = read_csv_to_df(path_mean_tree_dynamic_csv)
     cluster_arr = []
-    y_fate=[]
+    y_fate = []
     for cell_name in cell_combine_tree.expand_tree(sorting=False):
         if cell_name in cell_fate_dict.keys() and \
                 cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
@@ -2189,6 +2202,7 @@ def cluster_acc_eigenharmonic_01paper():
     print('dynamic maximum', cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('dynamic single', cluster_acc(y_agglo, y_fate, cluster_num_predict))
+
 
 def cluster_acc_spectrum_01paper():
     """
@@ -2211,7 +2225,7 @@ def cluster_acc_spectrum_01paper():
     life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
-    spectrum_num=26
+    spectrum_num = 26
 
     kmeans_acc_list_static = []
     ward_acc_list_static = []
@@ -2236,10 +2250,10 @@ def cluster_acc_spectrum_01paper():
 
         cell_list_dict = {}
         cell_frame_list_dict = {}
-        cell_static_f_list=[]
-        cell_static_Y_fate=[]
+        cell_static_f_list = []
+        cell_static_Y_fate = []
 
-        path_SHcPCA_csv = os.path.join(norm_spectrum_csv_path,'Sample' + embryo_name + '_Spectrum_norm.csv')
+        path_SHcPCA_csv = os.path.join(norm_spectrum_csv_path, 'Sample' + embryo_name + '_Spectrum_norm.csv')
         df_values_dict = read_csv_to_df(path_SHcPCA_csv)
         print('-----', embryo_name, '-----')
         for idx in df_values_dict.index:
@@ -2259,7 +2273,7 @@ def cluster_acc_spectrum_01paper():
                 cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
                 cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
         # ------------------static cell feature cluster acc----------------------------
-        cell_static_Y_fate=np.array(cell_static_Y_fate)
+        cell_static_Y_fate = np.array(cell_static_Y_fate)
         cluster_arr = np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list_static.append(cluster_acc(y_kmeans_estimation, cell_static_Y_fate, cluster_num_predict))
@@ -2352,14 +2366,13 @@ def cluster_acc_spectrum_01paper():
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('static single', cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
 
-
     # -------------dynamic features start cluster----------------------------
 
     path_mean_tree_dynamic_csv = os.path.join(norm_spectrum_dynamic_csv_path,
                                               'Mean_cellLineageTree_dynamic_Spectrum.csv')
     df_mean_tree_dynamic_fea = read_csv_to_df(path_mean_tree_dynamic_csv)
     cluster_arr = []
-    y_fate=[]
+    y_fate = []
     for cell_name in cell_combine_tree.expand_tree(sorting=False):
         if cell_name in cell_fate_dict.keys() and \
                 cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
@@ -2379,6 +2392,7 @@ def cluster_acc_spectrum_01paper():
     print('dynamic maximum', cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('dynamic single', cluster_acc(y_agglo, y_fate, cluster_num_predict))
+
 
 def SPHARM_cluster_test_with_C0_0ZERO():
     """
@@ -2617,10 +2631,12 @@ def clustering_original_and_normalized_feature_vector():
     print(len(this_cell_fate_dict))
 
     # -----get original 2D spherical matrix transformation features----------
-    pca_2dmatrix = PCA_f.read_PCA_file(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', '2D_matrix_PCA.csv'))
+    pca_2dmatrix = PCA_f.read_PCA_file(
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', '2D_matrix_PCA.csv'))
 
     # -----get original SPHARM pca transformation features-----
-    pca_spharm = PCA_f.read_PCA_file(os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', 'SPHARM_PCA.csv'))
+    pca_spharm = PCA_f.read_PCA_file(
+        os.path.join(config.cell_shape_analysis_data_path, 'my_data_csv/PCA_file', 'SPHARM_PCA.csv'))
 
     # --------------------lifespan clustering and SVM-------------------------------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
@@ -2785,7 +2801,7 @@ def cluster_silhouette_score_eigengrid_01paper():
         cell_frame_list_dict = {}
         cell_static_f_list = []
         path_eigengrid_w_csv = os.path.join(norm_eigengrid_csv_path,
-                                       'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
+                                            'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
         df_values_dict = read_csv_to_df(path_eigengrid_w_csv)
         print('-----', embryo_name, '-----')
         for idx in df_values_dict.index:
@@ -2870,14 +2886,14 @@ def cluster_silhouette_score_eigengrid_01paper():
     # -------------static features start cluster----------------------------
 
     path_mean_tree_static_csv = os.path.join(norm_eigengrid_csv_path,
-                                              'Mean_cellLineageTree_static_eigengrid.csv')
+                                             'Mean_cellLineageTree_static_eigengrid.csv')
     df_mean_tree_static_fea = read_csv_to_df(path_mean_tree_static_csv)
     cluster_arr = []
     for idx in df_mean_tree_static_fea.index:
         cell_name = idx.split('::')[1]
         if cell_name in cell_fate_dict.keys() and \
                 cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
-                cluster_arr.append(df_mean_tree_static_fea.loc[idx])
+            cluster_arr.append(df_mean_tree_static_fea.loc[idx])
 
     cluster_arr = np.array(cluster_arr)
     y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
@@ -2894,7 +2910,7 @@ def cluster_silhouette_score_eigengrid_01paper():
     # -------------dynamic features start cluster----------------------------
 
     path_mean_tree_dynamic_csv = os.path.join(norm_eigengrid_csv_path,
-                                            'Mean_cellLineageTree_dynamic_eigengrid.csv')
+                                              'Mean_cellLineageTree_dynamic_eigengrid.csv')
     df_mean_tree_dynamic_fea = read_csv_to_df(path_mean_tree_dynamic_csv)
     cluster_arr = []
     for cell_name in cell_combine_tree.expand_tree(sorting=False):
@@ -2939,11 +2955,11 @@ def cluster_silhouette_score_eigenharmonic_01paper():
     maximum_score_list_static = []
     single_score_list_static = []
 
-    kmeans_score_list=[]
-    ward_score_list=[]
-    average_score_list=[]
-    maximum_score_list=[]
-    single_score_list=[]
+    kmeans_score_list = []
+    ward_score_list = []
+    average_score_list = []
+    maximum_score_list = []
+    single_score_list = []
 
     for embryo_name in embryo_names:
 
@@ -2956,7 +2972,7 @@ def cluster_silhouette_score_eigenharmonic_01paper():
 
         cell_list_dict = {}
         cell_frame_list_dict = {}
-        cell_static_f_list=[]
+        cell_static_f_list = []
         path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
                                        'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
         df_values_dict = read_csv_to_df(path_SHcPCA_csv)
@@ -2976,7 +2992,7 @@ def cluster_silhouette_score_eigenharmonic_01paper():
                 cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
                 cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
         # ----------------static feature clustering result-----------------------
-        cluster_arr=np.array(cell_static_f_list)
+        cluster_arr = np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_score_list_static.append(silhouette_score(cluster_arr, y_kmeans_estimation))
         print('static feature eigenharmonic Kmeans', kmeans_score_list_static[-1])
@@ -3003,22 +3019,22 @@ def cluster_silhouette_score_eigenharmonic_01paper():
                           0] - begin_frame) * 1.39) > time_limit_minutes_start:
                 df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
         # -------------start cluster----------------------------
-        cluster_arr=df_avg_lifespan.values
+        cluster_arr = df_avg_lifespan.values
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
-        kmeans_score_list.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        kmeans_score_list.append(silhouette_score(cluster_arr, y_kmeans_estimation))
         print('dynamic feature eigenharmonic Kmeans', kmeans_score_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
-        ward_score_list.append(silhouette_score(cluster_arr,y_agglo))
-        print('dynamic feature eigenharmonic ward',ward_score_list[-1])
+        ward_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature eigenharmonic ward', ward_score_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
-        average_score_list.append(silhouette_score(cluster_arr,y_agglo))
-        print('dynamic feature eigenharmonic average',average_score_list[-1])
+        average_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature eigenharmonic average', average_score_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
-        maximum_score_list.append(silhouette_score(cluster_arr,y_agglo))
-        print('dynamic feature eigenharmonic maximum',maximum_score_list[-1])
+        maximum_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature eigenharmonic maximum', maximum_score_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
-        single_score_list.append(silhouette_score(cluster_arr,y_agglo))
-        print('dynamic feature eigenharmonic single',single_score_list[-1])
+        single_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature eigenharmonic single', single_score_list[-1])
     print('================individual clustering score==========')
 
     print('static feature eigenharmonic Kmeans  ', sum(kmeans_score_list_static) / len(kmeans_score_list_static))
@@ -3027,11 +3043,11 @@ def cluster_silhouette_score_eigenharmonic_01paper():
     print('static feature eigenharmonic maximum   ', sum(maximum_score_list_static) / len(maximum_score_list_static))
     print('static feature eigenharmonic single   ', sum(single_score_list_static) / len(single_score_list_static))
 
-    print('dynamic feature eigenharmonic Kmeans  ',sum(kmeans_score_list)/len(kmeans_score_list))
-    print('dynamic feature eigenharmonic ward   ',sum(ward_score_list)/len(ward_score_list))
-    print('dynamic feature eigenharmonic average   ',sum(average_score_list)/len(average_score_list))
-    print('dynamic feature eigenharmonic maximum   ',sum(maximum_score_list)/len(maximum_score_list))
-    print('dynamic feature eigenharmonic single   ',sum(single_score_list)/len(single_score_list))
+    print('dynamic feature eigenharmonic Kmeans  ', sum(kmeans_score_list) / len(kmeans_score_list))
+    print('dynamic feature eigenharmonic ward   ', sum(ward_score_list) / len(ward_score_list))
+    print('dynamic feature eigenharmonic average   ', sum(average_score_list) / len(average_score_list))
+    print('dynamic feature eigenharmonic maximum   ', sum(maximum_score_list) / len(maximum_score_list))
+    print('dynamic feature eigenharmonic single   ', sum(single_score_list) / len(single_score_list))
 
     # -----------------------mean cell lineage tree-------------------------
     print('----------mean cell lineage tree------')
@@ -3085,6 +3101,7 @@ def cluster_silhouette_score_eigenharmonic_01paper():
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('dynamic single', silhouette_score(cluster_arr, y_agglo))
 
+
 def cluster_silhouette_score_spectrum_01paper():
     # calculate the silhouette score
     # --------------------cell fate----------------------
@@ -3098,7 +3115,7 @@ def cluster_silhouette_score_spectrum_01paper():
     # -----------cluster each cell-----------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
     norm_spectrum_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
-    norm_dynamic_spectrum_csv_path= config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_csv'
+    norm_dynamic_spectrum_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_csv'
     life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
     time_limit_minutes_start = 150
@@ -3110,11 +3127,11 @@ def cluster_silhouette_score_spectrum_01paper():
     maximum_score_list_static = []
     single_score_list_static = []
 
-    kmeans_score_list=[]
-    ward_score_list=[]
-    average_score_list=[]
-    maximum_score_list=[]
-    single_score_list=[]
+    kmeans_score_list = []
+    ward_score_list = []
+    average_score_list = []
+    maximum_score_list = []
+    single_score_list = []
     for embryo_name in embryo_names:
 
         cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
@@ -3126,7 +3143,7 @@ def cluster_silhouette_score_spectrum_01paper():
 
         cell_list_dict = {}
         cell_frame_list_dict = {}
-        cell_static_f_list=[]
+        cell_static_f_list = []
         path_SHcPCA_csv = os.path.join(norm_spectrum_csv_path,
                                        'Sample' + embryo_name + '_Spectrum_norm.csv')
         df_values_dict = read_csv_to_df(path_SHcPCA_csv)
@@ -3146,7 +3163,7 @@ def cluster_silhouette_score_spectrum_01paper():
                 cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
                 cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
         # ----------------static feature clustering result-----------------------
-        cluster_arr=np.array(cell_static_f_list)
+        cluster_arr = np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_score_list_static.append(silhouette_score(cluster_arr, y_kmeans_estimation))
         print('static feature SPECTRUM Kmeans', kmeans_score_list_static[-1])
@@ -3173,22 +3190,22 @@ def cluster_silhouette_score_spectrum_01paper():
                           0] - begin_frame) * 1.39) > time_limit_minutes_start:
                 df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
         # -------------start cluster----------------------------
-        cluster_arr=df_avg_lifespan.values
+        cluster_arr = df_avg_lifespan.values
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
-        kmeans_score_list.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        kmeans_score_list.append(silhouette_score(cluster_arr, y_kmeans_estimation))
         print('dynamic feature SPECTRUM Kmeans', kmeans_score_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
-        ward_score_list.append(silhouette_score(cluster_arr,y_agglo))
-        print('dynamic feature SPECTRUM ward',ward_score_list[-1])
+        ward_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature SPECTRUM ward', ward_score_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
-        average_score_list.append(silhouette_score(cluster_arr,y_agglo))
-        print('dynamic feature SPECTRUM average',average_score_list[-1])
+        average_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature SPECTRUM average', average_score_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
-        maximum_score_list.append(silhouette_score(cluster_arr,y_agglo))
-        print('dynamic feature SPECTRUM maximum',maximum_score_list[-1])
+        maximum_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature SPECTRUM maximum', maximum_score_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
-        single_score_list.append(silhouette_score(cluster_arr,y_agglo))
-        print('dynamic feature SPECTRUM single',single_score_list[-1])
+        single_score_list.append(silhouette_score(cluster_arr, y_agglo))
+        print('dynamic feature SPECTRUM single', single_score_list[-1])
     print('================individual clustering score==========')
 
     print('static feature SPECTRUM Kmeans  ', sum(kmeans_score_list_static) / len(kmeans_score_list_static))
@@ -3197,11 +3214,11 @@ def cluster_silhouette_score_spectrum_01paper():
     print('static feature SPECTRUM maximum   ', sum(maximum_score_list_static) / len(maximum_score_list_static))
     print('static feature SPECTRUM single   ', sum(single_score_list_static) / len(single_score_list_static))
 
-    print('dynamic feature SPECTRUM Kmeans  ',sum(kmeans_score_list)/len(kmeans_score_list))
-    print('dynamic feature SPECTRUM ward   ',sum(ward_score_list)/len(ward_score_list))
-    print('dynamic feature SPECTRUM average   ',sum(average_score_list)/len(average_score_list))
-    print('dynamic feature SPECTRUM maximum   ',sum(maximum_score_list)/len(maximum_score_list))
-    print('dynamic feature SPECTRUM single   ',sum(single_score_list)/len(single_score_list))
+    print('dynamic feature SPECTRUM Kmeans  ', sum(kmeans_score_list) / len(kmeans_score_list))
+    print('dynamic feature SPECTRUM ward   ', sum(ward_score_list) / len(ward_score_list))
+    print('dynamic feature SPECTRUM average   ', sum(average_score_list) / len(average_score_list))
+    print('dynamic feature SPECTRUM maximum   ', sum(maximum_score_list) / len(maximum_score_list))
+    print('dynamic feature SPECTRUM single   ', sum(single_score_list) / len(single_score_list))
 
     # -----------------------mean cell lineage tree-------------------------
     print('----------mean cell lineage tree------')
@@ -3255,19 +3272,20 @@ def cluster_silhouette_score_spectrum_01paper():
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
     print('dynamic single', silhouette_score(cluster_arr, y_agglo))
 
+
 # cluster 三种dynamic feature之后用内部指标，inner error no test error!!!
 # Kmean Hierarchical cluster for 3 kinds totally 9, make a table.
 #
 # do the clustering for static feature if avaliable.
 def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
-
-    hop=1
-    df_pd_values_dict={}
+    hop = 1
+    df_pd_values_dict = {}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    path_saving_enhanced_spectrum= config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
+    path_saving_enhanced_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/norm_Spectrum_graph_enhanced_csv'
     for embryo_name in embryo_names:
         cell_list_dict = {}
-        path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,'Sample{}_h{}_M.csv'.format(embryo_name,str(hop)))
+        path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,
+                                         'Sample{}_h{}_M.csv'.format(embryo_name, str(hop)))
         df_pd_values_dict[embryo_name] = read_csv_to_df(path_spectrum_csv)
         for idx in df_pd_values_dict[embryo_name].index:
             cell_name = idx.split('::')[1]
@@ -3283,7 +3301,8 @@ def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
             # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
             df_dynamci_f.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
         print(embryo_name, df_dynamci_f)
-        df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h{}_M.csv'.format(embryo_name,str(hop))))
+        df_dynamci_f.to_csv(
+            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
 
     # ====================calculate average of 17 embryos==============================
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
@@ -3307,11 +3326,13 @@ def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
             else:
                 df_static_mean_tree.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list), axis=0)
     print(df_static_mean_tree)
-    df_static_mean_tree.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_static_enhanced_h{}_M.csv'.format(str(hop))))
+    df_static_mean_tree.to_csv(
+        os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_static_enhanced_h{}_M.csv'.format(str(hop))))
 
     embryo_list_dict = {}
     for embryo_name in embryo_names:
-        df_dynamic_spectrum = read_csv_to_df(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h{}_M.csv'.format(embryo_name,str(hop))))
+        df_dynamic_spectrum = read_csv_to_df(
+            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
         for cell_name in df_dynamic_spectrum.index:
             # cell_name = idx.split('::')[1]
             if cell_name in embryo_list_dict.keys():
@@ -3327,7 +3348,9 @@ def construct_mean_tree_and_dynamic_enhanced_spectrum_norm():
         df_dynamci_f.loc[cell_name] = np.mean(np.array(embryo_list_dict[cell_name]), axis=0)
     print('avg:', df_dynamci_f)
     # 看一下效果，如果和其他一個吊樣就把c0_0去掉
-    df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_dynamic_enhanced_h{}_M.csv'.format(str(hop))))
+    df_dynamci_f.to_csv(
+        os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_dynamic_enhanced_h{}_M.csv'.format(str(hop))))
+
 
 def cluster_acc_and_score_enhanced_spectrum_norm():
     """
@@ -3385,8 +3408,8 @@ def cluster_acc_and_score_enhanced_spectrum_norm():
 
         cell_list_dict = {}
         cell_frame_list_dict = {}
-        cell_static_f_list=[]
-        cell_static_Y_fate=[]
+        cell_static_f_list = []
+        cell_static_Y_fate = []
 
         path_SHcPCA_csv = os.path.join(norm_enhanced_spectrum_csv_path,
                                        'Sample' + embryo_name + '_h3_M.csv')
@@ -3409,11 +3432,11 @@ def cluster_acc_and_score_enhanced_spectrum_norm():
                 cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
                 cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
         # ------------------static cell feature cluster acc----------------------------
-        cell_static_Y_fate=np.array(cell_static_Y_fate)
+        cell_static_Y_fate = np.array(cell_static_Y_fate)
         cluster_arr = np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list_static.append(cluster_acc(y_kmeans_estimation, cell_static_Y_fate, cluster_num_predict))
-        kmeans_score_list_static.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        kmeans_score_list_static.append(silhouette_score(cluster_arr, y_kmeans_estimation))
         print('static feature enhancedspectrum Kmeans', kmeans_acc_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
         ward_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
@@ -3447,7 +3470,7 @@ def cluster_acc_and_score_enhanced_spectrum_norm():
         cluster_arr = df_avg_lifespan.values
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list.append(cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
-        kmeans_score_list.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        kmeans_score_list.append(silhouette_score(cluster_arr, y_kmeans_estimation))
         print('dynamic feature enhancedspectrum Kmeans', kmeans_acc_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
         ward_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
@@ -3515,15 +3538,20 @@ def cluster_acc_and_score_enhanced_spectrum_norm():
     static_y_fate = np.array(static_y_fate)
     cluster_arr = np.array(cluster_arr)
     y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
-    print('static Kmeans',silhouette_score(cluster_arr, y_kmeans_estimation), cluster_acc(y_kmeans_estimation, static_y_fate, cluster_num_predict))
+    print('static Kmeans', silhouette_score(cluster_arr, y_kmeans_estimation),
+          cluster_acc(y_kmeans_estimation, static_y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
-    print('static ward', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    print('static ward', silhouette_score(cluster_arr, y_agglo),
+          cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
-    print('static average', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    print('static average', silhouette_score(cluster_arr, y_agglo),
+          cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
-    print('static maximum', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    print('static maximum', silhouette_score(cluster_arr, y_agglo),
+          cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
-    print('static single', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    print('static single', silhouette_score(cluster_arr, y_agglo),
+          cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
 
     # -------------dynamic features start cluster----------------------------
 
@@ -3531,7 +3559,7 @@ def cluster_acc_and_score_enhanced_spectrum_norm():
                                               'Mean_cellLineageTree_dynamic_enhanced_h3_M.csv')
     df_mean_tree_dynamic_fea = read_csv_to_df(path_mean_tree_dynamic_csv)
     cluster_arr = []
-    y_fate=[]
+    y_fate = []
     for cell_name in cell_combine_tree.expand_tree(sorting=False):
         if cell_name in cell_fate_dict.keys() and \
                 cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
@@ -3542,26 +3570,28 @@ def cluster_acc_and_score_enhanced_spectrum_norm():
     y_fate = np.array(y_fate)
     cluster_arr = np.array(cluster_arr)
     y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
-    print('dynamic Kmeans', silhouette_score(cluster_arr, y_kmeans_estimation),cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
+    print('dynamic Kmeans', silhouette_score(cluster_arr, y_kmeans_estimation),
+          cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
-    print('dynamic ward', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    print('dynamic ward', silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
-    print('dynamic average', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    print('dynamic average', silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
-    print('dynamic maximum',silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    print('dynamic maximum', silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
-    print('dynamic single', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    print('dynamic single', silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
+
 
 def construct_mean_tree_and_dynamic_spectrum_no_C00():
-    spectrum_num=25
+    spectrum_num = 25
 
-    df_pd_values_dict={}
+    df_pd_values_dict = {}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    path_saving_dynamic_spectrum= config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_no_C00_csv'
+    path_saving_dynamic_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_no_C00_csv'
     path_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
     for embryo_name in embryo_names:
         cell_list_dict = {}
-        path_spectrum_csv = os.path.join(path_spectrum,'Sample{}_Spectrum.csv'.format(embryo_name))
+        path_spectrum_csv = os.path.join(path_spectrum, 'Sample{}_Spectrum.csv'.format(embryo_name))
         df_pd_values_dict[embryo_name] = read_csv_to_df(path_spectrum_csv)
         for idx in df_pd_values_dict[embryo_name].index:
             cell_name = idx.split('::')[1]
@@ -3577,7 +3607,8 @@ def construct_mean_tree_and_dynamic_spectrum_no_C00():
             # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
             df_dynamci_f.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
         print(embryo_name, df_dynamci_f)
-        df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum,'Sample' + embryo_name + '_dynamic_spectrum_no_C00.csv'))
+        df_dynamci_f.to_csv(
+            os.path.join(path_saving_dynamic_spectrum, 'Sample' + embryo_name + '_dynamic_spectrum_no_C00.csv'))
 
     # ====================calculate average of 17 embryos==============================
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
@@ -3601,11 +3632,13 @@ def construct_mean_tree_and_dynamic_spectrum_no_C00():
             else:
                 df_static_mean_tree.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list), axis=0)
     print(df_static_mean_tree)
-    df_static_mean_tree.to_csv(os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_static_Spectrum_no_C00.csv'))
+    df_static_mean_tree.to_csv(
+        os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_static_Spectrum_no_C00.csv'))
 
     embryo_list_dict = {}
     for embryo_name in embryo_names:
-        df_dynamic_spectrum = read_csv_to_df(os.path.join(path_saving_dynamic_spectrum,'Sample' + embryo_name + '_dynamic_spectrum_no_C00.csv'))
+        df_dynamic_spectrum = read_csv_to_df(
+            os.path.join(path_saving_dynamic_spectrum, 'Sample' + embryo_name + '_dynamic_spectrum_no_C00.csv'))
         for cell_name in df_dynamic_spectrum.index:
             # cell_name = idx.split('::')[1]
             if cell_name in embryo_list_dict.keys():
@@ -3623,6 +3656,7 @@ def construct_mean_tree_and_dynamic_spectrum_no_C00():
     # 看一下效果，如果和其他一個吊樣就把c0_0去掉
     df_dynamci_f.to_csv(os.path.join(path_saving_dynamic_spectrum, 'Mean_cellLineageTree_dynamic_spectrum_no_C00.csv'))
 
+
 def cluster_acc_and_score_spectrum_no_C00():
     """
     do clustering with SPECTRUM feature vector , ACCURACY AND SILHOUETTE SCORE
@@ -3638,7 +3672,7 @@ def cluster_acc_and_score_spectrum_no_C00():
 
     # -------------------cluster each cell--------------------
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    spectrum_no_c00_path= config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
+    spectrum_no_c00_path = config.cell_shape_analysis_data_path + r'my_data_csv/SH_time_domain_csv'
     norm_enhanced_spectrum_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/Spectrum_no_C00_csv'
     life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
     cluster_num_predict = 8  # no germ line after 100 or 150 minutes
@@ -3680,10 +3714,10 @@ def cluster_acc_and_score_spectrum_no_C00():
 
         cell_list_dict = {}
         cell_frame_list_dict = {}
-        cell_static_f_list=[]
-        cell_static_Y_fate=[]
+        cell_static_f_list = []
+        cell_static_Y_fate = []
 
-        path_static_fea_csv = os.path.join(spectrum_no_c00_path,'Sample' + embryo_name + '_Spectrum.csv')
+        path_static_fea_csv = os.path.join(spectrum_no_c00_path, 'Sample' + embryo_name + '_Spectrum.csv')
         df_values_dict = read_csv_to_df(path_static_fea_csv)
         print('-----', embryo_name, '-----')
         for idx in df_values_dict.index:
@@ -3703,11 +3737,11 @@ def cluster_acc_and_score_spectrum_no_C00():
                 cell_list_dict[cell_name] = [list(df_values_dict.loc[idx][1:])]
                 cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
         # ------------------static cell feature cluster acc----------------------------
-        cell_static_Y_fate=np.array(cell_static_Y_fate)
+        cell_static_Y_fate = np.array(cell_static_Y_fate)
         cluster_arr = np.array(cell_static_f_list)
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list_static.append(cluster_acc(y_kmeans_estimation, cell_static_Y_fate, cluster_num_predict))
-        kmeans_score_list_static.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        kmeans_score_list_static.append(silhouette_score(cluster_arr, y_kmeans_estimation))
         print('static feature spectrumnoC00 Kmeans', kmeans_acc_list_static[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
         ward_acc_list_static.append(cluster_acc(y_agglo, cell_static_Y_fate, cluster_num_predict))
@@ -3741,7 +3775,7 @@ def cluster_acc_and_score_spectrum_no_C00():
         cluster_arr = df_avg_lifespan.values
         y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
         kmeans_acc_list.append(cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
-        kmeans_score_list.append(silhouette_score(cluster_arr,y_kmeans_estimation))
+        kmeans_score_list.append(silhouette_score(cluster_arr, y_kmeans_estimation))
         print('dynamic feature spectrumnoC00 Kmeans', kmeans_acc_list[-1])
         y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
         ward_acc_list.append(cluster_acc(y_agglo, y_fate, cluster_num_predict))
@@ -3809,15 +3843,20 @@ def cluster_acc_and_score_spectrum_no_C00():
     static_y_fate = np.array(static_y_fate)
     cluster_arr = np.array(cluster_arr)
     y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
-    print('static Kmeans',silhouette_score(cluster_arr, y_kmeans_estimation), cluster_acc(y_kmeans_estimation, static_y_fate, cluster_num_predict))
+    print('static Kmeans', silhouette_score(cluster_arr, y_kmeans_estimation),
+          cluster_acc(y_kmeans_estimation, static_y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
-    print('static ward', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    print('static ward', silhouette_score(cluster_arr, y_agglo),
+          cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
-    print('static average', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    print('static average', silhouette_score(cluster_arr, y_agglo),
+          cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
-    print('static maximum', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    print('static maximum', silhouette_score(cluster_arr, y_agglo),
+          cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
-    print('static single', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
+    print('static single', silhouette_score(cluster_arr, y_agglo),
+          cluster_acc(y_agglo, static_y_fate, cluster_num_predict))
 
     # -------------dynamic features start cluster----------------------------
 
@@ -3825,7 +3864,7 @@ def cluster_acc_and_score_spectrum_no_C00():
                                               'Mean_cellLineageTree_dynamic_spectrum_no_C00.csv')
     df_mean_tree_dynamic_fea = read_csv_to_df(path_mean_tree_dynamic_csv)
     cluster_arr = []
-    y_fate=[]
+    y_fate = []
     for cell_name in cell_combine_tree.expand_tree(sorting=False):
         if cell_name in cell_fate_dict.keys() and \
                 cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start:
@@ -3836,26 +3875,29 @@ def cluster_acc_and_score_spectrum_no_C00():
     y_fate = np.array(y_fate)
     cluster_arr = np.array(cluster_arr)
     y_kmeans_estimation = KMeans(n_clusters=cluster_num_predict, tol=1e-4).fit_predict(cluster_arr)
-    print('dynamic Kmeans', silhouette_score(cluster_arr, y_kmeans_estimation),cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
+    print('dynamic Kmeans', silhouette_score(cluster_arr, y_kmeans_estimation),
+          cluster_acc(y_kmeans_estimation, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict).fit_predict(cluster_arr)
-    print('dynamic ward', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    print('dynamic ward', silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='average').fit_predict(cluster_arr)
-    print('dynamic average', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    print('dynamic average', silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='complete').fit_predict(cluster_arr)
-    print('dynamic maximum',silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    print('dynamic maximum', silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
     y_agglo = AgglomerativeClustering(n_clusters=cluster_num_predict, linkage='single').fit_predict(cluster_arr)
-    print('dynamic single', silhouette_score(cluster_arr, y_agglo),cluster_acc(y_agglo, y_fate, cluster_num_predict))
+    print('dynamic single', silhouette_score(cluster_arr, y_agglo), cluster_acc(y_agglo, y_fate, cluster_num_predict))
+
 
 def construct_mean_tree_and_dynamic_enhanced_noC00spectrum():
-
-    hop=1
-    fea_num=25
-    df_pd_values_dict={}
+    hop = 1
+    fea_num = 25
+    df_pd_values_dict = {}
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    path_saving_enhanced_spectrum= config.cell_shape_analysis_data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(str(hop))
+    path_saving_enhanced_spectrum = config.cell_shape_analysis_data_path + r'my_data_csv/noC00Spectrum_enhanced_h{}_M_csv'.format(
+        str(hop))
     for embryo_name in embryo_names:
         cell_list_dict = {}
-        path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,'Sample{}_h{}_M.csv'.format(embryo_name,str(hop)))
+        path_spectrum_csv = os.path.join(path_saving_enhanced_spectrum,
+                                         'Sample{}_h{}_M.csv'.format(embryo_name, str(hop)))
         df_pd_values_dict[embryo_name] = read_csv_to_df(path_spectrum_csv)
         for idx in df_pd_values_dict[embryo_name].index:
             cell_name = idx.split('::')[1]
@@ -3871,7 +3913,8 @@ def construct_mean_tree_and_dynamic_enhanced_noC00spectrum():
             # print(np.mean(np.array(cell_list_dict[cell_name]), axis=0))
             df_dynamci_f.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
         print(embryo_name, df_dynamci_f)
-        df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h{}_M.csv'.format(embryo_name,str(hop))))
+        df_dynamci_f.to_csv(
+            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
 
     # ====================calculate average of 17 embryos==============================
     cell_combine_tree, begin_frame = get_combined_lineage_tree()
@@ -3895,11 +3938,13 @@ def construct_mean_tree_and_dynamic_enhanced_noC00spectrum():
             else:
                 df_static_mean_tree.loc[tp_and_cell_index] = np.mean(np.array(tp_value_list), axis=0)
     print(df_static_mean_tree)
-    df_static_mean_tree.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_static_enhanced_h{}_M.csv'.format(str(hop))))
+    df_static_mean_tree.to_csv(
+        os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_static_enhanced_h{}_M.csv'.format(str(hop))))
 
     embryo_list_dict = {}
     for embryo_name in embryo_names:
-        df_dynamic_spectrum = read_csv_to_df(os.path.join(path_saving_enhanced_spectrum,'Sample{}_dynamic_h{}_M.csv'.format(embryo_name,str(hop))))
+        df_dynamic_spectrum = read_csv_to_df(
+            os.path.join(path_saving_enhanced_spectrum, 'Sample{}_dynamic_h{}_M.csv'.format(embryo_name, str(hop))))
         for cell_name in df_dynamic_spectrum.index:
             # cell_name = idx.split('::')[1]
             if cell_name in embryo_list_dict.keys():
@@ -3915,11 +3960,14 @@ def construct_mean_tree_and_dynamic_enhanced_noC00spectrum():
         df_dynamci_f.loc[cell_name] = np.mean(np.array(embryo_list_dict[cell_name]), axis=0)
     print('avg:', df_dynamci_f)
     # 看一下效果，如果和其他一個吊樣就把c0_0去掉
-    df_dynamci_f.to_csv(os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_dynamic_enhanced_h{}_M.csv'.format(str(hop))))
+    df_dynamci_f.to_csv(
+        os.path.join(path_saving_enhanced_spectrum, 'Mean_cellLineageTree_dynamic_enhanced_h{}_M.csv'.format(str(hop))))
+
 
 if __name__ == "__main__":
     # a={1:[1,2],2:[4,5]}
     # print([a[x] for x in a.keys()])
     # clustering_original_and_normalized_feature_vector()
     # cluster_with_lifespan_shape_features()
-    construct_mean_tree_and_dynamic_spectrum_01paper()
+    # construct_mean_tree_and_dynamic_spectrum_01paper()
+    calculate_SPHARM_embryos()

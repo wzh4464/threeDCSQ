@@ -43,26 +43,26 @@ def draw_PCA(sh_PCA_path):
         shc_instance2 = SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(list(sh_PCA_mean + 3 * component)))
         shc_instance3 = SHCoeffs.from_array(sh_analysis.collapse_flatten_clim(list(sh_PCA_mean + 5 * component)))
 
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance_3)
+        sh_reconstruction = sh_analysis.do_reconstruction_from_SH(100, shc_instance_3)
         axes_tmp = fig.add_subplot(2, 3, 1, projection='3d')
         draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(-5),
                        ax=axes_tmp)
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance_2)
+        sh_reconstruction = sh_analysis.do_reconstruction_from_SH(100, shc_instance_2)
         axes_tmp = fig.add_subplot(2, 3, 2, projection='3d')
         draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(-3),
                        ax=axes_tmp)
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance_1)
+        sh_reconstruction = sh_analysis.do_reconstruction_from_SH(100, shc_instance_1)
         axes_tmp = fig.add_subplot(2, 3, 3, projection='3d')
         draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(-1),
                        ax=axes_tmp)
 
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance1)
+        sh_reconstruction = sh_analysis.do_reconstruction_from_SH(100, shc_instance1)
         axes_tmp = fig.add_subplot(2, 3, 4, projection='3d')
         draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(1), ax=axes_tmp)
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance2)
+        sh_reconstruction = sh_analysis.do_reconstruction_from_SH(100, shc_instance2)
         axes_tmp = fig.add_subplot(2, 3, 5, projection='3d')
         draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(3), ax=axes_tmp)
-        sh_reconstruction = sh_analysis.do_reconstruction_for_SH(100, shc_instance3)
+        sh_reconstruction = sh_analysis.do_reconstruction_from_SH(100, shc_instance3)
         axes_tmp = fig.add_subplot(2, 3, 6, projection='3d')
         draw_3D_points(sh_reconstruction, fig_name='Component '+str(idx) + ' Constituent Weight ' + str(5), ax=axes_tmp)
 

@@ -58,7 +58,7 @@ from transformation.SH_represention import get_nib_embryo_membrane_dict, do_samp
 from utils.cell_func import get_cell_name_affine_table, nii_get_cell_surface
 from utils.draw_func import draw_3D_points, Arrow3D, set_size
 from utils.general_func import read_csv_to_df, load_nitf2_img
-from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_for_SH
+from utils.sh_cooperation import collapse_flatten_clim, do_reconstruction_from_SH
 from utils.data_io import check_folder
 
 import static.config as config
@@ -101,7 +101,7 @@ def show_cell_SPCSMs_info():
     instance_tmp = pysh.SHCoeffs.from_array(collapse_flatten_clim(embryo_csv.loc[tp + '::' + cell_name]))
     axes_tmp = fig_SPCSMs_info.add_subplot(2, 3, 2, projection='3d')
 
-    draw_3D_points(do_reconstruction_for_SH(sample_N=50, sh_coefficient_instance=instance_tmp),
+    draw_3D_points(do_reconstruction_from_SH(sample_N=50, sh_coefficient_instance=instance_tmp),
                    ax=axes_tmp, fig_name=cell_name + '::' + tp, cmap='viridis')
 
     sn = 20
@@ -464,7 +464,7 @@ def figure_for_science_01paper():
     #                                                                                    file_name)
     instance_tmp = pysh.SHCoeffs.from_array(collapse_flatten_clim(embryo_csv.loc[tp + '::' + cell_name]))
     axes_tmp3 = fig_SPCSMs_info.add_subplot(2, 2, 3, projection='3d')
-    draw_3D_points(do_reconstruction_for_SH(sample_N=50, sh_coefficient_instance=instance_tmp),
+    draw_3D_points(do_reconstruction_from_SH(sample_N=50, sh_coefficient_instance=instance_tmp),
                    ax=axes_tmp3, cmap=cm.coolwarm)
     sn = 20
     x_axis = Arrow3D([0, sn + 3], [0, 0],
@@ -629,7 +629,7 @@ def plot_voxel_and_reconstructed_surface_01paper():
     df_SHcPCA = read_csv_to_df(SHc_path)
     sh_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(df_SHcPCA.loc[tp + '::' + cell_name]))
     m_pcd = o3d.geometry.PointCloud()
-    resctruct_xyz = do_reconstruction_for_SH(100, sh_instance)
+    resctruct_xyz = do_reconstruction_from_SH(100, sh_instance)
     print(resctruct_xyz)
     pd.DataFrame(resctruct_xyz).to_csv("{}.csv".format(embryo_name + ' ' + cell_name + ' ' + tp))
     m_pcd.points = o3d.utility.Vector3dVector(resctruct_xyz)

@@ -139,3 +139,4 @@ print(np.unique(embryo_nuc_nii,return_counts=True))
 #     volume = nib.load(os.path.join(path_tmp, file_name)).get_fdata().astype(int).transpose([2, 1, 0])
 #
 #     print(tp,len(np.unique(volume).tolist()))
+

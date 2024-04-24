@@ -20,9 +20,9 @@ import utils.general_func as general_f
 
 
 
-def get_cell_name_affine_table(path=os.path.join(config.win_cell_shape_analysis_data_path,'name_dictionary_no_name.csv')):
+def get_cell_name_affine_table(path):
     """
-
+    path==os.path.join(config.win_cell_shape_analysis_data_path,'name_dictionary_no_name.csv')
     :return: a set of NO. to name LIST and name to NO. DICTIONARY:
     zero first, but actually there are no zero, remember to plus 1
     """

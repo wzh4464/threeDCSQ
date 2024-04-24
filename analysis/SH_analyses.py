@@ -20,7 +20,7 @@ from tqdm import tqdm
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 
-from utils.sh_cooperation import get_flatten_ldegree_morder, collapse_flatten_clim, do_reconstruction_for_SH, \
+from utils.sh_cooperation import get_flatten_ldegree_morder, collapse_flatten_clim, do_reconstruction_from_SH, \
     flatten_clim
 from utils.spherical_func import normalize_SHc
 
@@ -218,26 +218,26 @@ def analysis_SHcPCA_One_embryo(embryo_path, used_degree, l_degree=25, is_do_PCA=
                 shc_instance2 = pysh.SHCoeffs.from_array(collapse_flatten_clim(list(sh_PCA_mean + 3 * component)))
                 shc_instance3 = pysh.SHCoeffs.from_array(collapse_flatten_clim(list(sh_PCA_mean + 5 * component)))
 
-                sh_reconstruction = do_reconstruction_for_SH(30, shc_instance_3)
+                sh_reconstruction = do_reconstruction_from_SH(30, shc_instance_3)
                 axes_tmp = fig.add_subplot(2, 3, 1, projection='3d')
                 draw_f.draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(-5),
                                       ax=axes_tmp)
-                sh_reconstruction = do_reconstruction_for_SH(30, shc_instance_2)
+                sh_reconstruction = do_reconstruction_from_SH(30, shc_instance_2)
                 axes_tmp = fig.add_subplot(2, 3, 2, projection='3d')
                 draw_f.draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(-3),
                                       ax=axes_tmp)
-                sh_reconstruction = do_reconstruction_for_SH(30, shc_instance_1)
+                sh_reconstruction = do_reconstruction_from_SH(30, shc_instance_1)
                 axes_tmp = fig.add_subplot(2, 3, 3, projection='3d')
                 draw_f.draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(-1),
                                       ax=axes_tmp)
 
-                sh_reconstruction = do_reconstruction_for_SH(30, shc_instance1)
+                sh_reconstruction = do_reconstruction_from_SH(30, shc_instance1)
                 axes_tmp = fig.add_subplot(2, 3, 4, projection='3d')
                 draw_f.draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(1), ax=axes_tmp)
-                sh_reconstruction = do_reconstruction_for_SH(30, shc_instance2)
+                sh_reconstruction = do_reconstruction_from_SH(30, shc_instance2)
                 axes_tmp = fig.add_subplot(2, 3, 5, projection='3d')
                 draw_f.draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(3), ax=axes_tmp)
-                sh_reconstruction = do_reconstruction_for_SH(30, shc_instance3)
+                sh_reconstruction = do_reconstruction_from_SH(30, shc_instance3)
                 axes_tmp = fig.add_subplot(2, 3, 6, projection='3d')
                 draw_f.draw_3D_points(sh_reconstruction, fig_name=str(component_index) + 'Delta ' + str(5), ax=axes_tmp)
 
@@ -422,7 +422,7 @@ def analysis_SHc_Kmeans_One_embryo(embryo_path, used_degree, l_degree=25, cluste
             center_sample_modified = general_f.log_expand_offset(value.reshape((value.shape[0], 1)), offset).flatten()
 
             shc_instance = pysh.SHCoeffs.from_array(collapse_flatten_clim(list(center_sample_modified)))
-            center_sampling_dict[index] = do_reconstruction_for_SH(30, shc_instance)
+            center_sampling_dict[index] = do_reconstruction_from_SH(30, shc_instance)
 
             fig = plt.figure()
             axes_tmp = fig.add_subplot(figure_rows, figure_columns, 1, projection='3d')
@@ -434,7 +434,7 @@ def analysis_SHc_Kmeans_One_embryo(embryo_path, used_degree, l_degree=25, cluste
                 this_index = random_selection[i - 1]
                 shc_instance = pysh.SHCoeffs.from_array(
                     collapse_flatten_clim(list(df_embryo_SHc.values[this_index])))
-                sh_reconstruction = do_reconstruction_for_SH(20, shc_instance)
+                sh_reconstruction = do_reconstruction_from_SH(20, shc_instance)
                 axes_tmp = fig.add_subplot(figure_rows, figure_columns, i + 1, projection='3d')
                 tp_cell_name_index = df_embryo_SHc.index[this_index]
                 # print(tp_cell_name_index)
@@ -703,7 +703,7 @@ def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
                     center_points = [0, 0, 0]
                 points_membrane_local = tmp_this_membrane - center_points
 
-                reconstruction_xyz = do_reconstruction_for_SH(50, sh_coefficient_instance)
+                reconstruction_xyz = do_reconstruction_from_SH(50, sh_coefficient_instance)
                 grid_data_SH, _ = SH_represention.do_sampling_with_interval(50, reconstruction_xyz, 10)
 
                 grid_data_original, _ = SH_represention.do_sampling_with_interval(50, points_membrane_local, 10)
@@ -748,7 +748,7 @@ def analysis_compare_SHc(embryo_path, file_name, behavior='both'):
                     center_points = [0, 0, 0]
                 points_membrane_local = tmp_this_membrane - center_points
 
-                reconstruction_xyz = do_reconstruction_for_SH(50, sh_coefficient_instance)
+                reconstruction_xyz = do_reconstruction_from_SH(50, sh_coefficient_instance)
                 grid_data_SH, _ = SH_represention.do_sampling_with_interval(50, reconstruction_xyz, 10)
 
                 grid_data_original, _ = SH_represention.do_sampling_with_interval(50, points_membrane_local, 10)
@@ -829,7 +829,7 @@ def get_points_with_SHc(sh_instance, colat, lon, is_return_xyz=False):
 
 
 def do_contraction_image(sh_coefficient_instance, sh_show_N, points_membrane_local):
-    reconstruction_xyz = do_reconstruction_for_SH(sh_show_N, sh_coefficient_instance)
+    reconstruction_xyz = do_reconstruction_from_SH(sh_show_N, sh_coefficient_instance)
     p = multiprocessing.Process(target=draw_f.draw_3D_points, args=(reconstruction_xyz, 'shc reconstruction',))
     p.start()
     draw_f.draw_3D_points(points_membrane_local)

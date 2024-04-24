@@ -13,27 +13,27 @@ import pyshtools as pysh
 from utils.general_func import sph2descartes
 
 
-def flatten_clim(sh_coefficient_instance):
+def flatten_clim(sh_coefficient_array):
     """
     # -----------------------------------
     # cilm coefficient:
     # [0,:,:]---->m >= 0
     # [1,:,:]---->m <0
     # -----------------------------------
-    :param sh_coefficient_instance:
+    :param sh_coefficient_array:
     :return:
     """
     flatten_array = []
-    coefficient_degree = sh_coefficient_instance.coeffs.shape[1]
+    coefficient_degree = sh_coefficient_array.shape[1]
     # print(coefficient_degree)
     for l_degree in range(coefficient_degree):
         # m<0
         for m_order in np.arange(l_degree, 0, step=-1):
-            flatten_array.append(sh_coefficient_instance.coeffs[1, l_degree, m_order])
+            flatten_array.append(sh_coefficient_array[1, l_degree, m_order])
             # print(1, l_degree, m_order)
         # m>=0
         for m_order in np.arange(0, l_degree + 1):
-            flatten_array.append(sh_coefficient_instance.coeffs[0, l_degree, m_order])
+            flatten_array.append(sh_coefficient_array[0, l_degree, m_order])
             # print(0, l_degree, m_order)
 
     return np.array(flatten_array)
@@ -77,7 +77,7 @@ def get_flatten_ldegree_morder(degree):
 
 
 
-def do_reconstruction_for_SH(sample_N: int, sh_coefficient_instance: pysh.SHCoeffs):
+def do_reconstruction_from_SH(sample_N: int, sh_coefficient_instance: pysh.SHCoeffs):
     """
     latitude!!
     :param sample_N: sample N, total samples will be 2*sample_N**2
