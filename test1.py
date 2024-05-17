@@ -1449,7 +1449,7 @@ from treelib import Tree
 
 def recognition_of_hyp_cells_with_eigenharmonic_01paper():
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(r'./DATA', 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -1457,8 +1457,8 @@ def recognition_of_hyp_cells_with_eigenharmonic_01paper():
     df_saving_skin_recognition = pd.DataFrame(columns=np.arange(start=0.5, stop=2, step=0.1))
     # print(cell_fate_dict)
     # detection using weight of first 2dmatrix pca component
-    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
-    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_SH_PCA_csv'
+    life_span_tree_path = os.path.join(r'./DATA',  r'lineage_tree/LifeSpan')
+    norm_shcpca_csv_path = os.path.join(r'./DATA', r'my_data_csv/norm_SH_PCA_csv')
     time_limit_minutes_start = 100  # 50 or 100 or 150 start time bigger than this
     time_limit_minutes_end = 250  # 100 or 150 or 200 the end time smaller than this
     weight_threshold_static = 1
@@ -1475,60 +1475,60 @@ def recognition_of_hyp_cells_with_eigenharmonic_01paper():
         begin_frame[embryo_name] = max(tree_dict[embryo_name].get_node('ABa').data.get_time()[-1],
                                        tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
 
-    for embryo_name in embryo_names:
-        # -- Since the frame and time are different, we need to recalculate the average lifespan fea vector----
-        print(embryo_name, '=====================')
-        pca_num = 12
-
-        cell_list_dict = {}
-        cell_frame_list_dict = {}
-        path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
-                                       'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
-        df_values_dict = read_csv_to_df(path_SHcPCA_csv)
-        for idx in df_values_dict.index:
-            cell_name = idx.split('::')[1]
-            if cell_name in cell_list_dict.keys():
-                cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
-                cell_frame_list_dict[cell_name].append(idx.split('::')[0])
-            else:
-                # print(df_values_dict.loc[idx])
-                cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
-                cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
-        # ------------------build lifespan cell features vector for each embryo------------------
-        df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
-        for cell_name in cell_list_dict.keys():
-            df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
-
-        for weight_threshold in np.arange(start=0.5, stop=1.6, step=0.1):
-            all_fixed_cell = []
-            positive_count = 0
-            for cell_name in df_avg_lifespan.index:
-                if len(cell_frame_list_dict[cell_name]) > 10 and tree_dict[embryo_name].get_node(cell_name).is_leaf():
-
-                    if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
-                        embryo_name]) * 1.39) > time_limit_minutes_start and \
-                            ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[-1] - begin_frame[
-                                embryo_name]) * 1.39) < time_limit_minutes_end:
-                        if cell_fate_dict[cell_name] == 'Skin':
-                            positive_count += 1
-                        if df_avg_lifespan.at[cell_name, column] >= weight_threshold:
-                            # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
-                            all_fixed_cell.append(cell_fate_dict[cell_name])
-                            # print(cell_name, cell_fate_dict[cell_name])
-            print('-->>weight_threshold  ', weight_threshold)
-            # print(np.unique(all_fixed_cell, return_counts=True))
-            # print(all_fixed_cell)
-            # print(all_fixed_cell.count('Skin'))
-            if len(all_fixed_cell) != 0:
-
-                precision = all_fixed_cell.count('Skin') / len(all_fixed_cell)
-                recall = all_fixed_cell.count('Skin') / positive_count
-                print('precision  ', precision)
-                print('recall   ', recall)
-                if precision != 0 or recall != 0:
-                    print('f1 score  ', 2 * precision * recall / (precision + recall))
-            else:
-                print('no one cell is recognized')
+    # for embryo_name in embryo_names:
+    #     # -- Since the frame and time are different, we need to recalculate the average lifespan fea vector----
+    #     print(embryo_name, '=====================')
+    #     pca_num = 12
+    #
+    #     cell_list_dict = {}
+    #     cell_frame_list_dict = {}
+    #     path_SHcPCA_csv = os.path.join(norm_shcpca_csv_path,
+    #                                    'Sample' + embryo_name + 'LabelUnified_SHcPCA' + str(pca_num) + '_norm.csv')
+    #     df_values_dict = read_csv_to_df(path_SHcPCA_csv)
+    #     for idx in df_values_dict.index:
+    #         cell_name = idx.split('::')[1]
+    #         if cell_name in cell_list_dict.keys():
+    #             cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
+    #             cell_frame_list_dict[cell_name].append(idx.split('::')[0])
+    #         else:
+    #             # print(df_values_dict.loc[idx])
+    #             cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
+    #             cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
+    #     # ------------------build lifespan cell features vector for each embryo------------------
+    #     df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
+    #     for cell_name in cell_list_dict.keys():
+    #         df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+    #
+    #     for weight_threshold in np.arange(start=0.5, stop=1.6, step=0.1):
+    #         all_fixed_cell = []
+    #         positive_count = 0
+    #         for cell_name in df_avg_lifespan.index:
+    #             if len(cell_frame_list_dict[cell_name]) > 10 and tree_dict[embryo_name].get_node(cell_name).is_leaf():
+    #
+    #                 if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
+    #                     embryo_name]) * 1.39) > time_limit_minutes_start and \
+    #                         ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[-1] - begin_frame[
+    #                             embryo_name]) * 1.39) < time_limit_minutes_end:
+    #                     if cell_fate_dict[cell_name] == 'Skin':
+    #                         positive_count += 1
+    #                     if df_avg_lifespan.at[cell_name, column] >= weight_threshold:
+    #                         # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
+    #                         all_fixed_cell.append(cell_fate_dict[cell_name])
+    #                         # print(cell_name, cell_fate_dict[cell_name])
+    #         print('-->>weight_threshold  ', weight_threshold)
+    #         # print(np.unique(all_fixed_cell, return_counts=True))
+    #         # print(all_fixed_cell)
+    #         # print(all_fixed_cell.count('Skin'))
+    #         if len(all_fixed_cell) != 0:
+    #
+    #             precision = all_fixed_cell.count('Skin') / len(all_fixed_cell)
+    #             recall = all_fixed_cell.count('Skin') / positive_count
+    #             print('precision  ', precision)
+    #             print('recall   ', recall)
+    #             if precision != 0 or recall != 0:
+    #                 print('f1 score  ', 2 * precision * recall / (precision + recall))
+    #         else:
+    #             print('no one cell is recognized')
 
     # average detection (pattern confirmed)
     from lineage_stat.data_structure import get_combined_lineage_tree
@@ -1539,7 +1539,7 @@ def recognition_of_hyp_cells_with_eigenharmonic_01paper():
                                             'Mean_cellLineageTree_dynamic_eigenharmonic.csv')
     df_pd_spharmpca_lifespan = read_csv_to_df(path_SHcPCA_lifespan_csv)
 
-    for weight_threshold in np.arange(start=0.5, stop=1.6, step=0.1):
+    for weight_threshold in np.arange(start=1, stop=1.6, step=0.1):
         average_fixed_cell_name = []
         average_fixed_cell = []
 
@@ -1563,10 +1563,14 @@ def recognition_of_hyp_cells_with_eigenharmonic_01paper():
         # print(np.unique(all_fixed_cell, return_counts=True))
         # print(all_fixed_cell)
         # print(all_fixed_cell.count('Skin'))
-        if len(average_fixed_cell) != 0:
+        final_other_cells_deformed = ['ABplpappaap', 'ABplpapppa', 'ABpraapppp', 'Dpppa', 'Dpppp', 'ABplpapppp',
+                                      'MSppaaap']
 
+        if len(average_fixed_cell) != 0:
+            print(average_fixed_cell_name)
+            print(average_fixed_cell)
             precision = average_fixed_cell.count('Skin') / len(average_fixed_cell)
-            recall = average_fixed_cell.count('Skin') / positive_count
+            recall = average_fixed_cell.count('Skin') / (average_fixed_cell.count('Skin')+len(final_other_cells_deformed))
             print('precision  ', precision)
             print('recall   ', recall)
             if precision != 0 or recall != 0:
@@ -1579,7 +1583,7 @@ def recognition_of_hyp_cells_with_eigenharmonic_01paper():
 
 def recognition_of_hyp_cells_with_eigengrid_01paper():
     embryo_names = [str(i).zfill(2) for i in range(4, 21)]
-    df_cell_fate = pd.read_csv(os.path.join(config.cell_shape_analysis_data_path, 'CellFate.csv'))
+    df_cell_fate = pd.read_csv(os.path.join(r'./DATA', 'CellFate.csv'))
     cell_fate_dict = {}
     for idx in df_cell_fate.index:
         cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
@@ -1587,8 +1591,8 @@ def recognition_of_hyp_cells_with_eigengrid_01paper():
     df_saving_skin_recognition = pd.DataFrame(columns=np.arange(start=0.5, stop=2, step=0.1))
     # print(cell_fate_dict)
     # detection using weight of first 2dmatrix pca component
-    life_span_tree_path = config.cell_shape_analysis_data_path + r'lineage_tree/LifeSpan'
-    norm_shcpca_csv_path = config.cell_shape_analysis_data_path + r'my_data_csv/norm_2DMATRIX_PCA_csv'
+    life_span_tree_path = os.path.join(r'./DATA', r'lineage_tree/LifeSpan')
+    norm_shcpca_csv_path = os.path.join(r'./DATA',r'my_data_csv/norm_2DMATRIX_PCA_csv')
     time_limit_minutes_start = 100  # 50 or 100 or 150 start time bigger than this
     time_limit_minutes_end = 250  # 100 or 150 or 200 the end time smaller than this
     weight_threshold_static = 1
@@ -1609,60 +1613,60 @@ def recognition_of_hyp_cells_with_eigengrid_01paper():
         begin_frame[embryo_name] = max(tree_dict[embryo_name].get_node('ABa').data.get_time()[-1],
                                        tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
 
-    for embryo_name in embryo_names:
-        # -- Since the frame and time are different, we need to recalculate the average lifespan fea vector----
-        print(embryo_name, '=====================')
-        pca_num = 96
-
-        cell_list_dict = {}
-        cell_frame_list_dict = {}
-        path_2DMATRIXPCA_csv = os.path.join(norm_shcpca_csv_path,
-                                            'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
-        df_values_dict = read_csv_to_df(path_2DMATRIXPCA_csv)
-        for idx in df_values_dict.index:
-            cell_name = idx.split('::')[1]
-            if cell_name in cell_list_dict.keys():
-                cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
-                cell_frame_list_dict[cell_name].append(idx.split('::')[0])
-            else:
-                # print(df_values_dict.loc[idx])
-                cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
-                cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
-        # ------------------build lifespan cell features vector for each embryo------------------
-        df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
-        for cell_name in cell_list_dict.keys():
-            df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
-
-        for weight_threshold in np.arange(start=threshold_start, stop=threshold_end, step=threshold_step):
-            all_fixed_cell = []
-            positive_count = 0
-            for cell_name in df_avg_lifespan.index:
-                if len(cell_frame_list_dict[cell_name]) > 10 and tree_dict[embryo_name].get_node(cell_name).is_leaf():
-
-                    if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
-                        embryo_name]) * 1.39) > time_limit_minutes_start and \
-                            ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[-1] - begin_frame[
-                                embryo_name]) * 1.39) < time_limit_minutes_end:
-                        if cell_fate_dict[cell_name] == 'Skin':
-                            positive_count += 1
-                        if df_avg_lifespan.at[cell_name, column] >= weight_threshold:
-                            # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
-                            all_fixed_cell.append(cell_fate_dict[cell_name])
-                            # print(cell_name, cell_fate_dict[cell_name])
-            print('-->>weight_threshold  ', weight_threshold)
-            # print(np.unique(all_fixed_cell, return_counts=True))
-            # print(all_fixed_cell)
-            # print(all_fixed_cell.count('Skin'))
-            if len(all_fixed_cell) != 0:
-
-                precision = all_fixed_cell.count('Skin') / len(all_fixed_cell)
-                recall = all_fixed_cell.count('Skin') / positive_count
-                print('precision  ', precision)
-                print('recall   ', recall)
-                if precision != 0 or recall != 0:
-                    print('f1 score  ', 2 * precision * recall / (precision + recall))
-            else:
-                print('no one cell is recognized')
+    # for embryo_name in embryo_names:
+    #     # -- Since the frame and time are different, we need to recalculate the average lifespan fea vector----
+    #     print(embryo_name, '=====================')
+    #     pca_num = 96
+    #
+    #     cell_list_dict = {}
+    #     cell_frame_list_dict = {}
+    #     path_2DMATRIXPCA_csv = os.path.join(norm_shcpca_csv_path,
+    #                                         'Sample' + embryo_name + 'LabelUnified_2Dmatrix_PCA.csv')
+    #     df_values_dict = read_csv_to_df(path_2DMATRIXPCA_csv)
+    #     for idx in df_values_dict.index:
+    #         cell_name = idx.split('::')[1]
+    #         if cell_name in cell_list_dict.keys():
+    #             cell_list_dict[cell_name].append(list(df_values_dict.loc[idx]))
+    #             cell_frame_list_dict[cell_name].append(idx.split('::')[0])
+    #         else:
+    #             # print(df_values_dict.loc[idx])
+    #             cell_list_dict[cell_name] = [list(df_values_dict.loc[idx])]
+    #             cell_frame_list_dict[cell_name] = [idx.split('::')[0]]
+    #     # ------------------build lifespan cell features vector for each embryo------------------
+    #     df_avg_lifespan = pd.DataFrame(columns=range(pca_num))
+    #     for cell_name in cell_list_dict.keys():
+    #         df_avg_lifespan.loc[cell_name] = np.mean(np.array(cell_list_dict[cell_name]), axis=0)
+    #
+    #     for weight_threshold in np.arange(start=threshold_start, stop=threshold_end, step=threshold_step):
+    #         all_fixed_cell = []
+    #         positive_count = 0
+    #         for cell_name in df_avg_lifespan.index:
+    #             if len(cell_frame_list_dict[cell_name]) > 10 and tree_dict[embryo_name].get_node(cell_name).is_leaf():
+    #
+    #                 if ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[0] - begin_frame[
+    #                     embryo_name]) * 1.39) > time_limit_minutes_start and \
+    #                         ((tree_dict[embryo_name].get_node(cell_name).data.get_time()[-1] - begin_frame[
+    #                             embryo_name]) * 1.39) < time_limit_minutes_end:
+    #                     if cell_fate_dict[cell_name] == 'Skin':
+    #                         positive_count += 1
+    #                     if df_avg_lifespan.at[cell_name, column] >= weight_threshold:
+    #                         # print(tree_dict[embryo_name].get_node(cell_name).data.get_time())
+    #                         all_fixed_cell.append(cell_fate_dict[cell_name])
+    #                         # print(cell_name, cell_fate_dict[cell_name])
+    #         print('-->>weight_threshold  ', weight_threshold)
+    #         # print(np.unique(all_fixed_cell, return_counts=True))
+    #         # print(all_fixed_cell)
+    #         # print(all_fixed_cell.count('Skin'))
+    #         if len(all_fixed_cell) != 0:
+    #
+    #             precision = all_fixed_cell.count('Skin') / len(all_fixed_cell)
+    #             recall = all_fixed_cell.count('Skin') / positive_count
+    #             print('precision  ', precision)
+    #             print('recall   ', recall)
+    #             if precision != 0 or recall != 0:
+    #                 print('f1 score  ', 2 * precision * recall / (precision + recall))
+    #         else:
+    #             print('no one cell is recognized')
 
     # average detection (pattern confirmed)
     from lineage_stat.data_structure import get_combined_lineage_tree
@@ -1696,25 +1700,108 @@ def recognition_of_hyp_cells_with_eigengrid_01paper():
         # print(np.unique(all_fixed_cell, return_counts=True))
         # print(all_fixed_cell)
         # print(all_fixed_cell.count('Skin'))
+        final_other_cells_deformed = ['ABplpappaap', 'ABplpapppa', 'ABpraapppp',  'Dpppa', 'Dpppp', 'ABplpapppp','MSppaaap']
         if len(average_fixed_cell) != 0:
+            print(average_fixed_cell_name)
+            print(average_fixed_cell)
 
             precision = average_fixed_cell.count('Skin') / len(average_fixed_cell)
-            recall = average_fixed_cell.count('Skin') / positive_count
+            recall = average_fixed_cell.count('Skin') / (average_fixed_cell.count('Skin') +len(final_other_cells_deformed))
             print('precision  ', precision)
             print('recall   ', recall)
-            if precision != 0 or recall != 0:
-                print('f1 score  ', 2 * precision * recall / (precision + recall))
+            # if precision != 0 or recall != 0:
+            #     print('accuracy ', 2 * precision * recall / (precision + recall))
         else:
             print('no one cell is recognized')
 
-    # https: // en.wikipedia.org / wiki / Precision_and_recall
+def recognition_of_hyp_cells_with_cellvolume_01paper():
+    embryo_names = [str(i).zfill(2) for i in range(4, 21)]
+    df_cell_fate = pd.read_csv(os.path.join(r'./DATA', 'CellFate.csv'))
+    cell_fate_dict = {}
+    for idx in df_cell_fate.index:
+        cell_fate_dict[df_cell_fate.at[idx, 'Name'].strip('\'')] = df_cell_fate.at[idx, 'Fate'].strip('\'')
+
+    df_saving_skin_recognition = pd.DataFrame(columns=np.arange(start=0.5, stop=2, step=0.1))
+    # print(cell_fate_dict)
+    # detection using weight of first 2dmatrix pca component
+    life_span_tree_path = os.path.join(r'./DATA', r'lineage_tree/LifeSpan')
+    norm_shcpca_csv_path = os.path.join(r'./DATA', r'my_data_csv/norm_2DMATRIX_PCA_csv')
+    time_limit_minutes_start = 100  # 50 or 100 or 150 start time bigger than this
+    time_limit_minutes_end = 250  # 100 or 150 or 200 the end time smaller than this
+    weight_threshold_static = 1
+    # -----------precision = true positive (true skin)/true positive + false positive-----------
+    tree_dict = {}
+    begin_frame = {}
+    column = 0
+
+    threshold_start = 100
+    threshold_end = 140
+    threshold_step = 5
+
+    for embryo_name in embryo_names:
+        cell_tree_file_path = os.path.join(life_span_tree_path, 'Sample{}_cell_life_tree'.format(embryo_name))
+        with open(cell_tree_file_path, 'rb') as f:
+            # print(f)
+            tree_dict[embryo_name] = Tree(load(f))
+        begin_frame[embryo_name] = max(tree_dict[embryo_name].get_node('ABa').data.get_time()[-1],
+                                       tree_dict[embryo_name].get_node('ABp').data.get_time()[-1])
+
+    # average detection (pattern confirmed)
+    from lineage_stat.data_structure import get_combined_lineage_tree
+    cell_combine_tree, _ = get_combined_lineage_tree()
+    # ----------------read embryos' average SHcPCA result first--------------------------------
+    path_2dmatrixPCA_lifespan_csv = os.path.join(norm_shcpca_csv_path,
+                                                 'Mean_cellLineageTree_dynamic_eigengrid.csv')
+    df_pd_spharmpca_lifespan = read_csv_to_df(path_2dmatrixPCA_lifespan_csv)
+
+    for weight_threshold in np.arange(start=threshold_start, stop=threshold_end, step=threshold_step):
+        average_fixed_cell_name = []
+        average_fixed_cell = []
+
+        all_skin = []
+        positive_count = 0
+        for cell_name in cell_combine_tree.expand_tree(sorting=False):
+            if cell_name in df_pd_spharmpca_lifespan.index:
+                if cell_combine_tree.get_node(cell_name).data.get_time()[0] > time_limit_minutes_start and \
+                        cell_combine_tree.get_node(cell_name).data.get_time()[-1] < time_limit_minutes_end and \
+                        cell_combine_tree.get_node(cell_name).is_leaf():
+                    if cell_fate_dict[cell_name] == 'Skin':
+                        # print(cell_name, cell_fate_dict[cell_name])
+                        all_skin.append([cell_name, cell_fate_dict[cell_name]])
+                        positive_count += 1
+
+                    if abs(df_pd_spharmpca_lifespan.at[cell_name, str(column)]) > weight_threshold:
+                        average_fixed_cell_name.append(cell_name)
+                        average_fixed_cell.append(cell_fate_dict[cell_name])
+                        # print(cell_name, cell_fate_dict[cell_name])
+        print('-->>weight_threshold  ', weight_threshold)
+        # print(np.unique(all_fixed_cell, return_counts=True))
+        # print(all_fixed_cell)
+        # print(all_fixed_cell.count('Skin'))
+        final_other_cells_deformed = ['ABplpappaap', 'ABplpapppa', 'ABpraapppp', 'Dpppa', 'Dpppp', 'ABplpapppp',
+                                      'MSppaaap']
+        if len(average_fixed_cell) != 0:
+            print(average_fixed_cell_name)
+            print(average_fixed_cell)
+
+            precision = average_fixed_cell.count('Skin') / len(average_fixed_cell)
+            recall = average_fixed_cell.count('Skin') / (
+                        average_fixed_cell.count('Skin') + len(final_other_cells_deformed))
+            print('precision  ', precision)
+            print('recall   ', recall)
+            # if precision != 0 or recall != 0:
+            #     print('accuracy ', 2 * precision * recall / (precision + recall))
+        else:
+            print('no one cell is recognized')
+
+# https: // en.wikipedia.org / wiki / Precision_and_recall
 
 
 def save_the_PCA_file():
     """
     Why do i need to save this?
     Because PCA fit data is based on all segmented cell from 4-cell to 350-cell stage
-    As for the analysis of single embryo or time series. I would prefer this. Including all possible cell shapes during embryogensisis
+    As for the analysis of single embryo or time series. I would prefer this. Including all possible cell shapes during embryogenesis
     :return:
     """
 
@@ -3970,4 +4057,6 @@ if __name__ == "__main__":
     # clustering_original_and_normalized_feature_vector()
     # cluster_with_lifespan_shape_features()
     # construct_mean_tree_and_dynamic_spectrum_01paper()
-    calculate_SPHARM_embryos()
+    # calculate_SPHARM_embryos()
+    # recognition_of_hyp_cells_with_eigengrid_01paper()
+    recognition_of_hyp_cells_with_eigenharmonic_01paper()
