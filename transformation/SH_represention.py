@@ -130,61 +130,65 @@ def get_nib_embryo_membrane_dict(embryo_path, file_name):
     return dict_img_membrane, dict_center_points
 
 
-def get_SH_coefficient_of_embryo(embryos_path_root, saving_path_root,sample_N, lmax,
-                                 name_dictionary_path,surface_average_num=3):
-    """
+def get_SH_coefficient_of_embryo(embryos_path_root, saving_path_root, sample_N, lmax, name_dictionary_path, surface_average_num=3, target_cell=None):
+    """Calculate SH coefficients for all cells in an embryo."""
+    import pandas as pd
+    import numpy as np
+    from threeDCSQ.utils import cell_func as cell_f
+    from threeDCSQ.utils import general_func as general_f
+    from threeDCSQ.transformation.SH_represention import get_flatten_ldegree_morder
+    from threeDCSQ.utils import sh_cooperation
+    import pyshtools as pysh
 
-    :param sample_N: how many samples we need
-    :param embryo_path: the shape img path
-    :param file_name: file name
-    :param surface_average_num: how many points to get average num to calculate R=f(phi,theta)
-    :return:
-    """
-
-    column_indices = get_flatten_ldegree_morder(lmax)
-    pd_embryo = pd.DataFrame(columns=column_indices)
+    # Get cell name mapping
     number_cell_affine_table, _ = cell_f.get_cell_name_affine_table(path=name_dictionary_path)
-    niigz_files_this=sorted(glob.glob(os.path.join(embryos_path_root,'*.nii.gz')))
+
+    # Get all nii.gz files
+    niigz_files_this = sorted(glob.glob(os.path.join(embryos_path_root, "*.nii.gz")))
+
+    # Process each timepoint
     for niigz_path in niigz_files_this:
-        embryo_name,tp_str=os.path.basename(niigz_path).split('.')[0].split('_')[:2]
-        embryo_array=general_f.load_nitf2_img(niigz_path).get_fdata().astype(int)
-        cell_keys=np.unique(embryo_array)
+        # Extract timepoint info
+        filename = os.path.basename(niigz_path)
+        parts = filename.split("_")
+        if len(parts) >= 3:
+            embryo_name = parts[0]
+            tp_str = parts[-2]
+        else:
+            print(f"Warning: Unexpected filename format: {filename}")
+            continue
 
-        # THE DEGREE OF SH. we can specify it or less than N/2-1, or 10 -- 2*(10/2-1)+1=9 coefficients
-        # lmax = int(sample_N / 2 - 1)
+        # Load and process embryo data
+        embryo_array = general_f.load_nitf2_img(niigz_path).get_fdata().astype(int)
+        cell_keys = np.unique(embryo_array)
+        cell_keys = cell_keys[cell_keys != 0]  # Remove background
 
-        # this_embryo_dir = os.path.join(embryo_path, 'SH_C_folder_OF' + file_name)
-        # print('placing SH file in====>', this_embryo_dir)
-        # if not os.path.exists(this_embryo_dir):
-        #     os.makedirs(this_embryo_dir)
-        # print(os.path.basename(file_name))
+        # Process all cells in this frame
+        for label in cell_keys:
+            try:
+                # Get cell name from label
+                name = number_cell_affine_table.get(label, f"cell_{label}")
 
-        # --------------------------calculate all and save as csv --------------------------
-        for this_cell_label in cell_keys:
-            if this_cell_label:
-                cell_surface,center= cell_f.nii_get_cell_surface(embryo_array, this_cell_label)
-                # get center point
+                # Skip if not target cell
+                if target_cell and name != target_cell:
+                    continue
+
+                cell_surface, center = cell_f.nii_get_cell_surface(embryo_array, label)
                 points_membrane_local = cell_surface - center
-                griddata, _ = do_sampling_with_interval(sample_N, points_membrane_local, surface_average_num)
 
-                # do fourier transform and convolution on SPHERE
-                print(
-                    (
-                        (
-                            f'---------dealing with cell {str(this_cell_label)}-----'
-                            + number_cell_affine_table[this_cell_label]
-                        )
-                        + '   ---coefficient --------------------'
-                    )
+                griddata, _ = do_sampling_with_interval(
+                    sample_N, points_membrane_local, surface_average_num
                 )
-                # calculate coefficients from points
-                sh_coefficient=pysh.expand.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
+                sh_coefficient = pysh.expand.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
                 cilm = sh_cooperation.flatten_clim(sh_coefficient)
-                # build sh tools coefficient class instance
-                # sh_coefficient = pysh.SHCoeffs.from_array(cilm)
-                print(cilm)
-                pd_embryo.loc[tp_str+'::'+number_cell_affine_table[this_cell_label]]=cilm.tolist()
-    pd_embryo.to_csv(saving_path_root,embryo_name+'_l_'+str(lmax+1)+'.csv')
+
+                # Save individual cell data
+                cell_path = os.path.join(saving_path_root, f"{name}_{tp_str}_l{lmax+1}.npy")
+                np.save(cell_path, np.array(cilm))
+
+            except Exception as e:
+                print(f"Error processing cell {label} ({name}) in frame {tp_str}: {str(e)}")
+                continue
 
 
 def sample_and_SHc_with_surface(surface_points, sample_N, lmax, surface_average_num=5):
