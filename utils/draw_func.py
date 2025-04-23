@@ -6,7 +6,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import os
-from static import config
+from ..static import config
 import random
 import pyshtools as pysh
 
@@ -17,8 +17,8 @@ from mpl_toolkits.mplot3d import proj3d
 
 # import user defined library
 
-from utils.general_func import read_csv_to_df
-from utils.sh_cooperation import do_reconstruction_from_SH, collapse_flatten_clim
+from ..utils.general_func import read_csv_to_df
+from ..utils.sh_cooperation import do_reconstruction_from_SH, collapse_flatten_clim
 
 
 def generate_2D_Z_ARRAY(x, y, z):

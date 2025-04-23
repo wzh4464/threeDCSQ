@@ -1,16 +1,16 @@
-import random
 
-import utils.general_func as general_f
-import utils.cell_func as cell_f
-import utils.draw_func as draw_f
-import transformation.SH_represention as SH_represention
+
+from ..utils import general_func as general_f
+from ..utils import cell_func as cell_f
+from ..utils import draw_func as draw_f
+from ..transformation import SH_represention as SH_represention
 
 from matplotlib import pyplot as plt
 import pyshtools as pysh
 import numpy as np
 import pandas as pd
 import multiprocessing
-from static import config
+from ..static import config
 import os
 import math
 import re
@@ -20,9 +20,9 @@ from tqdm import tqdm
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 
-from utils.sh_cooperation import get_flatten_ldegree_morder, collapse_flatten_clim, do_reconstruction_from_SH, \
+from ..utils.sh_cooperation import get_flatten_ldegree_morder, collapse_flatten_clim, do_reconstruction_from_SH, \
     flatten_clim
-from utils.spherical_func import normalize_SHc
+from ..utils.spherical_func import normalize_SHc
 
 cluster_AB_list = ['ABa', 'ABp', 'ABal', 'ABar', 'ABpl', 'ABpr', 'ABala', 'ABalp', 'ABara', 'ABarp', 'ABpla', 'ABplp',
                    'ABpra', 'ABprp']

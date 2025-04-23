@@ -6,7 +6,7 @@
 
 import numpy as np
 import pandas as pd
-from static import config
+from ..static import config
 
 from scipy import ndimage
 from collections import Counter
@@ -16,7 +16,7 @@ import os
 
 # import user defined library
 
-import utils.general_func as general_f
+from . import general_func as general_f
 
 
 

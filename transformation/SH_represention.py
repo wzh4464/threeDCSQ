@@ -1,16 +1,17 @@
 import glob
 import math
 import os
-from static import config
+from ..static import config
 
 import numpy as np
 import pandas as pd
 import pyshtools as pysh
 
-import utils.general_func as general_f
-import utils.cell_func as cell_f
-import utils.spherical_func as sph_f
-from utils.sh_cooperation import get_flatten_ldegree_morder, flatten_clim
+from ..utils import general_func as general_f
+from ..utils import cell_func as cell_f
+from ..utils import spherical_func as sph_f
+from ..utils import sh_cooperation as sh_cooperation
+from ..utils.sh_cooperation import get_flatten_ldegree_morder
 
 
 def do_sampling_with_lat_lon(points_surface, lat_lon, average_num=5, is_return_xyz=False):
@@ -172,8 +173,8 @@ def get_SH_coefficient_of_embryo(embryos_path_root, saving_path_root,sample_N, l
                 print('---------dealing with cell ' + str(this_cell_label) + '-----' + number_cell_affine_table[
                     this_cell_label] + '   ---coefficient --------------------')
                 # calculate coefficients from points
-                sh_coefficient=pysh.shtools.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
-                cilm = flatten_clim(sh_coefficient)
+                sh_coefficient=pysh.expand.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
+                cilm = sh_cooperation.flatten_clim(sh_coefficient)
                 # build sh tools coefficient class instance
                 # sh_coefficient = pysh.SHCoeffs.from_array(cilm)
                 print(cilm)
@@ -191,7 +192,7 @@ def sample_and_SHc_with_surface(surface_points, sample_N, lmax, surface_average_
     # do fourier transform and convolution on SPHERE
     print('---------dealing with surface point coefficient --------------------')
     # calculate coefficients from points
-    cilm = pysh.shtools.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
+    cilm = pysh.expand.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
     # build sh tools coefficient class instance
-    sh_coefficient_instance = pysh.SHCoeffs.from_array(cilm)
+    sh_coefficient_instance = pysh.shclasses.SHCoeffs.from_array(cilm)
     return sh_coefficient_instance

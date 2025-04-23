@@ -10,7 +10,7 @@ import pyshtools as pysh
 
 # import user defined library
 
-from utils.general_func import sph2descartes
+from .general_func import sph2descartes
 
 
 def flatten_clim(sh_coefficient_array):

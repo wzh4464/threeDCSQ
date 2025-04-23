@@ -5,7 +5,7 @@
 
 import math
 import numpy as np
-from utils.general_func import read_csv_to_df
+from . import general_func as general_f
 
 
 # https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere/44164075#44164075
