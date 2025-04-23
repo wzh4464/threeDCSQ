@@ -1,4 +1,5 @@
 import glob
+import itertools
 import math
 import os
 from ..static import config
@@ -82,18 +83,17 @@ def get_nib_embryo_membrane_dict(embryo_path, file_name):
     img_membrane_data = img.get_fdata().astype(np.int16)
     x_num, y_num, z_num = img_membrane_data.shape
     # -------------get each cell membrane----------------
-    for x in range(x_num):
-        for y in range(y_num):
-            for z in range(z_num):
-                dict_key = img_membrane_data[x][y][z]
+    for x, y in itertools.product(range(x_num), range(y_num)):
+        for z in range(z_num):
+            dict_key = img_membrane_data[x][y][z]
 
-                if dict_key != 0:
-                    # print(file_name,dict_key)
+            if dict_key != 0:
+                # print(file_name,dict_key)
 
-                    if dict_key in dict_img_membrane:
-                        dict_img_membrane[dict_key].append([x, y, z])
-                    else:
-                        dict_img_membrane[dict_key] = [[x, y, z]]
+                if dict_key in dict_img_membrane:
+                    dict_img_membrane[dict_key].append([x, y, z])
+                else:
+                    dict_img_membrane[dict_key] = [[x, y, z]]
     # ----------------------
     # print(dict_img_membrane)
 
@@ -101,26 +101,24 @@ def get_nib_embryo_membrane_dict(embryo_path, file_name):
     if os.path.exists(os.path.join(embryo_path, file_name)):
         img = general_f.load_nitf2_img(os.path.join(embryo_path, file_name))
     else:
-        print('reading ， not embryo file!!!!!error')
-        return EOFError  # calculate cell and save automatically
+        raise EOFError("reading embryo file error")
 
     dict_img_cell_calculate = {}
     img_cell_data = img.get_fdata().astype(np.int16)
-    for x in range(x_num):
-        for y in range(y_num):
-            for z in range(z_num):
-                dict_key = img_cell_data[x][y][z]
-                if dict_key != 0:
-                    # print(file_name,dict_key)
+    for x, y in itertools.product(range(x_num), range(y_num)):
+        for z in range(z_num):
+            dict_key = img_cell_data[x][y][z]
+            if dict_key != 0:
+                # print(file_name,dict_key)
 
-                    if dict_key in dict_img_cell_calculate:
-                        dict_img_cell_calculate[dict_key].append([x, y, z])
-                    else:
-                        dict_img_cell_calculate[dict_key] = [[x, y, z]]
+                if dict_key in dict_img_cell_calculate:
+                    dict_img_cell_calculate[dict_key].append([x, y, z])
+                else:
+                    dict_img_cell_calculate[dict_key] = [[x, y, z]]
     # ---------------------------------------------------
     # print(dict_img_cell_calculate.keys())
     dict_center_points = {}
-    for dict_key in dict_img_cell_calculate.keys():
+    for dict_key in dict_img_cell_calculate:
         center_point = np.sum(dict_img_cell_calculate[dict_key], axis=0) / len(dict_img_cell_calculate[dict_key])
         if center_point is None:
             center_point = [0, 0, 0]
@@ -170,8 +168,15 @@ def get_SH_coefficient_of_embryo(embryos_path_root, saving_path_root,sample_N, l
                 griddata, _ = do_sampling_with_interval(sample_N, points_membrane_local, surface_average_num)
 
                 # do fourier transform and convolution on SPHERE
-                print('---------dealing with cell ' + str(this_cell_label) + '-----' + number_cell_affine_table[
-                    this_cell_label] + '   ---coefficient --------------------')
+                print(
+                    (
+                        (
+                            f'---------dealing with cell {str(this_cell_label)}-----'
+                            + number_cell_affine_table[this_cell_label]
+                        )
+                        + '   ---coefficient --------------------'
+                    )
+                )
                 # calculate coefficients from points
                 sh_coefficient=pysh.expand.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
                 cilm = sh_cooperation.flatten_clim(sh_coefficient)
@@ -180,7 +185,6 @@ def get_SH_coefficient_of_embryo(embryos_path_root, saving_path_root,sample_N, l
                 print(cilm)
                 pd_embryo.loc[tp_str+'::'+number_cell_affine_table[this_cell_label]]=cilm.tolist()
     pd_embryo.to_csv(saving_path_root,embryo_name+'_l_'+str(lmax+1)+'.csv')
-
 
 
 def sample_and_SHc_with_surface(surface_points, sample_N, lmax, surface_average_num=5):
@@ -193,6 +197,4 @@ def sample_and_SHc_with_surface(surface_points, sample_N, lmax, surface_average_
     print('---------dealing with surface point coefficient --------------------')
     # calculate coefficients from points
     cilm = pysh.expand.SHExpandDH(griddata, sampling=2, lmax_calc=lmax)
-    # build sh tools coefficient class instance
-    sh_coefficient_instance = pysh.shclasses.SHCoeffs.from_array(cilm)
-    return sh_coefficient_instance
+    return pysh.shclasses.SHCoeffs.from_array(cilm)
